@@ -1,0 +1,56 @@
+#!/usr/bin/env node
+import { setGlobalDispatcher, ProxyAgent, Agent } from "undici";
+import { SocksClient } from "socks";
+import * as tls from "tls";
+import { Command } from "commander";
+import { registerTokenCommands } from "./commands/token.js";
+import { registerMarketCommands } from "./commands/market.js";
+import { registerPortfolioCommands } from "./commands/portfolio.js";
+import { registerSwapCommands } from "./commands/swap.js";
+
+const proxy = process.env.HTTPS_PROXY ?? process.env.https_proxy
+           ?? process.env.HTTP_PROXY  ?? process.env.http_proxy;
+if (proxy) {
+  const u = new URL(proxy);
+  if (u.protocol === "socks5:" || u.protocol === "socks4:") {
+    const type = u.protocol === "socks5:" ? 5 : 4;
+    setGlobalDispatcher(new Agent({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      connect: async (options: any, callback: any) => {
+        try {
+          const { socket } = await SocksClient.createConnection({
+            proxy: { host: u.hostname, port: parseInt(u.port || "1080"), type },
+            command: "connect",
+            destination: { host: options.hostname!, port: +options.port! },
+          });
+          if (options.protocol === "https:") {
+            callback(null, tls.connect({ socket, servername: options.hostname, rejectUnauthorized: options.rejectUnauthorized !== false }));
+          } else {
+            callback(null, socket);
+          }
+        } catch (err) {
+          callback(err as Error, null);
+        }
+      },
+    }));
+  } else {
+    setGlobalDispatcher(new ProxyAgent(proxy));
+  }
+}
+
+const program = new Command();
+
+program
+  .name("gmgn-cli")
+  .version("1.0.0")
+  .description("GMGN OpenAPI CLI — market data, token info, portfolio and swap");
+
+registerTokenCommands(program);
+registerMarketCommands(program);
+registerPortfolioCommands(program);
+registerSwapCommands(program);
+
+program.parseAsync().catch((err) => {
+  console.error(`[gmgn-cli] ${err.message}`);
+  process.exit(1);
+});

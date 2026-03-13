@@ -1,0 +1,23 @@
+{
+  "name": "gmgn-cli",
+  "description": "GMGN OpenAPI skills — token info, market data, wallet portfolio, and swap execution across sol / bsc / base / eth / monad",
+  "version": "1.0.0",
+  "author": {
+    "name": "GMGN"
+  },
+  "homepage": "https://gmgn.ai",
+  "repository": "https://github.com/gmgn-ai/gmgn-skills",
+  "license": "MIT",
+  "keywords": [
+    "gmgn",
+    "crypto",
+    "solana",
+    "token",
+    "defi",
+    "swap",
+    "portfolio",
+    "market",
+    "blockchain"
+  ],
+  "skills": ["./skills/"]
+}

@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment & secrets
+.env
+keys/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+yarn.log
+
+# OS
+.DS_Store
+
+# Internal / testing (not for public release)
+testing/

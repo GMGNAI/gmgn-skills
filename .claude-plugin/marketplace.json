@@ -1,0 +1,45 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "gmgn-cli",
+  "description": "GMGN OpenAPI skills for AI coding assistants — token info, market data, wallet portfolio, and swap execution across sol / bsc / base / eth / monad",
+  "owner": {
+    "name": "GMGN"
+  },
+  "plugins": [
+    {
+      "name": "gmgn-cli",
+      "source": "./",
+      "description": "4 GMGN skills — token info & security, K-line market data, wallet portfolio analysis, and DEX swap execution",
+      "version": "1.0.0",
+      "author": {
+        "name": "GMGN"
+      },
+      "homepage": "https://gmgn.ai",
+      "repository": "https://github.com/gmgn-ai/gmgn-skills",
+      "license": "MIT",
+      "keywords": [
+        "gmgn",
+        "crypto",
+        "solana",
+        "token",
+        "defi",
+        "swap",
+        "portfolio",
+        "market",
+        "blockchain",
+        "skills"
+      ],
+      "category": "web3",
+      "tags": [
+        "skills",
+        "token",
+        "market",
+        "portfolio",
+        "swap",
+        "defi",
+        "blockchain"
+      ],
+      "strict": false
+    }
+  ]
+}

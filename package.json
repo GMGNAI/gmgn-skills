@@ -1,0 +1,50 @@
+{
+  "name": "gmgn-cli",
+  "version": "1.0.0",
+  "description": "GMGN OpenAPI CLI — call GMGN market, token, portfolio and swap APIs from the command line",
+  "type": "module",
+  "bin": {
+    "gmgn-cli": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "skills",
+    ".claude-plugin"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "socks": "^2.8.7",
+    "undici": "^7.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gmgn-ai/gmgn-skills"
+  },
+  "keywords": [
+    "gmgn",
+    "crypto",
+    "solana",
+    "token",
+    "defi",
+    "swap",
+    "portfolio",
+    "market",
+    "claude-skill"
+  ]
+}
