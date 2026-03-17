@@ -26,6 +26,24 @@ Use the `gmgn-cli` tool to query token information based on the user's request.
 - Run from the directory where your `.env` file is located, or set `GMGN_HOST` in your environment
 - `gmgn-cli` installed globally: `npm install -g gmgn-cli@1.0.1`
 
+## Info / Security / Pool Options
+
+| Option | Description |
+|--------|-------------|
+| `--chain` | Required. `sol` / `bsc` / `base` |
+| `--address` | Required. Token contract address |
+
+## Holders / Traders Options
+
+| Option | Description |
+|--------|-------------|
+| `--chain` | Required. `sol` / `bsc` / `base` |
+| `--address` | Required. Token contract address |
+| `--limit <n>` | Number of results (default `20`, max `100`) |
+| `--order-by <field>` | Sort field: `amount_percentage` / `profit` / `unrealized_profit` / `buy_volume_cur` / `sell_volume_cur` (default `amount_percentage`) |
+| `--direction <asc\|desc>` | Sort direction (default `desc`) |
+| `--tag <tag>` | Wallet tag filter: `renowned` / `smart_degen` (default `renowned`) |
+
 ## Usage Examples
 
 ```bash
@@ -39,11 +57,9 @@ gmgn-cli token security --chain sol --address <token_address>
 gmgn-cli token pool --chain sol --address <token_address>
 
 # Top holders
-gmgn-cli token holders --chain sol --address <token_address>
 gmgn-cli token holders --chain sol --address <token_address> --limit 50
 
 # Top traders
-gmgn-cli token traders --chain sol --address <token_address>
 gmgn-cli token traders --chain sol --address <token_address> --limit 50
 
 # Raw JSON output (for piping)

@@ -54,12 +54,21 @@ export function registerTokenCommands(program: Command): void {
     .description("Get top token holders")
     .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
     .requiredOption("--address <address>", "Token contract address")
+    .option("--limit <n>", "Number of results (default 20, max 100)", parseInt)
+    .option("--order-by <field>", "Sort field: amount_percentage / profit / unrealized_profit / buy_volume_cur / sell_volume_cur", "amount_percentage")
+    .option("--direction <dir>", "Sort direction: asc / desc", "desc")
+    .option("--tag <tag>", "Wallet tag filter: renowned / smart_degen", "renowned")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       validateChain(opts.chain);
       validateAddress(opts.address, opts.chain, "--address");
+      const extra: Record<string, string | number> = {};
+      if (opts.limit != null) extra["limit"] = opts.limit;
+      if (opts.orderBy) extra["order_by"] = opts.orderBy;
+      if (opts.direction) extra["direction"] = opts.direction;
+      if (opts.tag) extra["tag"] = opts.tag;
       const client = new OpenApiClient(getConfig());
-      const data = await client.getTokenTopHolders(opts.chain, opts.address).catch(exitOnError);
+      const data = await client.getTokenTopHolders(opts.chain, opts.address, extra).catch(exitOnError);
       printResult(data, opts.raw);
     });
 
@@ -68,12 +77,21 @@ export function registerTokenCommands(program: Command): void {
     .description("Get top token traders")
     .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
     .requiredOption("--address <address>", "Token contract address")
+    .option("--limit <n>", "Number of results (default 20, max 100)", parseInt)
+    .option("--order-by <field>", "Sort field: amount_percentage / profit / unrealized_profit / buy_volume_cur / sell_volume_cur", "amount_percentage")
+    .option("--direction <dir>", "Sort direction: asc / desc", "desc")
+    .option("--tag <tag>", "Wallet tag filter: renowned / smart_degen", "renowned")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       validateChain(opts.chain);
       validateAddress(opts.address, opts.chain, "--address");
+      const extra: Record<string, string | number> = {};
+      if (opts.limit != null) extra["limit"] = opts.limit;
+      if (opts.orderBy) extra["order_by"] = opts.orderBy;
+      if (opts.direction) extra["direction"] = opts.direction;
+      if (opts.tag) extra["tag"] = opts.tag;
       const client = new OpenApiClient(getConfig());
-      const data = await client.getTokenTopTraders(opts.chain, opts.address).catch(exitOnError);
+      const data = await client.getTokenTopTraders(opts.chain, opts.address, extra).catch(exitOnError);
       printResult(data, opts.raw);
     });
 }

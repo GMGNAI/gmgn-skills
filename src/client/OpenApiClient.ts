@@ -61,12 +61,12 @@ export class OpenApiClient {
     return this.normalRequest("GET", "/v1/token/pool_info", { chain, address });
   }
 
-  async getTokenTopHolders(chain: string, address: string): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/market/token_top_holders", { chain, address });
+  async getTokenTopHolders(chain: string, address: string, extra: Record<string, string | number> = {}): Promise<unknown> {
+    return this.normalRequest("GET", "/v1/market/token_top_holders", { chain, address, ...extra });
   }
 
-  async getTokenTopTraders(chain: string, address: string): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/market/token_top_traders", { chain, address });
+  async getTokenTopTraders(chain: string, address: string, extra: Record<string, string | number> = {}): Promise<unknown> {
+    return this.normalRequest("GET", "/v1/market/token_top_traders", { chain, address, ...extra });
   }
 
   // ---- Market endpoints (normal auth) ----

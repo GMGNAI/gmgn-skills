@@ -44,10 +44,10 @@ Use the `gmgn-cli` tool to query K-line data for a token or browse trending toke
 | `--chain` | Required. `sol` / `bsc` / `base` |
 | `--interval` | Required. `1h` / `3h` / `6h` / `24h` |
 | `--limit <n>` | Number of results (default 100, max 100) |
-| `--orderby <field>` | Sort field: `score` / `volume` / `swaps` / `liquidity` / `marketcap` / `holders` / `price` / `change` / `change1m` / `change5m` / `change1h` / `renowned_count` / `smart_degen_count` / `bluechip_owner_percentage` / `rank` / `creation_timestamp` / `square_mentions` / `history_highest_market_cap` / `gas_fee` |
+| `--order-by <field>` | Sort field: `default` / `swaps` / `marketcap` / `history_highest_market_cap` / `liquidity` / `volume` / `holder_count` / `smart_degen_count` / `renowned_count` / `gas_fee` / `price` / `change1m` / `change5m` / `change1h` / `creation_timestamp` |
 | `--direction <asc\|desc>` | Sort direction (default `desc`) |
-| `--filter <tag...>` | Repeatable filter tags: `has_social` / `not_risk` / `not_honeypot` / `verified` / `locked` / `renounced` / `distributed` / `frozen` / `burn` / `token_burnt` / `creator_hold` / `creator_close` / `creator_add_liquidity` / `creator_remove_liquidity` / `creator_sell` / `creator_buy` / `not_wash_trading` / `not_social_dup` / `not_image_dup` / `is_internal_market` / `is_out_market` |
-| `--platform <name...>` | Repeatable platform filter: `pump` / `moonshot` / `launchlab` |
+| `--filter <tag...>` | Repeatable filter tags (chain-specific). **sol** (defaults: `renounced frozen`): `renounced` / `frozen` / `burn` / `token_burnt` / `has_social` / `not_social_dup` / `not_image_dup` / `dexscr_update_link` / `not_wash_trading` / `is_internal_market` / `is_out_market`. **evm** (defaults: `not_honeypot verified renounced`): `not_honeypot` / `verified` / `renounced` / `locked` / `token_burnt` / `has_social` / `not_social_dup` / `not_image_dup` / `dexscr_update_link` / `is_internal_market` / `is_out_market` |
+| `--platform <name...>` | Repeatable platform filter (chain-specific). **sol**: `Pump.fun` / `pump_mayhem` / `pump_mayhem_agent` / `pump_agent` / `letsbonk` / `bonkers` / `bags` / `memoo` / `liquid` / `bankr` / `zora` / `surge` / `anoncoin` / `moonshot_app` / `wendotdev` / `heaven` / `sugar` / `token_mill` / `believe` / `trendsfun` / `trends_fun` / `jup_studio` / `Moonshot` / `boop` / `xstocks` / `ray_launchpad` / `meteora_virtual_curve` / `pool_ray` / `pool_meteora` / `pool_pump_amm` / `pool_orca`. **bsc**: `fourmeme` / `fourmeme_agent` / `bn_fourmeme` / `flap` / `clanker` / `lunafun` / `pool_uniswap` / `pool_pancake`. **base**: `clanker` / `bankr` / `flaunch` / `zora` / `zora_creator` / `baseapp` / `basememe` / `virtuals_v2` / `klik` |
 
 ## Usage Examples
 
@@ -73,15 +73,15 @@ gmgn-cli market kline \
 # Linux: use $(date -d '24 hours ago' +%s) instead of $(date -v-24H +%s)
 
 # Top 20 hot tokens on SOL in the last 1 hour, sorted by volume
-gmgn-cli market trending --chain sol --interval 1h --orderby volume --limit 20
+gmgn-cli market trending --chain sol --interval 1h --order-by volume --limit 20
 
-# Hot tokens with social links only, not risky, on BSC over 24h
+# Hot tokens with social links only, verified and not honeypot, on BSC over 24h
 gmgn-cli market trending \
   --chain bsc --interval 24h \
-  --filter has_social --filter not_risk
+  --filter has_social --filter not_honeypot --filter verified
 
-# Pump platform tokens on SOL, last 6 hours
-gmgn-cli market trending --chain sol --interval 6h --platform pump
+# Pump.fun platform tokens on SOL, last 6 hours
+gmgn-cli market trending --chain sol --interval 6h --platform Pump.fun
 
 # Raw output for further processing
 gmgn-cli market kline --chain sol --address <addr> \
@@ -92,13 +92,13 @@ gmgn-cli market kline --chain sol --address <addr> \
 
 ### Step 1 — Fetch trending data
 
-Fetch a broad pool with safe filters, sorted by GMGN's composite score:
+Fetch a broad pool with safe filters:
 
 ```bash
 gmgn-cli market trending \
   --chain <chain> --interval 1h \
-  --orderby score --limit 50 \
-  --filter not_risk --filter not_honeypot --filter has_social --raw
+  --order-by volume --limit 50 \
+  --filter not_honeypot --filter has_social --raw
 ```
 
 ### Step 2 — AI multi-factor analysis
@@ -107,7 +107,6 @@ Analyze each record in the response using the following signals (apply judgment,
 
 | Signal | Field(s) | Weight | Notes |
 |--------|----------|--------|-------|
-| GMGN quality score | `score` | High | Primary ranking signal from GMGN |
 | Smart money interest | `smart_degen_count`, `renowned_count` | High | Key conviction indicator |
 | Bluechip ownership | `bluechip_owner_percentage` | Medium | Quality of holder base |
 | Real trading activity | `volume`, `swaps` | Medium | Distinguishes genuine interest from wash trading |
@@ -115,7 +114,7 @@ Analyze each record in the response using the following signals (apply judgment,
 | Pool safety | `liquidity` | Medium | Low liquidity = high slippage risk |
 | Token maturity | `creation_timestamp` | Low | Avoid tokens less than ~1h old unless other signals are very strong |
 
-Select the **top 5** tokens with the best composite profile. Prefer tokens that score well across multiple signals rather than excelling in just one.
+Select the **top 5** tokens with the best composite profile. Prefer tokens that perform well across multiple signals rather than excelling in just one.
 
 ### Step 3 — Present top 5 to user
 
@@ -124,8 +123,8 @@ Present results as a concise table, then give a one-line rationale for each pick
 ```
 Top 5 Trending Tokens — SOL / 1h
 
-# | Symbol | Address (short) | Score | Smart Degens | Volume | 1h Chg | Reasoning
-1 | ...     | ...             | ...   | ...          | ...    | ...    | High score + smart money accumulating
+# | Symbol | Address (short) | Smart Degens | Volume | 1h Chg | Reasoning
+1 | ...     | ...             | ...          | ...    | ...    | Smart money accumulating + high volume
 2 | ...
 ...
 ```

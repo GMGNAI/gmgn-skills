@@ -162,7 +162,7 @@ token info (confirm token)  →  portfolio token-balance (check funds)  →  swa
 
 **Discover trading opportunities via trending:**
 ```
-market trending (top 50, score-ranked)  →  AI selects top 5 by multi-factor analysis  →  user reviews  →  token info / token security  →  swap
+market trending (top 50)  →  AI selects top 5 by multi-factor analysis  →  user reviews  →  token info / token security  →  swap
 ```
 
 ---
@@ -183,7 +183,7 @@ npx gmgn-cli token info --chain sol --address <addr>
 npx gmgn-cli market trending \
   --chain sol \
   --interval 1h \
-  --orderby volume --limit 20 \
+  --order-by volume --limit 20 \
   --filter not_risk --filter not_honeypot
 ```
 

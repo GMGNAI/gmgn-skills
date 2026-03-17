@@ -116,7 +116,7 @@ npx gmgn-cli market trending \
   --chain <chain> \
   --interval <interval> \
   [--limit <n>] \
-  [--orderby <field>] \
+  [--order-by <field>] \
   [--direction asc|desc] \
   [--filter <tag>] \
   [--platform <name>] \
@@ -128,10 +128,16 @@ npx gmgn-cli market trending \
 | `--chain` | Yes | `sol` / `bsc` / `base` |
 | `--interval` | Yes | `1h` / `3h` / `6h` / `24h` |
 | `--limit` | No | Number of results (default 100, max 100) |
-| `--orderby` | No | Sort field: `score` / `volume` / `swaps` / `liquidity` / `marketcap` / `holders` / `price` / `change` / `change1m` / `change5m` / `change1h` / `renowned_count` / `smart_degen_count` / `bluechip_owner_percentage` / `rank` / `creation_timestamp` / `square_mentions` / `history_highest_market_cap` / `gas_fee` |
+| `--order-by` | No | Sort field: `volume` / `swaps` / `liquidity` / `marketcap` / `holders` / `price` / `change` / `change1m` / `change5m` / `change1h` / `renowned_count` / `smart_degen_count` / `bluechip_owner_percentage` / `rank` / `creation_timestamp` / `square_mentions` / `history_highest_market_cap` / `gas_fee` |
 | `--direction` | No | Sort direction: `asc` / `desc` (default `desc`) |
 | `--filter` | No | Filter tag (repeatable): `has_social` / `not_risk` / `not_honeypot` / `verified` / `locked` / `renounced` / `distributed` / `frozen` / `burn` / `token_burnt` / `creator_hold` / `creator_close` / `creator_add_liquidity` / `creator_remove_liquidity` / `creator_sell` / `creator_buy` / `not_wash_trading` / `not_social_dup` / `not_image_dup` / `is_internal_market` / `is_out_market` |
-| `--platform` | No | Platform filter (repeatable): `pump` / `moonshot` / `launchlab` |
+| `--platform` | No | Platform filter (repeatable). Omit (or pass an empty list) to include **all** platforms. Available values depend on chain — see below. |
+
+**`sol` platforms:** `Pump.fun` / `pump_mayhem` / `pump_mayhem_agent` / `pump_agent` / `letsbonk` / `bonkers` / `bags` / `memoo` / `liquid` / `bankr` / `zora` / `surge` / `anoncoin` / `moonshot_app` / `wendotdev` / `heaven` / `sugar` / `token_mill` / `believe` / `trendsfun` / `trends_fun` / `jup_studio` / `Moonshot` / `boop` / `xstocks` / `ray_launchpad` / `meteora_virtual_curve` / `pool_ray` / `pool_meteora` / `pool_pump_amm` / `pool_orca`
+
+**`bsc` platforms:** `fourmeme` / `fourmeme_agent` / `bn_fourmeme` / `flap` / `clanker` / `lunafun` / `pool_uniswap` / `pool_pancake`
+
+**`base` platforms:** `clanker` / `bankr` / `flaunch` / `zora` / `zora_creator` / `baseapp` / `basememe` / `virtuals_v2` / `klik`
 
 ---
 

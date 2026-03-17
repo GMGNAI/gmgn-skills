@@ -75,7 +75,7 @@ gmgn-cli portfolio token-balance \
 |--------|-------------|
 | `--limit <n>` | Page size (default `20`, max 50) |
 | `--cursor <cursor>` | Pagination cursor |
-| `--order-by <field>` | Sort field: `usd_value` / `price` / `unrealized_profit` / `realized_profit` / `total_profit` / `history_bought_cost` / `history_sold_income` (default `usd_value`) |
+| `--order-by <field>` | Sort field: `usd_value` / `last_active_timestamp` / `realized_profit` / `unrealized_profit` / `total_profit` / `history_bought_cost` / `history_sold_income` (default `usd_value`) |
 | `--direction <asc\|desc>` | Sort direction (default `desc`) |
 | `--sell-out` | Include sold-out positions |
 | `--show-small` | Include small-value positions |
@@ -90,8 +90,10 @@ gmgn-cli portfolio token-balance \
 |--------|-------------|
 | `--token <address>` | Filter by token |
 | `--limit <n>` | Page size |
-| `--cursor <cursor>` | Pagination cursor |
+| `--cursor <cursor>` | Pagination cursor (pass the `next` value from the previous response) |
 | `--type <type>` | Repeatable: `buy` / `sell` / `add` / `remove` / `transfer` |
+
+The activity response includes a `next` field. Pass it to `--cursor` to fetch the next page.
 
 ## Stats Options
 

@@ -14,7 +14,7 @@ export function registerPortfolioCommands(program: Command): void {
     .requiredOption("--wallet <address>", "Wallet address")
     .option("--limit <n>", "Page size (default 20, max 50)", parseInt, 20)
     .option("--cursor <cursor>", "Pagination cursor")
-    .option("--order-by <field>", "Sort field: usd_value / price / price_change / unrealized_profit / realized_profit / ...", "usd_value")
+    .option("--order-by <field>", "Sort field: usd_value / last_active_timestamp / realized_profit / unrealized_profit / total_profit / history_bought_cost / history_sold_income", "usd_value")
     .option("--direction <dir>", "Sort direction: asc / desc", "desc")
     .option("--interval <interval>", "Stats interval (default 24h)")
     .option("--sell-out", "Include sold-out positions")
