@@ -44,7 +44,7 @@ Use the `gmgn-cli` tool to query K-line data for a token or browse trending toke
 | `--chain` | Required. `sol` / `bsc` / `base` |
 | `--interval` | Required. `1h` / `3h` / `6h` / `24h` |
 | `--limit <n>` | Number of results (default 100, max 100) |
-| `--order-by <field>` | Sort field: `default` / `swaps` / `marketcap` / `history_highest_market_cap` / `liquidity` / `volume` / `holder_count` / `smart_degen_count` / `renowned_count` / `gas_fee` / `price` / `change1m` / `change5m` / `change1h` / `creation_timestamp` |
+| `--orderby <field>` | Sort field: `default` / `swaps` / `marketcap` / `history_highest_market_cap` / `liquidity` / `volume` / `holder_count` / `smart_degen_count` / `renowned_count` / `gas_fee` / `price` / `change1m` / `change5m` / `change1h` / `creation_timestamp` |
 | `--direction <asc\|desc>` | Sort direction (default `desc`) |
 | `--filter <tag...>` | Repeatable filter tags (chain-specific). **sol** (defaults: `renounced frozen`): `renounced` / `frozen` / `burn` / `token_burnt` / `has_social` / `not_social_dup` / `not_image_dup` / `dexscr_update_link` / `not_wash_trading` / `is_internal_market` / `is_out_market`. **evm** (defaults: `not_honeypot verified renounced`): `not_honeypot` / `verified` / `renounced` / `locked` / `token_burnt` / `has_social` / `not_social_dup` / `not_image_dup` / `dexscr_update_link` / `is_internal_market` / `is_out_market` |
 | `--platform <name...>` | Repeatable platform filter (chain-specific). **sol**: `Pump.fun` / `pump_mayhem` / `pump_mayhem_agent` / `pump_agent` / `letsbonk` / `bonkers` / `bags` / `memoo` / `liquid` / `bankr` / `zora` / `surge` / `anoncoin` / `moonshot_app` / `wendotdev` / `heaven` / `sugar` / `token_mill` / `believe` / `trendsfun` / `trends_fun` / `jup_studio` / `Moonshot` / `boop` / `xstocks` / `ray_launchpad` / `meteora_virtual_curve` / `pool_ray` / `pool_meteora` / `pool_pump_amm` / `pool_orca`. **bsc**: `fourmeme` / `fourmeme_agent` / `bn_fourmeme` / `flap` / `clanker` / `lunafun` / `pool_uniswap` / `pool_pancake`. **base**: `clanker` / `bankr` / `flaunch` / `zora` / `zora_creator` / `baseapp` / `basememe` / `virtuals_v2` / `klik` |
@@ -73,7 +73,7 @@ gmgn-cli market kline \
 # Linux: use $(date -d '24 hours ago' +%s) instead of $(date -v-24H +%s)
 
 # Top 20 hot tokens on SOL in the last 1 hour, sorted by volume
-gmgn-cli market trending --chain sol --interval 1h --order-by volume --limit 20
+gmgn-cli market trending --chain sol --interval 1h --orderby volume --limit 20
 
 # Hot tokens with social links only, verified and not honeypot, on BSC over 24h
 gmgn-cli market trending \
@@ -97,7 +97,7 @@ Fetch a broad pool with safe filters:
 ```bash
 gmgn-cli market trending \
   --chain <chain> --interval 1h \
-  --order-by default --direction desc --limit 50 \
+  --orderby default --direction desc --limit 50 \
   --filter not_honeypot --filter has_social --raw
 ```
 
@@ -139,7 +139,7 @@ For each token, offer:
 
 - `market kline`: `--from` and `--to` are Unix timestamps in **seconds** — CLI converts to milliseconds automatically
 - `market trending`: `--filter` and `--platform` are repeatable flags
-- `market trending` **default sort**: when the user does not specify any sort field, always add `--order-by default --direction desc` to sort by GMGN composite score descending. Only override `--order-by` when the user explicitly requests a different sort field.
+- `market trending` **default sort**: when the user does not specify any sort field, always add `--orderby default --direction desc` to sort by GMGN composite score descending. Only override `--orderby` when the user explicitly requests a different sort field.
 - All commands use normal auth (API Key only, no signature)
 - If the user doesn't provide kline timestamps, calculate them from the current time based on their desired time range
 - Use `--raw` to get single-line JSON for further processing
