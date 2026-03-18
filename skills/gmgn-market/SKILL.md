@@ -97,7 +97,7 @@ Fetch a broad pool with safe filters:
 ```bash
 gmgn-cli market trending \
   --chain <chain> --interval 1h \
-  --order-by volume --limit 50 \
+  --order-by default --direction desc --limit 50 \
   --filter not_honeypot --filter has_social --raw
 ```
 
@@ -139,6 +139,7 @@ For each token, offer:
 
 - `market kline`: `--from` and `--to` are Unix timestamps in **seconds** — CLI converts to milliseconds automatically
 - `market trending`: `--filter` and `--platform` are repeatable flags
+- `market trending` **default sort**: when the user does not specify any sort field, always add `--order-by default --direction desc` to sort by GMGN composite score descending. Only override `--order-by` when the user explicitly requests a different sort field.
 - All commands use normal auth (API Key only, no signature)
 - If the user doesn't provide kline timestamps, calculate them from the current time based on their desired time range
 - Use `--raw` to get single-line JSON for further processing
