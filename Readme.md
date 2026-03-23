@@ -85,6 +85,8 @@ Config lookup order: `~/.config/gmgn/.env` → project `.env` (project takes pre
 
 Install a pinned version to avoid pulling untrusted updates at runtime:
 
+Requires Node.js 18.17 or newer.
+
 ```bash
 npm install -g gmgn-cli@1.0.1
 ```
