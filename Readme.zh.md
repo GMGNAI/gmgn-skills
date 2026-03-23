@@ -85,6 +85,8 @@ cp .env.example .env
 
 安装固定版本，避免运行时拉取未经验证的更新：
 
+需要 Node.js 18.17 或更高版本。
+
 ```bash
 npm install -g gmgn-cli@1.0.1
 ```

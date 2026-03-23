@@ -40,6 +40,8 @@ Currency tokens are the base/native assets of each chain. They are used to buy o
 
 ## Prerequisites
 
+Node.js 18.17 or newer is required.
+
 Both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY` must be set in `.env`. The private key must correspond to the wallet bound to the API Key.
 
 `gmgn-cli` must be installed globally before use (one-time setup):

@@ -23,7 +23,7 @@
     "commander": "^12.1.0",
     "dotenv": "^16.4.5",
     "socks": "^2.8.7",
-    "undici": "^7.24.1"
+    "undici": "^6.24.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -31,7 +31,7 @@
     "typescript": "^5.5.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.17.0"
   },
   "license": "MIT",
   "repository": {
