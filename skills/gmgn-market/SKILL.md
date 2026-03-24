@@ -1,7 +1,7 @@
 ---
 name: gmgn-market
 description: Query GMGN market data — token K-line (candlestick) and trending token swap data. Supports sol / bsc / base.
-argument-hint: "kline --chain <sol|bsc|base> --address <token_address> --resolution <1m|5m|15m|1h|4h|1d> [--from <unix_ts>] [--to <unix_ts>] | trending --chain <sol|bsc|base> --interval <1h|3h|6h|24h>"
+argument-hint: "kline --chain <sol|bsc|base> --address <token_address> --resolution <1m|5m|15m|1h|4h|1d> [--from <unix_ts>] [--to <unix_ts>] | trending --chain <sol|bsc|base> --interval <1m|5m|1h|6h|24h>"
 ---
 
 Use the `gmgn-cli` tool to query K-line data for a token or browse trending tokens.
@@ -42,7 +42,7 @@ Use the `gmgn-cli` tool to query K-line data for a token or browse trending toke
 | Option | Description |
 |--------|-------------|
 | `--chain` | Required. `sol` / `bsc` / `base` |
-| `--interval` | Required. `1h` / `3h` / `6h` / `24h` |
+| `--interval` | Required. `1m` / `5m` / `1h` / `6h` / `24h` (default `1h`) |
 | `--limit <n>` | Number of results (default 100, max 100) |
 | `--order-by <field>` | Sort field: `default` / `swaps` / `marketcap` / `history_highest_market_cap` / `liquidity` / `volume` / `holder_count` / `smart_degen_count` / `renowned_count` / `gas_fee` / `price` / `change1m` / `change5m` / `change1h` / `creation_timestamp` |
 | `--direction <asc\|desc>` | Sort direction (default `desc`) |
