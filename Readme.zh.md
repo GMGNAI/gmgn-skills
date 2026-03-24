@@ -80,7 +80,7 @@ npx skills add GMGNAI/gmgn-skills
 ### 1.2 npm 全局安装
 
 ```bash
-npm install -g gmgn-cli@1.0.1
+npm install -g gmgn-cli@1.0.2
 ```
 
 ### 1.3 本地开发
@@ -321,7 +321,7 @@ npx gmgn-cli order get --chain sol --order-id <order-id>
 - 限制配置文件权限：`chmod 600 ~/.config/gmgn/.env`
 - 不要将 `.env` 文件提交到版本控制系统，请将其加入 `.gitignore`
 - 不要在日志、截图或聊天中泄露 `GMGN_API_KEY` 或 `GMGN_PRIVATE_KEY`
-- 使用固定版本安装（`npm install -g gmgn-cli@1.0.1`），而非 `npx gmgn-cli`，以避免在持有凭证的环境中执行未预期的包更新
+- 使用固定版本安装（`npm install -g gmgn-cli@1.0.2`），而非 `npx gmgn-cli`，以避免在持有凭证的环境中执行未预期的包更新
 
 **免责声明**
 

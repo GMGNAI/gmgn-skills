@@ -24,7 +24,7 @@ Use the `gmgn-cli` tool to query wallet portfolio data based on the user's reque
 
 - `.env` file with `GMGN_API_KEY` set
 - Run from the directory where your `.env` file is located, or set `GMGN_HOST` in your environment
-- `gmgn-cli` installed globally: `npm install -g gmgn-cli@1.0.1`
+- `gmgn-cli` installed globally: `npm install -g gmgn-cli@1.0.2`
 
 ## Usage Examples
 

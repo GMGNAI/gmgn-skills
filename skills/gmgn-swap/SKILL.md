@@ -45,7 +45,7 @@ Both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY` must be set in `.env`. The private ke
 `gmgn-cli` must be installed globally before use (one-time setup):
 
 ```bash
-npm install -g gmgn-cli@1.0.1
+npm install -g gmgn-cli@1.0.2
 ```
 
 ### Credential Model

@@ -53,7 +53,7 @@ EOF
 When creating or updating any file in `skills/`:
 
 - **Language**: English only — no bilingual content. SKILL.md files are read by AI, not humans.
-- **Package runner**: Always use the pre-installed `gmgn-cli` binary (e.g. `gmgn-cli token info ...`). Never use `npx gmgn-cli` or `npx gmgn-cli@<version>` — npx downloads the package at runtime alongside live credentials. The package must be installed once with `npm install -g gmgn-cli@1.0.1`.
+- **Package runner**: Always use the pre-installed `gmgn-cli` binary (e.g. `gmgn-cli token info ...`). Never use `npx gmgn-cli` or `npx gmgn-cli@<version>` — npx downloads the package at runtime alongside live credentials. The package must be installed once with `npm install -g gmgn-cli@1.0.2`.
 - **Section order**: Sub-commands → Supported Chains → Prerequisites → Parameters/Options (if needed) → Usage Examples → Notes
 - **`--raw` flag**: All commands support `--raw` for single-line JSON output. Always document it in the Notes section.
 - **YAML frontmatter**: Quote `argument-hint` values that contain `|` characters to avoid YAML parsing errors.

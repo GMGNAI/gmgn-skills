@@ -21,7 +21,7 @@ Use the `gmgn-cli` tool to query K-line data for a token or browse trending toke
 
 - `.env` file with `GMGN_API_KEY` set
 - Run from the directory where your `.env` file is located, or set `GMGN_HOST` in your environment
-- `gmgn-cli` installed globally: `npm install -g gmgn-cli@1.0.1`
+- `gmgn-cli` installed globally: `npm install -g gmgn-cli@1.0.2`
 
 ## Kline Parameters
 
