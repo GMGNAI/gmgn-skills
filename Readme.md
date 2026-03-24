@@ -1,8 +1,16 @@
-# gmgn-cli
+<div align="center">
 
-> 中文文档：[Readme.zh.md](Readme.zh.md)
+<img src="static/gmgnagentskills.png" alt="GMGN Agent Skills" />
 
-GMGN AI skills for on-chain operations — token research, market data, wallet analysis, and swap.
+[![X](https://img.shields.io/badge/Follow-%40gmgnai-black?logo=x&logoColor=white)](https://x.com/gmgnai) [![Telegram](https://img.shields.io/badge/Telegram-gmgnagentapi-2CA5E0?logo=telegram&logoColor=white)](https://t.me/gmgnagentapi) [![Discord](https://img.shields.io/badge/Discord-gmgnai-5865F2?logo=discord&logoColor=white)](https://discord.gg/gmgnai)
+
+English | [简体中文](Readme.zh.md)
+
+</div>
+
+## GMGN Agent Skills
+
+With GMGN Agent Skills, you can use AI agents to query real-time trending token rankings across multiple chains, token fundamentals, social media signals, live trading activity, new tokens in Trenches, top holders, top traders, smart money positions, KOL holdings, insider wallets, bundled wallet exposure, and other professional on-chain analytics. It also supports market orders, limit orders, advanced take-profit/stop-loss strategy orders, and wallet management — including real-time holdings, recent P&L, and transaction history — all through natural language.
 
 ---
 
@@ -15,50 +23,127 @@ GMGN AI skills for on-chain operations — token research, market data, wallet a
 | [`/gmgn-portfolio`](skills/gmgn-portfolio/SKILL.md) | Wallet holdings, activity, stats | [SKILL.md](skills/gmgn-portfolio/SKILL.md) |
 | [`/gmgn-swap`](skills/gmgn-swap/SKILL.md) | Swap submission + order query | [SKILL.md](skills/gmgn-swap/SKILL.md) |
 
----
+> For detailed CLI commands, parameters, and recommended values, see the [Wiki documentation](https://github.com/GMGNAI/gmgn-skills/wiki).
 
-## Usage Examples
+### Quick Start
 
-Natural language prompts you can send to any AI assistant with gmgn-cli skills installed:
-
-```
-buy 0.1 SOL of <token_address>
-sell 50% of <token_address> on BSC
-check order status <order_id>
-is <token_address> safe to buy on solana?
-show top holders of <token_address>
-show my wallet holdings on SOL
-query token details for 0x1234...
-show trading stats for wallet <wallet_address> on BSC
-```
+Ready to install skills? [Jump to Installation →](#get-started)
 
 ---
 
-## Setup
+## Demo Cases
 
-### 0. Prepare
+### Trending Token Rankings
 
-Before applying for an API Key, get two things ready:
+Send this prompt to your AI Agent:
 
-**Generate an Ed25519 key pair**
+```
+Fetch Solana 1h trending, filter for pump.fun tokens created within 6h, sort by volume descending.
+```
 
-Download and run the [Binance Asymmetric Key Generator](https://github.com/binance/asymmetric-key-generator/releases). You will need the **public key** when filling out the API Key application, and the **private key** in your `.env` later (for swap / order).
+![Trending Token Rankings](static/market-rank-1h-Pumpfun-en.png)
 
-**Get your public egress IP** (for the IP whitelist)
+### Real-Time Token Trading Analysis
+
+Send this prompt to your AI Agent:
+
+```
+Check the first token's K-line, analyze entry timing, plot price + volume chart, and provide social media links and smart money/KOL trading analysis.
+```
+
+![Token Analysis 1](static/market-tokenanalysis-en01.png)
+![Token Analysis 2](static/market-tokenanalysis-en02.png)
+
+---
+
+## Get Started
+
+Before installing, create your API Key at **https://gmgn.ai/ai**. The API key is used for:
+
+1. Read data: tokens, trending lists, K-line, and featured on-chain metrics
+2. Submit trades: market orders, limit orders, strategy orders, and more
+
+---
+
+## 1. Installation
+
+Choose one of the following methods:
+
+### 1.1 Via Agent (recommended)
+
+Send this to your AI agent:
+
+```bash
+npx skills add GMGNAI/gmgn-skills
+```
+
+### 1.2 npm Global Install
+
+```bash
+npm install -g gmgn-cli@1.0.1
+```
+
+### 1.3 Local Development
+
+```bash
+npm install
+npm run build
+node dist/index.js <command> [options]
+```
+
+## 2. Verify Connection
+
+### Option 1: Via AI Agent
+
+Send this prompt to your AI Agent:
+
+```
+Run this CLI command: GMGN_API_KEY=gmgn_solbscbaseethmonadtron npx gmgn-cli market trending --chain sol --interval 1h --limit 3
+```
+
+### Option 2: Via CLI
+
+Test with the public API key — no registration required:
+
+```bash
+GMGN_API_KEY=gmgn_solbscbaseethmonadtron gmgn-cli market trending --chain sol --interval 1h --limit 3
+```
+
+If you see JSON output, the CLI is working. The public key supports all read-only commands (token / market / portfolio). The public key is for testing only — apply for your own API key to use any feature (see step 3).
+
+## 3. Get Your Own API Key
+
+The public key in step 2 is for testing only. Apply for your own API key at **https://gmgn.ai/ai** — required for all actual use (read-only and swap). You will need:
+
+### 3.1 Generate an Ed25519 Key Pair
+
+**Option 1 — Ask your AI agent (recommended)**
+
+Send this prompt to your agent:
+
+```
+Generate an Ed25519 key pair for me using OpenSSL and show me:
+1. The public key (I need to fill it in the GMGN API Key application form)
+2. The private key in PEM format (I need to set it as GMGN_PRIVATE_KEY in my .env)
+```
+
+**Option 2 — Binance Key Generator**
+
+Download and run the [Binance Asymmetric Key Generator](https://github.com/binance/asymmetric-key-generator/releases).
+
+Enter the **public key** in the application form.
+
+### 3.2 Get Your Public Egress IP
+
+For the IP whitelist (required when enabling swap capability on your API key):
 
 ```bash
 curl ip.me
 ```
 
-Or visit **https://ip.me** in your browser.
+## 4. Configure Your API Key
 
-### 1. Get an API Key
-
-Apply at **https://gmgn.ai/ai** — enter the public key and your IP address from the step above.
-
-### 2. Configure
-
-**Option A — Global config (recommended)**
+### Option 1: Global config (recommended)
 
 Create `~/.config/gmgn/.env` once — works from any directory:
 
@@ -67,12 +152,12 @@ mkdir -p ~/.config/gmgn
 cat > ~/.config/gmgn/.env << 'EOF'
 GMGN_API_KEY=your_api_key_here
 
-# Required for swap / order (private key from step 0):
+# Required for swap / order only:
 GMGN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n<base64>\n-----END PRIVATE KEY-----\n"
 EOF
 ```
 
-**Option B — Project `.env`**
+### Option 2: Project `.env`
 
 ```bash
 cp .env.example .env
@@ -81,23 +166,15 @@ cp .env.example .env
 
 Config lookup order: `~/.config/gmgn/.env` → project `.env` (project takes precedence).
 
-### 3. CLI Install
+## 5. Try in AI Clients
 
-Install a pinned version to avoid pulling untrusted updates at runtime:
+#### OpenClaw
 
-```bash
-npm install -g gmgn-cli@1.0.1
+Send the following prompt directly to test the query capabilities:
+
 ```
-
-Local development:
-
-```bash
-npm install
-npm run build
-node dist/index.js <command> [options]
+Show me the trending tokens on Solana in the last 1 hour.
 ```
-
-### 4. Connect to Your AI Tool
 
 #### Claude Code
 
@@ -107,19 +184,17 @@ Skills are automatically discovered when the package is installed as a plugin.
 
 Skills are automatically discovered via the `.cursor-plugin/` configuration.
 
-1. Complete steps 1–3 above
-2. Configure credentials in `~/.config/gmgn/.env`
-3. Restart Cursor — skills will be available in Agent mode via `/gmgn-*` commands
+1. Complete the installation and configuration steps above
+2. Restart Cursor — skills will be available in Agent mode via `/gmgn-*` commands
 
 #### Cline
 
-1. Complete steps 1–3 above
+1. Complete the installation and configuration steps above
 2. In Cline settings → **Skills directory**: point to the installed package's `skills/` folder:
    ```bash
    echo "$(npm root -g)/gmgn-skills/skills"
    ```
-3. Configure credentials in `~/.config/gmgn/.env`
-4. Restart Cline — `/gmgn-token`, `/gmgn-market`, `/gmgn-portfolio`, `/gmgn-swap` will be available
+3. Restart Cline — `/gmgn-token`, `/gmgn-market`, `/gmgn-portfolio`, `/gmgn-swap` will be available
 
 #### Codex CLI
 
@@ -143,7 +218,24 @@ See [.opencode/INSTALL.md](.opencode/INSTALL.md) for full instructions.
 
 ---
 
-## Typical Workflows
+## 6. Usage
+
+### Examples
+
+Natural language prompts you can send to any AI assistant with gmgn-cli skills installed:
+
+```
+buy 0.1 SOL of <token_address>
+sell 50% of <token_address> on BSC
+check order status <order_id>
+is <token_address> safe to buy on solana?
+show top holders of <token_address>
+show my wallet holdings on SOL
+query token details for 0x1234...
+show trading stats for wallet <wallet_address> on BSC
+```
+
+### Typical Workflows
 
 **Research a token:**
 ```
@@ -167,9 +259,9 @@ market trending (top 50)  →  AI selects top 5 by multi-factor analysis  →  u
 
 ---
 
-## CLI Reference
+## 7. CLI Reference
 
-Full parameter reference: [docs/cli-usage.md](docs/cli-usage.md)
+Full parameter reference: [docs/cli-usage.md](docs/cli-usage.md). All commands support `--raw` for single-line JSON output (pipe-friendly, e.g. `| jq '.price'`).
 
 ### Token
 
@@ -209,9 +301,7 @@ npx gmgn-cli swap \
 npx gmgn-cli order get --chain sol --order-id <order-id>
 ```
 
----
-
-## Supported Chains
+## 8. Supported Chains
 
 | Commands | Chains | Chain Currencies |
 |----------|--------|-----------------|
@@ -220,17 +310,7 @@ npx gmgn-cli order get --chain sol --order-id <order-id>
 
 ---
 
-## Output Format
-
-Default: formatted JSON. Use `--raw` for single-line JSON (pipe-friendly):
-
-```bash
-npx gmgn-cli token info --chain sol --address <addr> --raw | jq '.price'
-```
-
----
-
-## Security & Disclaimer
+## 9. Security & Disclaimer
 
 **About `GMGN_PRIVATE_KEY`**
 
