@@ -124,13 +124,9 @@ gmgn-cli order get --chain sol --order-id <order_id>
 |-------|------|-------------|
 | `order_id` | string | Order ID for follow-up queries |
 | `hash` | string | Transaction hash |
-| `state` | int | Order state code |
-| `confirmation.state` | string | `processed` / `confirmed` / `failed` / `expired` |
-| `confirmation.detail` | string | Confirmation detail message |
+| `status` | string | Order status: `pending` / `processed` / `confirmed` / `failed` / `expired` |
 | `error_code` | string | Error code on failure |
 | `error_status` | string | Error description on failure |
-| `height` | number | Block height of the transaction |
-| `order_height` | number | Block height when the order was placed |
 | `input_token` | string | Input token contract address |
 | `output_token` | string | Output token contract address |
 | `filled_input_amount` | string | Actual input consumed (smallest unit); empty if not filled |
@@ -183,7 +179,7 @@ This check is free, requires no API key, and works for any ERC-20 token on Base.
 - **Percentage sell restriction** — `--percent` is ONLY valid when `input_token` is NOT a currency. Do NOT use `--percent` when `input_token` is SOL/BNB/ETH (native) or USDC. This includes: "sell 50% of my SOL", "use 30% of my BNB to buy X", "spend 50% of my USDC on X" — all unsupported. Explain the restriction to the user and ask for an explicit absolute amount instead.
 - **Chain-wallet compatibility** — SOL addresses are incompatible with EVM chains (bsc/base). Warn the user and abort if the address format does not match the chain.
 - **Credential sensitivity** — `GMGN_API_KEY` and `GMGN_PRIVATE_KEY` can directly execute trades on the linked wallet. Never log, display, or expose these values.
-- **Order polling** — After a swap, if `confirmation.state` is not yet `confirmed` / `failed` / `expired`, poll with `order get` up to 3 times at 5-second intervals before reporting a timeout. Once confirmed, display the trade result using `filled_input_amount` and `filled_output_amount` (convert from smallest unit using token decimals), e.g. "Spent 0.1 SOL → received 98.5 USDC" or "Sold 1000 TOKEN → received 0.08 SOL".
+- **Order polling** — After a swap, if `status` is not yet `confirmed` / `failed` / `expired`, poll with `order get` up to 3 times at 5-second intervals before reporting a timeout. Once confirmed, display the trade result using `filled_input_amount` and `filled_output_amount` (convert from smallest unit using token decimals), e.g. "Spent 0.1 SOL → received 98.5 USDC" or "Sold 1000 TOKEN → received 0.08 SOL".
 - **Block explorer links** — After a successful swap, display a clickable explorer link for the returned `hash`:
 
   | Chain | Explorer |
