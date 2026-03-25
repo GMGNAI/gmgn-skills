@@ -30,7 +30,7 @@ export function registerMarketCommands(program: Command): void {
     .command("trending")
     .description("Get trending token swap data")
     .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
-    .requiredOption("--interval <interval>", "Time interval: 1h / 3h / 6h / 24h")
+    .requiredOption("--interval <interval>", "Time interval: 1m / 5m / 1h / 6h / 24h")
     .option("--limit <n>", "Number of results (default 100, max 100)", parseInt)
     .option("--order-by <field>", "Sort field: default / volume / swaps / marketcap / holder_count / price / change1h / ... (see docs for full list)")
     .option("--direction <dir>", "Sort direction: asc / desc")
