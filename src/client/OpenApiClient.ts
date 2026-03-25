@@ -75,10 +75,13 @@ export class OpenApiClient {
     chain: string,
     address: string,
     resolution: string,
-    from: number,
-    to: number
+    from?: number,
+    to?: number
   ): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/market/token_kline", { chain, address, resolution, from, to });
+    const query: Record<string, string | number> = { chain, address, resolution };
+    if (from != null) query["from"] = from;
+    if (to != null) query["to"] = to;
+    return this.normalRequest("GET", "/v1/market/token_kline", query);
   }
 
   // ---- Portfolio endpoints (normal auth) ----
@@ -123,6 +126,11 @@ export class OpenApiClient {
     return this.normalRequest("GET", "/v1/user/wallet_token_balance", { chain, wallet_address: walletAddress, token_address: tokenAddress });
   }
 
+  async getTrenches(chain: string): Promise<unknown> {
+    const body = buildTrenchesBody(chain);
+    return this.normalRequest("POST", "/v1/trenches", { chain }, body);
+  }
+
   // ---- Market trending endpoints (normal auth) ----
 
   async getTrendingSwaps(
@@ -137,6 +145,35 @@ export class OpenApiClient {
 
   async getUserInfo(): Promise<unknown> {
     return this.normalRequest("GET", "/v1/user/info", {});
+  }
+
+  async getFollowWallet(chain: string, extra: Record<string, string | number | string[]> = {}): Promise<unknown> {
+    return this.normalRequest("GET", "/v1/trade/follow_wallet", { chain, ...extra });
+  }
+
+  async getKol(limit?: number): Promise<unknown> {
+    const query: Record<string, string | number> = {};
+    if (limit != null) query["limit"] = limit;
+    return this.normalRequest("GET", "/v1/user/kol", query);
+  }
+
+  async getSmartMoney(limit?: number): Promise<unknown> {
+    const query: Record<string, string | number> = {};
+    if (limit != null) query["limit"] = limit;
+    return this.normalRequest("GET", "/v1/user/smartmoney", query);
+  }
+
+  async quoteOrder(
+    chain: string,
+    from_address: string,
+    input_token: string,
+    output_token: string,
+    input_amount: string,
+    slippage: number
+  ): Promise<unknown> {
+    return this.normalRequest("GET", "/v1/trade/quote", {
+      chain, from_address, input_token, output_token, input_amount, slippage,
+    });
   }
 
   // ---- Swap endpoints (critical auth) ----
@@ -267,6 +304,47 @@ function formatCurl(method: string, url: string, headers: Record<string, string>
     .join(" \\\n");
   const bodyArg = body ? ` \\\n  -d '${body.replace(/'/g, "'\\''")}'` : "";
   return `\n[curl]\ncurl -X ${method} '${url}' \\\n${headerArgs}${bodyArg}\n`;
+}
+
+const TRENCHES_PLATFORMS: Record<string, string[]> = {
+  sol: [
+    "Pump.fun", "pump_mayhem", "pump_mayhem_agent", "pump_agent",
+    "letsbonk", "bonkers", "bags", "memoo", "liquid", "bankr", "zora",
+    "surge", "anoncoin", "moonshot_app", "wendotdev", "heaven", "sugar",
+    "token_mill", "believe", "trendsfun", "trends_fun", "jup_studio",
+    "Moonshot", "boop", "ray_launchpad", "meteora_virtual_curve", "xstocks",
+  ],
+  bsc: [
+    "fourmeme", "fourmeme_agent", "bn_fourmeme", "four_xmode_agent",
+    "flap", "clanker", "lunafun",
+  ],
+  base: [
+    "clanker", "bankr", "flaunch", "zora", "zora_creator",
+    "baseapp", "basememe", "virtuals_v2", "klik",
+  ],
+};
+
+const TRENCHES_QUOTE_ADDRESS_TYPES: Record<string, number[]> = {
+  sol:  [4, 5, 3, 1, 13, 0],
+  bsc:  [6, 7, 1, 16, 8, 3, 9, 10, 2, 17, 18, 0],
+  base: [11, 3, 12, 13, 0],
+};
+
+function buildTrenchesBody(chain: string): Record<string, unknown> {
+  const launchpad_platform = TRENCHES_PLATFORMS[chain] ?? [];
+  const quote_address_type = TRENCHES_QUOTE_ADDRESS_TYPES[chain] ?? [];
+  const section = {
+    filters: ["offchain", "onchain"],
+    launchpad_platform,
+    quote_address_type,
+    launchpad_platform_v2: true,
+  };
+  return {
+    new_creation:    { ...section, limit: 60 },
+    near_completion: { ...section, limit: 120 },
+    completed:       { ...section, limit: 60 },
+    version: "v2",
+  };
 }
 
 function buildUrl(base: string, query: Record<string, string | number | string[]>): string {

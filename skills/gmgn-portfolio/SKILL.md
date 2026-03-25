@@ -1,7 +1,7 @@
 ---
 name: gmgn-portfolio
-description: Query GMGN wallet portfolio — API Key wallet info, holdings, transaction activity, trading stats, and token balance. Supports sol / bsc / base.
-argument-hint: "<info|holdings|activity|stats|token-balance> [--chain <sol|bsc|base>] [--wallet <wallet_address>]"
+description: Query GMGN wallet portfolio — API Key wallet info, holdings, transaction activity, trading stats, token balance, follow-wallet trades, KOL trades, and Smart Money trades. Supports sol / bsc / base.
+argument-hint: "<info|holdings|activity|stats|token-balance|follow-wallet|kol|smartmoney> [--chain <sol|bsc|base>] [--wallet <wallet_address>]"
 ---
 
 Use the `gmgn-cli` tool to query wallet portfolio data based on the user's request.
@@ -15,6 +15,9 @@ Use the `gmgn-cli` tool to query wallet portfolio data based on the user's reque
 | `portfolio activity` | Transaction history |
 | `portfolio stats` | Trading statistics (supports batch) |
 | `portfolio token-balance` | Token balance for a specific token |
+| `portfolio follow-wallet` | Follow-wallet trade records |
+| `portfolio kol` | KOL trade records (SOL chain) |
+| `portfolio smartmoney` | Smart Money trade records (SOL chain) |
 
 ## Supported Chains
 
@@ -24,7 +27,7 @@ Use the `gmgn-cli` tool to query wallet portfolio data based on the user's reque
 
 - `.env` file with `GMGN_API_KEY` set
 - Run from the directory where your `.env` file is located, or set `GMGN_HOST` in your environment
-- `gmgn-cli` installed globally: `npm install -g gmgn-cli@1.0.2`
+- `gmgn-cli` installed globally: `npm install -g gmgn-cli@1.1.0`
 
 ## Usage Examples
 
@@ -100,6 +103,46 @@ The activity response includes a `next` field. Pass it to `--cursor` to fetch th
 | Option | Description |
 |--------|-------------|
 | `--period <period>` | Stats period: `7d` / `30d` (default `7d`) |
+
+## Follow-Wallet Options
+
+| Option | Description |
+|--------|-------------|
+| `--chain` | Required. `sol` / `bsc` / `base` / `eth` |
+| `--wallet <address>` | Filter by wallet address |
+| `--base-token <address>` | Filter by base token address |
+| `--page-token <cursor>` | Pagination cursor |
+| `--limit <n>` | Page size (1–200, default 100) |
+| `--side <side>` | Trade direction filter |
+| `--cost <cost>` | Cost filter |
+| `--filter <tag...>` | Repeatable filter conditions |
+| `--with-balance` | Include balance in response |
+| `--with-security` | Include security info in response |
+| `--min-amount-usd <n>` | Minimum trade amount (USD) |
+| `--max-amount-usd <n>` | Maximum trade amount (USD) |
+| `--is-gray` | Gray mode filter |
+
+## KOL / Smart Money Options
+
+| Option | Description |
+|--------|-------------|
+| `--limit <n>` | Page size (1–200, default 100) |
+
+Both `kol` and `smartmoney` return SOL chain data only — no `--chain` flag needed.
+
+```bash
+# Follow-wallet trades filtered by wallet
+gmgn-cli portfolio follow-wallet --chain sol --wallet <wallet_address>
+
+# Follow-wallet with balance info
+gmgn-cli portfolio follow-wallet --chain sol --with-balance --limit 20
+
+# KOL trade records
+gmgn-cli portfolio kol --limit 10 --raw
+
+# Smart Money trade records
+gmgn-cli portfolio smartmoney --limit 10 --raw
+```
 
 ## Notes
 

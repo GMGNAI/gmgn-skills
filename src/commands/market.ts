@@ -13,15 +13,21 @@ export function registerMarketCommands(program: Command): void {
     .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
     .requiredOption("--address <address>", "Token contract address")
     .requiredOption("--resolution <resolution>", "Candlestick resolution: 1m / 5m / 15m / 1h / 4h / 1d")
-    .requiredOption("--from <timestamp>", "Start time (Unix seconds)", parseInt)
-    .requiredOption("--to <timestamp>", "End time (Unix seconds)", parseInt)
+    .option("--from <timestamp>", "Start time (Unix seconds)", parseInt)
+    .option("--to <timestamp>", "End time (Unix seconds)", parseInt)
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       validateChain(opts.chain);
       validateAddress(opts.address, opts.chain, "--address");
       const client = new OpenApiClient(getConfig());
       const data = await client
-        .getTokenKline(opts.chain, opts.address, opts.resolution, opts.from * 1000, opts.to * 1000)
+        .getTokenKline(
+          opts.chain,
+          opts.address,
+          opts.resolution,
+          opts.from != null ? opts.from * 1000 : undefined,
+          opts.to != null ? opts.to * 1000 : undefined
+        )
         .catch(exitOnError);
       printResult(data, opts.raw);
     });
@@ -48,6 +54,18 @@ export function registerMarketCommands(program: Command): void {
 
       const client = new OpenApiClient(getConfig());
       const data = await client.getTrendingSwaps(opts.chain, opts.interval, extra).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
+  market
+    .command("trenches")
+    .description("Get Trenches token data (new creation, near completion, completed)")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      validateChain(opts.chain);
+      const client = new OpenApiClient(getConfig());
+      const data = await client.getTrenches(opts.chain).catch(exitOnError);
       printResult(data, opts.raw);
     });
 }

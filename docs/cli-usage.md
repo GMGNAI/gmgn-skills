@@ -255,6 +255,127 @@ npx gmgn-cli portfolio token-balance \
 
 ---
 
+## market trenches
+
+Query Trenches token lists (new creation, near completion, completed).
+
+```bash
+npx gmgn-cli market trenches --chain <chain> [--raw]
+```
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` |
+
+**Response:** `data.new_creation`, `data.pump`, `data.completed` — each is an array of `RankItem` (same structure as `market trending` rank items).
+
+---
+
+## portfolio follow-wallet
+
+Query follow-wallet trade records.
+
+```bash
+npx gmgn-cli portfolio follow-wallet \
+  --chain <chain> \
+  [--wallet <wallet_address>] \
+  [--base-token <token_address>] \
+  [--page-token <cursor>] \
+  [--limit <n>] \
+  [--side <side>] \
+  [--cost <cost>] \
+  [--filter <tag>] \
+  [--with-balance] \
+  [--with-security] \
+  [--min-amount-usd <n>] \
+  [--max-amount-usd <n>] \
+  [--is-gray] \
+  [--raw]
+```
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
+| `--wallet` | No | Filter by wallet address |
+| `--base-token` | No | Filter by base token address |
+| `--page-token` | No | Pagination cursor |
+| `--limit` | No | Page size (1–200, default 100) |
+| `--side` | No | Trade direction filter |
+| `--cost` | No | Cost filter |
+| `--filter` | No | Filter conditions (repeatable) |
+| `--with-balance` | No | Include balance in response |
+| `--with-security` | No | Include security info in response |
+| `--min-amount-usd` | No | Minimum trade amount (USD) |
+| `--max-amount-usd` | No | Maximum trade amount (USD) |
+| `--is-gray` | No | Gray mode filter |
+
+---
+
+## portfolio kol
+
+Query KOL trade records (SOL chain).
+
+```bash
+npx gmgn-cli portfolio kol [--limit <n>] [--raw]
+```
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--limit` | No | Page size (1–200, default 100) |
+
+---
+
+## portfolio smartmoney
+
+Query Smart Money trade records (SOL chain).
+
+```bash
+npx gmgn-cli portfolio smartmoney [--limit <n>] [--raw]
+```
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--limit` | No | Page size (1–200, default 100) |
+
+---
+
+## order quote
+
+Get a swap quote without submitting a transaction. Uses normal auth — no private key required.
+
+```bash
+npx gmgn-cli order quote \
+  --chain <chain> \
+  --from <wallet_address> \
+  --input-token <input_token_address> \
+  --output-token <output_token_address> \
+  --amount <input_amount> \
+  --slippage <n> \
+  [--raw]
+```
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--from` | Yes | Wallet address (must match API Key binding) |
+| `--input-token` | Yes | Input token contract address |
+| `--output-token` | Yes | Output token contract address |
+| `--amount` | Yes | Input amount (smallest unit) |
+| `--slippage` | Yes | Slippage tolerance, e.g. `0.01` = 1% |
+
+**Response fields (data):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `input_token` | string | Input token contract address |
+| `output_token` | string | Output token contract address |
+| `input_amount` | string | Input amount (smallest unit) |
+| `output_amount` | string | Expected output amount (smallest unit) |
+| `min_output_amount` | string | Minimum output after slippage |
+| `slippage` | number | Actual slippage percentage |
+
+---
+
 ## swap
 
 Submit a token swap. **Requires `GMGN_PRIVATE_KEY` configured in `.env`.**

@@ -1,10 +1,10 @@
 ---
 name: gmgn-market
-description: Query GMGN market data — token K-line (candlestick) and trending token swap data. Supports sol / bsc / base.
-argument-hint: "kline --chain <sol|bsc|base> --address <token_address> --resolution <1m|5m|15m|1h|4h|1d> [--from <unix_ts>] [--to <unix_ts>] | trending --chain <sol|bsc|base> --interval <1m|5m|1h|6h|24h>"
+description: Query GMGN market data — token K-line (candlestick), trending token swap data, and Trenches token lists. Supports sol / bsc / base.
+argument-hint: "kline --chain <sol|bsc|base> --address <token_address> --resolution <1m|5m|15m|1h|4h|1d> [--from <unix_ts>] [--to <unix_ts>] | trending --chain <sol|bsc|base> --interval <1m|5m|1h|6h|24h> | trenches --chain <sol|bsc|base>"
 ---
 
-Use the `gmgn-cli` tool to query K-line data for a token or browse trending tokens.
+Use the `gmgn-cli` tool to query K-line data for a token, browse trending tokens, or view Trenches token lists.
 
 ## Sub-commands
 
@@ -12,6 +12,7 @@ Use the `gmgn-cli` tool to query K-line data for a token or browse trending toke
 |-------------|-------------|
 | `market kline` | Token candlestick data |
 | `market trending` | Trending token swap data |
+| `market trenches` | Trenches token lists (new creation, near completion, completed) |
 
 ## Supported Chains
 
@@ -21,7 +22,7 @@ Use the `gmgn-cli` tool to query K-line data for a token or browse trending toke
 
 - `.env` file with `GMGN_API_KEY` set
 - Run from the directory where your `.env` file is located, or set `GMGN_HOST` in your environment
-- `gmgn-cli` installed globally: `npm install -g gmgn-cli@1.0.2`
+- `gmgn-cli` installed globally: `npm install -g gmgn-cli@1.1.0`
 
 ## Kline Parameters
 
@@ -134,6 +135,19 @@ Top 5 Trending Tokens — SOL / 1h
 For each token, offer:
 - **Deep dive**: `token info` + `token security` for full due diligence
 - **Swap**: execute directly if the user is satisfied with the trending data alone
+
+## Trenches Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` |
+
+Response fields: `data.new_creation`, `data.pump`, `data.completed` — each is an array of `RankItem` (same fields as `market trending` rank items).
+
+```bash
+# Trenches token lists on SOL
+gmgn-cli market trenches --chain sol --raw
+```
 
 ## Notes
 

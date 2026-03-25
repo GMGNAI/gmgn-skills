@@ -61,6 +61,29 @@ export function registerSwapCommands(program: Command): void {
   const order = program.command("order").description("Order management commands");
 
   order
+    .command("quote")
+    .description("Get a swap quote without submitting a transaction")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
+    .requiredOption("--input-token <address>", "Input token contract address")
+    .requiredOption("--output-token <address>", "Output token contract address")
+    .requiredOption("--amount <amount>", "Input amount (smallest unit)")
+    .requiredOption("--slippage <n>", "Slippage tolerance (e.g. 0.01 = 1%)", parseFloat)
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      validateChain(opts.chain);
+      validateAddress(opts.from, opts.chain, "--from");
+      validateAddress(opts.inputToken, opts.chain, "--input-token");
+      validateAddress(opts.outputToken, opts.chain, "--output-token");
+      validatePositiveInt(opts.amount, "--amount");
+      const client = new OpenApiClient(getConfig());
+      const data = await client
+        .quoteOrder(opts.chain, opts.from, opts.inputToken, opts.outputToken, opts.amount, opts.slippage)
+        .catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
+  order
     .command("get")
     .description("Query order status (requires private key)")
     .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / monad")

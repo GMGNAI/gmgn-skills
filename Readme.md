@@ -80,7 +80,7 @@ npx skills add GMGNAI/gmgn-skills
 ### 1.2 npm Global Install
 
 ```bash
-npm install -g gmgn-cli@1.0.2
+npm install -g gmgn-cli@1.1.0
 ```
 
 ### 1.3 Local Development
@@ -321,7 +321,7 @@ npx gmgn-cli order get --chain sol --order-id <order-id>
 - Restrict config file permissions: `chmod 600 ~/.config/gmgn/.env`
 - Never commit your `.env` file to version control — add it to `.gitignore`
 - Do not share `GMGN_API_KEY` or `GMGN_PRIVATE_KEY` in logs, screenshots, or chat messages
-- Use a pinned install (`npm install -g gmgn-cli@1.0.2`) rather than `npx gmgn-cli` to avoid executing unintended package updates alongside your credentials
+- Use a pinned install (`npm install -g gmgn-cli@1.1.0`) rather than `npx gmgn-cli` to avoid executing unintended package updates alongside your credentials
 
 **Disclaimer**
 

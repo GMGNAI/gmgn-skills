@@ -20,6 +20,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. **Req
 | Sub-command | Description |
 |-------------|-------------|
 | `swap` | Submit a token swap |
+| `order quote` | Get a swap quote (no transaction submitted) |
 | `order get` | Query order status |
 
 ## Supported Chains
@@ -45,7 +46,7 @@ Both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY` must be set in `.env`. The private ke
 `gmgn-cli` must be installed globally before use (one-time setup):
 
 ```bash
-npm install -g gmgn-cli@1.0.2
+npm install -g gmgn-cli@1.1.0
 ```
 
 ### Credential Model
@@ -91,6 +92,31 @@ gmgn-cli swap \
   --output-token <sol_or_usdc_address> \
   --percent 50
 ```
+
+## Quote Usage
+
+Get an estimated output amount before submitting a swap. Uses normal auth — no private key required.
+
+```bash
+gmgn-cli order quote \
+  --chain sol \
+  --from <wallet_address> \
+  --input-token <input_token_address> \
+  --output-token <output_token_address> \
+  --amount <input_amount_smallest_unit> \
+  --slippage 0.01
+```
+
+### Quote Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `input_token` | string | Input token contract address |
+| `output_token` | string | Output token contract address |
+| `input_amount` | string | Input amount (smallest unit) |
+| `output_amount` | string | Expected output amount (smallest unit) |
+| `min_output_amount` | string | Minimum output after slippage |
+| `slippage` | number | Actual slippage percentage |
 
 ## Order Query
 

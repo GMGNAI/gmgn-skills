@@ -62,7 +62,7 @@ export function registerPortfolioCommands(program: Command): void {
       validateAddress(opts.wallet, opts.chain, "--wallet");
       if (opts.token) validateAddress(opts.token, opts.chain, "--token");
       const extra: Record<string, string | number | string[]> = {};
-      if (opts.token) extra["token"] = opts.token;
+      if (opts.token) extra["token_address"] = opts.token;
       if (opts.limit != null) extra["limit"] = opts.limit;
       if (opts.cursor) extra["cursor"] = opts.cursor;
       if (opts.type?.length) extra["type"] = opts.type;
@@ -110,6 +110,65 @@ export function registerPortfolioCommands(program: Command): void {
       validateAddress(opts.token, opts.chain, "--token");
       const client = new OpenApiClient(getConfig());
       const data = await client.getWalletTokenBalance(opts.chain, opts.wallet, opts.token).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
+  portfolio
+    .command("follow-wallet")
+    .description("Get follow-wallet trade records")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
+    .option("--wallet <address>", "Filter by wallet address")
+    .option("--base-token <address>", "Filter by base token address")
+    .option("--page-token <cursor>", "Pagination cursor")
+    .option("--limit <n>", "Page size (1–200, default 100)", parseInt)
+    .option("--side <side>", "Trade direction filter")
+    .option("--cost <cost>", "Cost filter")
+    .option("--filter <tag...>", "Filter conditions, repeatable")
+    .option("--with-balance", "Include balance in response")
+    .option("--with-security", "Include security info in response")
+    .option("--min-amount-usd <n>", "Minimum trade amount (USD)", parseFloat)
+    .option("--max-amount-usd <n>", "Maximum trade amount (USD)", parseFloat)
+    .option("--is-gray", "Gray mode filter")
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      validateChain(opts.chain);
+      const extra: Record<string, string | number | string[]> = {};
+      if (opts.wallet) extra["wallet_address"] = opts.wallet;
+      if (opts.baseToken) extra["base_token"] = opts.baseToken;
+      if (opts.pageToken) extra["page_token"] = opts.pageToken;
+      if (opts.limit != null) extra["limit"] = opts.limit;
+      if (opts.side) extra["side"] = opts.side;
+      if (opts.cost) extra["cost"] = opts.cost;
+      if (opts.filter?.length) extra["filters"] = opts.filter;
+      if (opts.withBalance) extra["with_balance"] = "true";
+      if (opts.withSecurity) extra["with_security"] = "true";
+      if (opts.minAmountUsd != null) extra["min_amount_usd"] = opts.minAmountUsd;
+      if (opts.maxAmountUsd != null) extra["max_amount_usd"] = opts.maxAmountUsd;
+      if (opts.isGray) extra["is_gray"] = "true";
+      const client = new OpenApiClient(getConfig());
+      const data = await client.getFollowWallet(opts.chain, extra).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
+  portfolio
+    .command("kol")
+    .description("Get KOL trade records (SOL chain)")
+    .option("--limit <n>", "Page size (1–200, default 100)", parseInt)
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      const client = new OpenApiClient(getConfig());
+      const data = await client.getKol(opts.limit).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
+  portfolio
+    .command("smartmoney")
+    .description("Get Smart Money trade records (SOL chain)")
+    .option("--limit <n>", "Page size (1–200, default 100)", parseInt)
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      const client = new OpenApiClient(getConfig());
+      const data = await client.getSmartMoney(opts.limit).catch(exitOnError);
       printResult(data, opts.raw);
     });
 }
