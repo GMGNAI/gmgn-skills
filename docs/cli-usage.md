@@ -260,14 +260,17 @@ npx gmgn-cli portfolio token-balance \
 Query Trenches token lists (new creation, near completion, completed).
 
 ```bash
-npx gmgn-cli market trenches --chain <chain> [--raw]
+npx gmgn-cli market trenches --chain <chain> [--type <type...>] [--launchpad-platform <platform...>] [--limit <n>] [--raw]
 ```
 
 | Option | Required | Description |
 |--------|----------|-------------|
 | `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--type` | No | Categories to query, repeatable: `new_creation` / `near_completion` / `completed` (default: all three) |
+| `--launchpad-platform` | No | Launchpad platform filter, repeatable (default: all platforms for the chain) |
+| `--limit` | No | Max results per category, max 80 (default: 80) |
 
-**Response:** `data.new_creation`, `data.pump`, `data.completed` — each is an array of `RankItem` (same structure as `market trending` rank items).
+**Response:** `data.new_creation`, `data.pump`, `data.completed` — each is an array of `RankItem` (same structure as `market trending` rank items). **Note: `data.pump` in the response corresponds to `--type near_completion` in the request. The API always returns this category under the key `pump`, not `near_completion`.**
 
 ---
 

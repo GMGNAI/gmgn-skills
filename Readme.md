@@ -277,6 +277,12 @@ npx gmgn-cli market trending \
   --interval 1h \
   --order-by volume --limit 20 \
   --filter not_risk --filter not_honeypot
+
+npx gmgn-cli market trenches \
+  --chain sol \
+  --type new_creation --type near_completion --type completed \
+  --launchpad-platform Pump.fun --launchpad-platform pump_mayhem --launchpad-platform letsbonk \
+  --limit 80
 ```
 
 ### Portfolio
