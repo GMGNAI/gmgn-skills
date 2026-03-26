@@ -295,7 +295,7 @@ npx gmgn-cli swap \
   --input-token <input-token-addr> \
   --output-token <output-token-addr> \
   --amount 1000000 \
-  --auto-slippage
+  --slippage 0.01
 
 # Query order
 npx gmgn-cli order get --chain sol --order-id <order-id>

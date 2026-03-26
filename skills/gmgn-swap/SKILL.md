@@ -73,6 +73,15 @@ gmgn-cli swap \
   --input-token <input_token_address> \
   --output-token <output_token_address> \
   --amount 1000000 \
+  --slippage 0.01
+
+# With automatic slippage
+gmgn-cli swap \
+  --chain sol \
+  --from <wallet_address> \
+  --input-token <input_token_address> \
+  --output-token <output_token_address> \
+  --amount 1000000 \
   --auto-slippage
 
 # With anti-MEV (SOL)
