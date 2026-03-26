@@ -199,7 +199,7 @@ cp .env.example .env
 #### Codex CLI
 
 ```bash
-git clone https://github.com/gmgn-ai/gmgn-skills ~/.codex/gmgn-cli
+git clone https://github.com/GMGNAI/gmgn-skills ~/.codex/gmgn-cli
 mkdir -p ~/.agents/skills
 ln -s ~/.codex/gmgn-cli/skills ~/.agents/skills/gmgn-cli
 ```
@@ -209,7 +209,7 @@ ln -s ~/.codex/gmgn-cli/skills ~/.agents/skills/gmgn-cli
 #### OpenCode
 
 ```bash
-git clone https://github.com/gmgn-ai/gmgn-skills ~/.opencode/gmgn-cli
+git clone https://github.com/GMGNAI/gmgn-skills ~/.opencode/gmgn-cli
 mkdir -p ~/.agents/skills
 ln -s ~/.opencode/gmgn-cli/skills ~/.agents/skills/gmgn-cli
 ```

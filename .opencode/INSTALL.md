@@ -12,7 +12,7 @@ Enable GMGN skills in OpenCode via native skill discovery. Just clone and symlin
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/gmgn-ai/gmgn-skills ~/.opencode/gmgn-cli
+   git clone https://github.com/GMGNAI/gmgn-skills ~/.opencode/gmgn-cli
    ```
 
 2. **Register the plugin:**
