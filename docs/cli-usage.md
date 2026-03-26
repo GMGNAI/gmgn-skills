@@ -388,6 +388,7 @@ npx gmgn-cli swap \
   --output-token <output_token_address> \
   [--amount <input_amount> | --percent <pct>] \
   [--slippage <n>] \
+  [--auto-slippage] \
   [--min-output <amount>] \
   [--anti-mev] \
   [--priority-fee <sol>] \
@@ -408,6 +409,7 @@ npx gmgn-cli swap \
 | `--amount` | No* | Input raw amount in minimal unit (e.g., lamports for SOL); required unless `--percent` is used |
 | `--percent` | No* | Input amount as a percentage, e.g. `50` = 50%; required unless `--amount` is used; only valid when input token is not a currency (not SOL/BNB/ETH/USDC) |
 | `--slippage` | No | Slippage tolerance, e.g. `0.01` = 1% |
+| `--auto-slippage` | No | Enable automatic slippage |
 | `--min-output` | No | Minimum output amount (raw amount) |
 | `--anti-mev` | No | Enable anti-MEV protection (default true) |
 | `--priority-fee` | No | Priority fee in SOL (≥ 0.00001 SOL, SOL only) |

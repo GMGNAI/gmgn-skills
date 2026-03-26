@@ -15,6 +15,7 @@ export function registerSwapCommands(program: Command): void {
     .option("--amount <amount>", "Input raw amount (smallest unit)")
     .option("--percent <pct>", "Input amount as a percentage, e.g. 50 = 50%, 1 = 1%; only valid when input_token is NOT a currency", parseFloat)
     .option("--slippage <n>", "Slippage tolerance (e.g. 0.01 = 1%)", parseFloat)
+    .option("--auto-slippage", "Enable automatic slippage")
     .option("--min-output <amount>", "Minimum output amount")
     .option("--anti-mev", "Enable anti-MEV protection, default true")
     .option("--priority-fee <sol>", "Priority fee in SOL (≥ 0.00001, SOL only)")
@@ -44,6 +45,7 @@ export function registerSwapCommands(program: Command): void {
       };
       if (opts.percent != null) params.input_amount_bps = String(Math.round(opts.percent * 100));
       if (opts.slippage != null) params.slippage = opts.slippage;
+      if (opts.autoSlippage) params.auto_slippage = true;
       if (opts.minOutput) params.min_output_amount = opts.minOutput;
       if (opts.antiMev) params.is_anti_mev = true;
       if (opts.priorityFee) params.priority_fee = opts.priorityFee;
@@ -96,4 +98,3 @@ export function registerSwapCommands(program: Command): void {
       printResult(data, opts.raw);
     });
 }
-
