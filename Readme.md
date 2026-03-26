@@ -80,7 +80,7 @@ npx skills add GMGNAI/gmgn-skills
 ### 1.2 npm Global Install
 
 ```bash
-npm install -g gmgn-cli@1.1.0
+npm install -g gmgn-cli
 ```
 
 ### 1.3 Local Development
@@ -294,7 +294,7 @@ npx gmgn-cli portfolio holdings --chain sol --wallet <addr>
 ### Swap (requires private key)
 
 ```bash
-# Submit swap
+# Submit swap with fixed slippage
 npx gmgn-cli swap \
   --chain sol \
   --from <wallet-address> \
@@ -302,6 +302,15 @@ npx gmgn-cli swap \
   --output-token <output-token-addr> \
   --amount 1000000 \
   --slippage 0.01
+
+# Submit swap with automatic slippage
+npx gmgn-cli swap \
+  --chain sol \
+  --from <wallet-address> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --amount 1000000 \
+  --auto-slippage
 
 # Query order
 npx gmgn-cli order get --chain sol --order-id <order-id>
@@ -327,7 +336,7 @@ npx gmgn-cli order get --chain sol --order-id <order-id>
 - Restrict config file permissions: `chmod 600 ~/.config/gmgn/.env`
 - Never commit your `.env` file to version control — add it to `.gitignore`
 - Do not share `GMGN_API_KEY` or `GMGN_PRIVATE_KEY` in logs, screenshots, or chat messages
-- Use a pinned install (`npm install -g gmgn-cli@1.1.0`) rather than `npx gmgn-cli` to avoid executing unintended package updates alongside your credentials
+- Always use the latest version of gmgn-cli (`npm install -g gmgn-cli`). To check your current version: `gmgn-cli --version`
 
 **Disclaimer**
 

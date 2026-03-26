@@ -80,7 +80,7 @@ npx skills add GMGNAI/gmgn-skills
 ### 1.2 npm 全局安装
 
 ```bash
-npm install -g gmgn-cli@1.1.0
+npm install -g gmgn-cli
 ```
 
 ### 1.3 本地开发
@@ -227,12 +227,23 @@ ln -s ~/.opencode/gmgn-cli/skills ~/.agents/skills/gmgn-cli
 ```
 用 0.1 SOL 买入 <token_address>
 卖出 BSC 上 <token_address> 的 50%
+把我持有的 <token_address> 卖掉 30%
+查询报价，我想用 1 SOL 换 <token_address>，能换多少
 查询订单状态 <order_id>
 solana 上的 <token_address> 安全吗，值得买入吗？
 查看 <token_address> 的前十大持有者
+查看 <token_address> 的聪明钱持仓，按买入量排序
+查看 <token_address> 最近的 KOL 交易动态
 查看我在 SOL 上的钱包持仓
 查询 0x1234... 的代币详情
+查看 <token_address> 过去 24 小时的 K 线和交易量
 查看 BSC 上钱包 <wallet_address> 的交易统计
+查看钱包 <wallet_address> 最近的交易记录
+我的 API Key 绑定了哪些钱包，余额各是多少
+查看 SOL 链上最新的聪明钱交易动态
+查看 SOL 链上 KOL 最近在买什么
+查询 Solana 上最新发布的代币
+查询 Solana 1 分钟交易热门代币
 ```
 
 ### 典型使用场景
@@ -266,18 +277,46 @@ solana 上的 <token_address> 安全吗，值得买入吗？
 ### Token
 
 ```bash
+# 基本信息 + 实时价格
 npx gmgn-cli token info --chain sol --address <addr>
+
+# 安全指标（蜜罐、税率、集中度、rug 风险）
+npx gmgn-cli token security --chain sol --address <addr>
+
+# 流动池信息（DEX、储备量、深度）
+npx gmgn-cli token pool --chain sol --address <addr>
+
+# 持仓大户（按持仓比例排序）
+npx gmgn-cli token holders --chain sol --address <addr> --limit 50
+
+# 聪明钱持仓大户（按买入量排序）
+npx gmgn-cli token holders --chain sol --address <addr> \
+  --tag smart_degen --order-by buy_volume_cur --limit 20
+
+# 交易大户（KOL，按已实现盈利排序）
+npx gmgn-cli token traders --chain sol --address <addr> \
+  --tag renowned --order-by profit --limit 20
 ```
 
 ### Market
 
 ```bash
+# K 线数据（1h 周期，最近 24 小时）
+# macOS:
+npx gmgn-cli market kline \
+  --chain sol --address <addr> \
+  --resolution 1h \
+  --from $(date -v-24H +%s) --to $(date +%s)
+# Linux: $(date -d '24 hours ago' +%s)
+
+# 热门代币榜（SOL，1h，按交易量排序）
 npx gmgn-cli market trending \
   --chain sol \
   --interval 1h \
   --order-by volume --limit 20 \
   --filter not_risk --filter not_honeypot
 
+# 战壕新币列表
 npx gmgn-cli market trenches \
   --chain sol \
   --type new_creation --type near_completion --type completed \
@@ -288,13 +327,35 @@ npx gmgn-cli market trenches \
 ### Portfolio
 
 ```bash
+# 钱包持仓
 npx gmgn-cli portfolio holdings --chain sol --wallet <addr>
+
+# 交易记录
+npx gmgn-cli portfolio activity --chain sol --wallet <addr>
+
+# 交易统计（支持多钱包）
+npx gmgn-cli portfolio stats --chain sol --wallet <addr1> --wallet <addr2>
+
+# API Key 绑定的钱包及主币余额
+npx gmgn-cli portfolio info --chain sol
+
+# 单个 token 余额
+npx gmgn-cli portfolio token-balance --chain sol --wallet <addr> --token <token_addr>
+
+# 跟单交易记录
+npx gmgn-cli portfolio follow-wallet --chain sol
+
+# KOL 交易记录（仅 SOL）
+npx gmgn-cli portfolio kol
+
+# 聪明钱交易记录（仅 SOL）
+npx gmgn-cli portfolio smartmoney
 ```
 
 ### Swap（需要私钥）
 
 ```bash
-# 提交兑换
+# 提交兑换（固定滑点）
 npx gmgn-cli swap \
   --chain sol \
   --from <wallet-address> \
@@ -303,7 +364,34 @@ npx gmgn-cli swap \
   --amount 1000000 \
   --slippage 0.01
 
-# 查询订单
+# 提交兑换（自动滑点）
+npx gmgn-cli swap \
+  --chain sol \
+  --from <wallet-address> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --amount 1000000 \
+  --auto-slippage
+
+# 按持仓比例卖出（例：卖出 50%）
+npx gmgn-cli swap \
+  --chain sol \
+  --from <wallet-address> \
+  --input-token <token-addr> \
+  --output-token <usdc-addr> \
+  --percent 50 \
+  --auto-slippage
+
+# 获取报价（不提交交易）
+npx gmgn-cli order quote \
+  --chain sol \
+  --from <wallet-address> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --amount 1000000 \
+  --slippage 0.01
+
+# 查询订单状态
 npx gmgn-cli order get --chain sol --order-id <order-id>
 ```
 
@@ -327,7 +415,7 @@ npx gmgn-cli order get --chain sol --order-id <order-id>
 - 限制配置文件权限：`chmod 600 ~/.config/gmgn/.env`
 - 不要将 `.env` 文件提交到版本控制系统，请将其加入 `.gitignore`
 - 不要在日志、截图或聊天中泄露 `GMGN_API_KEY` 或 `GMGN_PRIVATE_KEY`
-- 使用固定版本安装（`npm install -g gmgn-cli@1.1.0`），而非 `npx gmgn-cli`，以避免在持有凭证的环境中执行未预期的包更新
+- 请使用最新的 gmgn-cli（`npm install -g gmgn-cli`），查看当前版本请使用 `gmgn-cli --version`。
 
 **免责声明**
 

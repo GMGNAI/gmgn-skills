@@ -10,9 +10,9 @@ Use the `gmgn-cli` tool to query K-line data for a token, browse trending tokens
 
 | Sub-command | Description |
 |-------------|-------------|
-| `market kline` | Token candlestick data |
-| `market trending` | Trending token swap data |
-| `market trenches` | Trenches token lists (new creation, near completion, completed) |
+| `market kline` | Token candlestick / OHLCV data and trading volume over a time range |
+| `market trending` | Trending tokens ranked by swap activity — use `--interval` to specify the time window (e.g. `1m` for 1-minute hottest, `1h` for 1-hour trending) |
+| `market trenches` | Newly launched launchpad paltform tokens — **use this when the user asks for "new tokens", "just launched tokens", "latest tokens on pump.fun/letsbonk"**. Three categories: `new_creation` (just created), `near_completion` (bonding curve almost full), `completed` (graduated to open market / DEX) |
 
 ## Supported Chains
 
@@ -24,21 +24,50 @@ Use the `gmgn-cli` tool to query K-line data for a token, browse trending tokens
 - Run from the directory where your `.env` file is located, or set `GMGN_HOST` in your environment
 - `gmgn-cli` installed globally: `npm install -g gmgn-cli@1.1.0`
 
-## Kline Parameters
+## `market kline` Parameters
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `--chain` | Yes | `sol` / `bsc` / `base` |
 | `--address` | Yes | Token contract address |
-| `--resolution` | Yes | Candlestick resolution |
+| `--resolution` | Yes | Candlestick resolution: `1m` / `5m` / `15m` / `1h` / `4h` / `1d` |
 | `--from` | No | Start time (Unix seconds) |
 | `--to` | No | End time (Unix seconds) |
 
-## Resolutions
+## `market kline` Response Fields
 
-`1m` / `5m` / `15m` / `1h` / `4h` / `1d`
+The response is an object with a `list` array. Each element in `list` is one candlestick:
 
-## Trending Options
+| Field | Type | Description |
+|-------|------|-------------|
+| `time` | number | Candle open time — Unix timestamp in **milliseconds** (divide by 1000 for seconds) |
+| `open` | string | Opening price in USD at the start of the period |
+| `close` | string | Closing price in USD at the end of the period |
+| `high` | string | Highest price in USD during the period |
+| `low` | string | Lowest price in USD during the period |
+| `volume` | string | Trading volume in **USD** (dollar value of all trades in this period) |
+| `amount` | string | Trading volume in **base token units** (number of tokens traded) |
+
+**Important distinctions (naming is counterintuitive — do not guess):**
+- `volume` = USD dollar value (e.g. `1214` means ~$1,214 traded) — use this for "how much was traded in USD"
+- `amount` = token count (e.g. `5379110` means ~5.38M tokens changed hands) — use this for "how many tokens were traded"
+- For tokens not priced at $1, `volume` and `amount` will differ by orders of magnitude (e.g. a $0.0002 token: $1,214 volume = 5,379,110 tokens)
+- To get **total USD volume over a time range**, sum `volume` across all candles in the range
+- To get **price trend**, read `close` values in chronological order (`time` ascending)
+- To detect **volatility**, compare `high` vs `low` within each candle
+- Candles are returned in chronological order (oldest first)
+
+## `market trending` Options
+
+**`--interval` selection guide — always match to the user's stated time window:**
+
+| User says | `--interval` |
+|-----------|-------------|
+| "1分钟热门" / "1m trending" / "hottest right now" | `1m` |
+| "5分钟" / "5m" | `5m` |
+| "1小时" / "1h" / no time specified (default) | `1h` |
+| "6小时" / "6h" | `6h` |
+| "24小时" / "今日" / "daily" | `24h` |
 
 | Option | Description |
 |--------|-------------|
@@ -51,6 +80,8 @@ Use the `gmgn-cli` tool to query K-line data for a token, browse trending tokens
 | `--platform <name...>` | Repeatable platform filter (chain-specific). **sol**: `Pump.fun` / `pump_mayhem` / `pump_mayhem_agent` / `pump_agent` / `letsbonk` / `bonkers` / `bags` / `memoo` / `liquid` / `bankr` / `zora` / `surge` / `anoncoin` / `moonshot_app` / `wendotdev` / `heaven` / `sugar` / `token_mill` / `believe` / `trendsfun` / `trends_fun` / `jup_studio` / `Moonshot` / `boop` / `xstocks` / `ray_launchpad` / `meteora_virtual_curve` / `pool_ray` / `pool_meteora` / `pool_pump_amm` / `pool_orca`. **bsc**: `fourmeme` / `fourmeme_agent` / `bn_fourmeme` / `flap` / `clanker` / `lunafun` / `pool_uniswap` / `pool_pancake`. **base**: `clanker` / `bankr` / `flaunch` / `zora` / `zora_creator` / `baseapp` / `basememe` / `virtuals_v2` / `klik` |
 
 ## Usage Examples
+
+### Kline
 
 ```bash
 # Last 1 hour of 1-minute candles
@@ -73,21 +104,209 @@ gmgn-cli market kline \
   --to $(date +%s)
 # Linux: use $(date -d '24 hours ago' +%s) instead of $(date -v-24H +%s)
 
+# Raw output for further processing
+gmgn-cli market kline --chain sol --address <addr> \
+  --resolution 5m --from <ts> --to <ts> --raw | jq '.[]'
+```
+
+### Trending — General
+
+```bash
 # Top 20 hot tokens on SOL in the last 1 hour, sorted by volume
 gmgn-cli market trending --chain sol --interval 1h --order-by volume --limit 20
+
+# Top 50 tokens on SOL, 5m window, sorted by volume
+gmgn-cli market trending --chain sol --interval 5m --order-by volume --limit 50
 
 # Hot tokens with social links only, verified and not honeypot, on BSC over 24h
 gmgn-cli market trending \
   --chain bsc --interval 24h \
   --filter has_social --filter not_honeypot --filter verified
-
-# Pump.fun platform tokens on SOL, last 6 hours
-gmgn-cli market trending --chain sol --interval 6h --platform Pump.fun
-
-# Raw output for further processing
-gmgn-cli market kline --chain sol --address <addr> \
-  --resolution 5m --from <ts> --to <ts> --raw | jq '.[]'
 ```
+
+### Trending — SOL by Launchpad Platform
+
+Use `--platform` to filter trending results to tokens from specific launchpads only.
+
+```bash
+# SOL 1m hottest — Pump.fun + letsbonk only (most active launchpads), sorted by volume
+gmgn-cli market trending \
+  --chain sol --interval 1m \
+  --platform Pump.fun --platform letsbonk \
+  --order-by volume --limit 50 --raw
+
+# SOL 5m hottest — Pump.fun + letsbonk + Moonshot, sorted by volume
+gmgn-cli market trending \
+  --chain sol --interval 5m \
+  --platform Pump.fun --platform letsbonk --platform moonshot_app \
+  --order-by volume --limit 50 --raw
+
+# SOL 1h trending — Pump.fun only, with safety filters
+gmgn-cli market trending \
+  --chain sol --interval 1h \
+  --platform Pump.fun \
+  --filter renounced --filter frozen --filter not_wash_trading \
+  --order-by volume --limit 20 --raw
+
+# SOL 1h trending — all major launchpads combined
+gmgn-cli market trending \
+  --chain sol --interval 1h \
+  --platform Pump.fun --platform letsbonk --platform moonshot_app \
+  --platform pump_mayhem --platform pump_mayhem_agent --platform bonkers \
+  --order-by volume --limit 50 --raw
+```
+
+### Trending — BSC by Launchpad Platform
+
+```bash
+# BSC 1m hottest — fourmeme (main BSC launchpad), sorted by volume
+gmgn-cli market trending \
+  --chain bsc --interval 1m \
+  --platform fourmeme --platform four_xmode_agent \
+  --order-by volume --limit 50 --raw
+
+# BSC 5m hottest — fourmeme family, sorted by volume
+gmgn-cli market trending \
+  --chain bsc --interval 5m \
+  --platform fourmeme --platform fourmeme_agent --platform bn_fourmeme --platform four_xmode_agent \
+  --order-by volume --limit 50 --raw
+
+# BSC 1h trending — fourmeme with safety filters
+gmgn-cli market trending \
+  --chain bsc --interval 1h \
+  --platform fourmeme --platform fourmeme_agent --platform bn_fourmeme --platform four_xmode_agent \
+  --filter not_honeypot --filter verified \
+  --order-by volume --limit 20 --raw
+```
+
+### Trending — Base by Launchpad Platform
+
+```bash
+# Base 1m hottest — clanker + zora (main Base launchpads), sorted by volume
+gmgn-cli market trending \
+  --chain base --interval 1m \
+  --platform clanker --platform zora --platform zora_creator \
+  --order-by volume --limit 50 --raw
+
+# Base 5m hottest — clanker + zora + virtuals_v2 + flaunch, sorted by volume
+gmgn-cli market trending \
+  --chain base --interval 5m \
+  --platform clanker --platform zora --platform zora_creator \
+  --platform virtuals_v2 --platform flaunch \
+  --order-by volume --limit 50 --raw
+
+# Base 1h trending — all major launchpads with safety filters
+gmgn-cli market trending \
+  --chain base --interval 1h \
+  --platform clanker --platform zora --platform zora_creator \
+  --platform virtuals_v2 --platform flaunch --platform baseapp \
+  --filter not_honeypot --filter verified \
+  --order-by volume --limit 20 --raw
+```
+
+## `market trending` Response Fields
+
+The response is `data.rank` — an array of rank items. Each item represents one token.
+
+**Basic Info**
+
+| Field | Description |
+|-------|-------------|
+| `address` | Token contract address |
+| `symbol` / `name` | Token ticker and full name |
+| `logo` | Token logo image URL |
+| `chain` | Chain identifier |
+| `total_supply` | Total token supply |
+| `creator` | Creator wallet address |
+| `launchpad_platform` | Launch/pool platform (e.g. `Pump.fun`, `letsbonk`, `pool_meteora`, `fourmeme`) |
+| `exchange` | Current DEX (e.g. `meteora_damm_v2`, `raydium`, `pump_amm`) |
+| `open_timestamp` | Open market listing time (Unix seconds) |
+| `creation_timestamp` | Token creation time (Unix seconds) |
+| `rank` | Position in this trending list (lower = hotter) |
+| `hot_level` | Trending intensity level (higher = hotter) |
+
+**Price & Market**
+
+| Field | Description |
+|-------|-------------|
+| `price` | Current price in USD |
+| `market_cap` | Market cap in USD (directly available — no calculation needed) |
+| `liquidity` | Current liquidity in USD |
+| `volume` | Trading volume in USD for the queried interval |
+| `history_highest_market_cap` | All-time highest market cap in USD |
+| `initial_liquidity` | Initial liquidity at token launch |
+| `price_change_percent` | Price change % for the queried interval |
+| `price_change_percent1m` | Price change % in last 1 minute |
+| `price_change_percent5m` | Price change % in last 5 minutes |
+| `price_change_percent1h` | Price change % in last 1 hour |
+
+**Trading Activity**
+
+| Field | Description |
+|-------|-------------|
+| `swaps` | Total swap count in the queried interval |
+| `buys` / `sells` | Buy / sell count in the interval |
+| `holder_count` | Number of unique token holders |
+| `gas_fee` | Average gas fee per transaction |
+
+**Security & Risk**
+
+| Field | Chains | Description |
+|-------|--------|-------------|
+| `renounced_mint` | SOL | Mint authority renounced (`1` = yes, `0` = no) |
+| `renounced_freeze_account` | SOL | Freeze authority renounced (`1` = yes, `0` = no) |
+| `is_honeypot` | BSC / Base | Honeypot flag (`1` = yes, `0` = no) |
+| `is_open_source` | all | Contract verified (`1` = yes, `0` = no) |
+| `is_renounced` | all | Ownership renounced (`1` = yes, `0` = no) |
+| `buy_tax` / `sell_tax` | all | Tax rate — empty string means `0` (no tax) |
+| `burn_status` | all | Liquidity burn status (e.g. `"none"`, `"burn"`) |
+| `top_10_holder_rate` | all | Top 10 wallets concentration (0–1) |
+| `rug_ratio` | all | Rug pull risk score (0–1) |
+| `is_wash_trading` | all | Wash trading detected (`true` / `false`) |
+| `rat_trader_amount_rate` | all | Ratio of insider/sneak trading volume |
+| `bundler_rate` | all | Ratio of bundle bot trading volume |
+| `entrapment_ratio` | all | Entrapment trading ratio |
+| `sniper_count` | all | Number of sniper wallets at launch |
+| `bot_degen_count` / `bot_degen_rate` | all | Bot degen wallet count / ratio |
+| `dev_team_hold_rate` | all | Dev team holding ratio |
+| `top70_sniper_hold_rate` | all | Top 70 sniper current holding ratio |
+| `lock_percent` | all | Liquidity lock percentage |
+
+**Dev Status**
+
+| Field | Description |
+|-------|-------------|
+| `creator_token_status` | Dev holding status: `creator_hold` (still holding) / `creator_close` (sold/closed) |
+| `creator_close` | Boolean shorthand for `creator_token_status == creator_close` |
+| `dev_token_burn_ratio` | Ratio of dev's tokens that have been burned |
+
+**Smart Money**
+
+| Field | Description |
+|-------|-------------|
+| `smart_degen_count` | Number of smart money wallets holding the token |
+| `renowned_count` | Number of renowned / KOL wallets holding the token |
+| `bluechip_owner_percentage` | Ratio of holders that are bluechip wallets (0–1) |
+
+**Social**
+
+| Field | Description |
+|-------|-------------|
+| `twitter_username` | Twitter / X username (not a full URL — prepend `https://x.com/` to get the link) |
+| `website` | Project website URL |
+| `telegram` | Telegram URL |
+| `cto_flag` | Community takeover flag (`1` = CTO has occurred) |
+
+**Dexscreener Marketing**
+
+| Field | Description |
+|-------|-------------|
+| `dexscr_ad` | Dexscreener ad placed (`1` = yes) |
+| `dexscr_update_link` | Social links updated on Dexscreener (`1` = yes) |
+| `dexscr_trending_bar` | Paid for Dexscreener trending bar (`1` = yes) |
+| `dexscr_boost_fee` | Dexscreener boost amount paid (0 = none) |
+
+---
 
 ## Workflow: Discover Trading Opportunities via Trending
 
@@ -136,7 +355,16 @@ For each token, offer:
 - **Deep dive**: `token info` + `token security` for full due diligence
 - **Swap**: execute directly if the user is satisfied with the trending data alone
 
-## Trenches Parameters
+## `market trenches` Parameters
+
+**Intent → `--type` mapping (always specify `--type` explicitly):**
+
+| User intent | `--type` value |
+|-------------|----------------|
+| "new tokens", "just launched", "newly created", "latest tokens" | `new_creation` |
+| "about to graduate", "near completion", "bonding curve almost full" | `near_completion` |
+| "graduated tokens", "already on DEX", "open market tokens" | `completed` |
+| No specific stage mentioned | omit `--type` (returns all three) |
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
@@ -147,7 +375,7 @@ For each token, offer:
 
 Response fields: `data.new_creation`, `data.pump`, `data.completed` — each is an array of `RankItem` (same fields as `market trending` rank items). **Important: `data.pump` in the response corresponds to `--type near_completion` in the request. The API always returns this category under the key `pump`, not `near_completion`.**
 
-### Response Item Key Reference
+## `market trenches` Response Fields
 
 **Basic Info**
 
