@@ -73,6 +73,7 @@ gmgn-cli swap \
   --input-token <input_token_address> \
   --output-token <output_token_address> \
   --amount 1000000 \
+  --auto-slippage \
   --slippage 0.01
 
 # With anti-MEV (SOL)
@@ -135,6 +136,7 @@ gmgn-cli order get --chain sol --order-id <order_id>
 | `--amount` | No* | Input amount in smallest unit. Required unless `--percent` is used. |
 | `--percent <pct>` | No* | Sell percentage of `input_token`, e.g. `50` = 50%, `1` = 1%. Sets `input_amount` to `0` automatically. **Only valid when `input_token` is NOT a currency (SOL/BNB/ETH/USDC).** |
 | `--slippage <n>` | No | Slippage tolerance, e.g. `0.01` = 1% |
+| `--auto-slippage` | No | Enable automatic slippage |
 | `--min-output <n>` | No | Minimum output amount |
 | `--anti-mev` | No | Enable anti-MEV protection (default true) |
 | `--priority-fee <sol>` | No | Priority fee in SOL (≥ 0.00001, SOL only) |
