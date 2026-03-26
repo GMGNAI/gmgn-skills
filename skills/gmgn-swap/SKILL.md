@@ -73,8 +73,7 @@ gmgn-cli swap \
   --input-token <input_token_address> \
   --output-token <output_token_address> \
   --amount 1000000 \
-  --auto-slippage \
-  --slippage 0.01
+  --auto-slippage
 
 # With anti-MEV (SOL)
 gmgn-cli swap \
