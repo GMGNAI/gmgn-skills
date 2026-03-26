@@ -325,7 +325,39 @@ npx gmgn-cli order get --chain sol --order-id <order-id>
 
 ---
 
-## 9. Security & Disclaimer
+## 9. Upgrade Skills and CLI
+
+To upgrade `gmgn-cli` and Skills to the latest version:
+
+**Via AI Agent (recommended)**
+
+Send this to your AI agent:
+
+```
+Run these two commands to update gmgn-cli and the skills:
+1. npm install -g gmgn-cli
+2. npx skills add GMGNAI/gmgn-skills
+```
+
+**Via CLI**
+
+```bash
+# Upgrade gmgn-cli
+npm install -g gmgn-cli
+
+# Upgrade Skills
+npx skills add GMGNAI/gmgn-skills
+```
+
+**Check the current version**
+
+```bash
+gmgn-cli --version
+```
+
+---
+
+## 10. Security & Disclaimer
 
 **About `GMGN_PRIVATE_KEY`**
 

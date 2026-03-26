@@ -404,7 +404,39 @@ npx gmgn-cli order get --chain sol --order-id <order-id>
 
 ---
 
-## 9. 安全与免责
+## 9. 升级 Skills 和 CLI
+
+将 `gmgn-cli` 和 Skills 升级到最新版本：
+
+**方式一：通过 AI Agent（推荐）**
+
+发送给你的 AI Agent：
+
+```
+运行以下两条命令，更新 gmgn-cli 和 Skills 文档：
+1. npm install -g gmgn-cli
+2. npx skills add GMGNAI/gmgn-skills
+```
+
+**方式二：通过 CLI**
+
+```bash
+# 升级 gmgn-cli
+npm install -g gmgn-cli
+
+# 升级 Skills
+npx skills add GMGNAI/gmgn-skills
+```
+
+**查看当前版本号**
+
+```bash
+gmgn-cli --version
+```
+
+---
+
+## 10. 安全与免责
 
 **关于 `GMGN_PRIVATE_KEY`**
 
