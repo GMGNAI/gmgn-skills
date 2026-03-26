@@ -12,7 +12,7 @@ Enable GMGN skills in Codex via native skill discovery. Just clone and symlink.
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/gmgn-ai/gmgn-skills ~/.codex/gmgn-cli
+   git clone https://github.com/GMGNAI/gmgn-skills ~/.codex/gmgn-cli
    ```
 
 2. **Create the skills symlink:**

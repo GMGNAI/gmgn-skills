@@ -6,7 +6,7 @@
     "name": "GMGN",
     "url": "https://gmgn.ai"
   },
-  "repository": "https://github.com/gmgn-ai/gmgn-skills",
+  "repository": "https://github.com/GMGNAI/gmgn-skills",
   "license": "MIT",
   "keywords": ["gmgn", "crypto", "solana", "token", "defi", "swap"],
   "skills": "./skills/"
