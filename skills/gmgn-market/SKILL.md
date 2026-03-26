@@ -141,12 +141,178 @@ For each token, offer:
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--type` | No | Categories to query, repeatable: `new_creation` / `near_completion` / `completed` (default: all three) |
+| `--launchpad-platform` | No | Launchpad platform filter, repeatable (default: all platforms for the chain) |
+| `--limit` | No | Max results per category, max 80 (default: 80) |
 
-Response fields: `data.new_creation`, `data.pump`, `data.completed` — each is an array of `RankItem` (same fields as `market trending` rank items).
+Response fields: `data.new_creation`, `data.pump`, `data.completed` — each is an array of `RankItem` (same fields as `market trending` rank items). **Important: `data.pump` in the response corresponds to `--type near_completion` in the request. The API always returns this category under the key `pump`, not `near_completion`.**
+
+### Response Item Key Reference
+
+**Basic Info**
+
+| Field | Description |
+|-------|-------------|
+| `address` | Token contract address |
+| `symbol` / `name` | Token symbol and name |
+| `launchpad_platform` | Launch platform (e.g. `Pump.fun`, `letsbonk`) |
+| `exchange` | Current exchange (e.g. `pump_amm`, `raydium`) |
+| `usd_market_cap` | Market cap in USD |
+| `liquidity` | Liquidity in USD |
+| `total_supply` | Total token supply |
+| `created_timestamp` | Creation time (Unix seconds) |
+| `open_timestamp` | Open market listing time (Unix seconds, `completed` only) |
+| `complete_timestamp` | Bonding curve completion time (Unix seconds) |
+| `complete_cost_time` | Time from creation to completion in seconds |
+
+**Trading Data**
+
+| Field | Description |
+|-------|-------------|
+| `swaps_1m` / `swaps_1h` / `swaps_24h` | Swap count per time window |
+| `volume_1h` / `volume_24h` | Trading volume in USD |
+| `buys_24h` / `sells_24h` | Buy / sell count in 24h |
+| `net_buy_24h` | Net buy volume in 24h |
+| `holder_count` | Number of token holders |
+
+**Security & Risk**
+
+| Field | Chains | Description |
+|-------|--------|-------------|
+| `renounced_mint` | SOL | Whether mint authority is renounced (SOL-specific concept; always `false` on EVM chains) |
+| `renounced_freeze_account` | SOL | Whether freeze authority is renounced (SOL-specific concept; always `false` on EVM chains) |
+| `burn_status` | all | Liquidity burn status |
+| `rug_ratio` | all | Rug pull risk ratio |
+| `top_10_holder_rate` | all | Top 10 holders concentration ratio |
+| `rat_trader_amount_rate` | all | Insider / sneak trading volume ratio |
+| `bundler_trader_amount_rate` | all | Bundle trading volume ratio |
+| `is_wash_trading` | all | Whether wash trading is detected |
+| `sniper_count` | all | Number of sniper wallets |
+| `suspected_insider_hold_rate` | all | Suspected insider holding ratio |
+| `open_source` | all | Whether contract source code is verified (`"yes"` / `"no"` / `"unknown"`) |
+| `owner_renounced` | all | Whether contract ownership is renounced (`"yes"` / `"no"` / `"unknown"`) |
+| `is_honeypot` | BSC / Base | Whether token is a honeypot (`"yes"` / `"no"`); returns empty string on SOL (not applicable) |
+| `buy_tax` | all | Buy tax ratio (e.g. `0.03` = 3%) |
+| `dev_team_hold_rate` | all | Dev team holding ratio |
+
+**Dev Holdings**
+
+| Field | Description |
+|-------|-------------|
+| `creator_token_status` | Dev holding status (e.g. `creator_hold`, `creator_close`) |
+| `creator_balance_rate` | Dev holding ratio as a proportion of total supply |
+
+**Smart Money**
+
+| Field | Description |
+|-------|-------------|
+| `smart_degen_count` | Number of smart money holders |
+| `renowned_count` | Number of renowned wallet holders (KOL) |
+
+**Social Media**
+
+| Field | Description |
+|-------|-------------|
+| `twitter` | Twitter / X link |
+| `telegram` | Telegram link |
+| `website` | Website link |
+| `instagram` | Instagram link |
+| `tiktok` | TikTok link |
+| `has_at_least_one_social` | Whether any social media link exists |
+| `x_user_follower` | Twitter follower count |
+| `cto_flag` | Whether community takeover (CTO) has occurred |
+
+**Dexscreener Marketing**
+
+| Field | Description |
+|-------|-------------|
+| `dexscr_ad` | Whether a Dexscreener ad has been placed |
+| `dexscr_update_link` | Whether social links have been updated on Dexscreener |
+| `dexscr_trending_bar` | Whether paid for Dexscreener trending bar placement |
+| `dexscr_boost_fee` | Amount paid for Dexscreener boost (0 = none) |
+
+### Solana Trenches Examples
 
 ```bash
-# Trenches token lists on SOL
-gmgn-cli market trenches --chain sol --raw
+# All three categories at once
+gmgn-cli market trenches --chain sol --raw \
+  --type new_creation --type near_completion --type completed \
+  --launchpad-platform Pump.fun --launchpad-platform pump_mayhem --launchpad-platform pump_mayhem_agent --launchpad-platform pump_agent --launchpad-platform letsbonk --launchpad-platform bonkers --launchpad-platform bags \
+  --limit 80
+
+# New creation only
+gmgn-cli market trenches --chain sol --raw \
+  --type new_creation \
+  --launchpad-platform Pump.fun --launchpad-platform pump_mayhem --launchpad-platform pump_mayhem_agent --launchpad-platform pump_agent --launchpad-platform letsbonk --launchpad-platform bonkers --launchpad-platform bags \
+  --limit 80
+
+# Near completion only
+gmgn-cli market trenches --chain sol --raw \
+  --type near_completion \
+  --launchpad-platform Pump.fun --launchpad-platform pump_mayhem --launchpad-platform pump_mayhem_agent --launchpad-platform pump_agent --launchpad-platform letsbonk --launchpad-platform bonkers --launchpad-platform bags \
+  --limit 80
+
+# Completed (open market) only
+gmgn-cli market trenches --chain sol --raw \
+  --type completed \
+  --launchpad-platform Pump.fun --launchpad-platform pump_mayhem --launchpad-platform pump_mayhem_agent --launchpad-platform pump_agent --launchpad-platform letsbonk --launchpad-platform bonkers --launchpad-platform bags \
+  --limit 80
+```
+
+### BSC Trenches Examples
+
+```bash
+# All three categories at once
+gmgn-cli market trenches --chain bsc --raw \
+  --type new_creation --type near_completion --type completed \
+  --launchpad-platform fourmeme --launchpad-platform fourmeme_agent --launchpad-platform bn_fourmeme --launchpad-platform four_xmode_agent --launchpad-platform flap --launchpad-platform clanker --launchpad-platform lunafun \
+  --limit 80
+
+# New creation only
+gmgn-cli market trenches --chain bsc --raw \
+  --type new_creation \
+  --launchpad-platform fourmeme --launchpad-platform fourmeme_agent --launchpad-platform bn_fourmeme --launchpad-platform four_xmode_agent --launchpad-platform flap --launchpad-platform clanker --launchpad-platform lunafun \
+  --limit 80
+
+# Near completion only
+gmgn-cli market trenches --chain bsc --raw \
+  --type near_completion \
+  --launchpad-platform fourmeme --launchpad-platform fourmeme_agent --launchpad-platform bn_fourmeme --launchpad-platform four_xmode_agent --launchpad-platform flap --launchpad-platform clanker --launchpad-platform lunafun \
+  --limit 80
+
+# Completed (open market) only
+gmgn-cli market trenches --chain bsc --raw \
+  --type completed \
+  --launchpad-platform fourmeme --launchpad-platform fourmeme_agent --launchpad-platform bn_fourmeme --launchpad-platform four_xmode_agent --launchpad-platform flap --launchpad-platform clanker --launchpad-platform lunafun \
+  --limit 80
+```
+
+### Base Trenches Examples
+
+```bash
+# All three categories at once
+gmgn-cli market trenches --chain base --raw \
+  --type new_creation --type near_completion --type completed \
+  --launchpad-platform clanker --launchpad-platform bankr --launchpad-platform flaunch --launchpad-platform zora --launchpad-platform zora_creator --launchpad-platform baseapp --launchpad-platform basememe --launchpad-platform virtuals_v2 --launchpad-platform klik \
+  --limit 80
+
+# New creation only
+gmgn-cli market trenches --chain base --raw \
+  --type new_creation \
+  --launchpad-platform clanker --launchpad-platform bankr --launchpad-platform flaunch --launchpad-platform zora --launchpad-platform zora_creator --launchpad-platform baseapp --launchpad-platform basememe --launchpad-platform virtuals_v2 --launchpad-platform klik \
+  --limit 80
+
+# Near completion only
+gmgn-cli market trenches --chain base --raw \
+  --type near_completion \
+  --launchpad-platform clanker --launchpad-platform bankr --launchpad-platform flaunch --launchpad-platform zora --launchpad-platform zora_creator --launchpad-platform baseapp --launchpad-platform basememe --launchpad-platform virtuals_v2 --launchpad-platform klik \
+  --limit 80
+
+# Completed (open market) only
+gmgn-cli market trenches --chain base --raw \
+  --type completed \
+  --launchpad-platform clanker --launchpad-platform bankr --launchpad-platform flaunch --launchpad-platform zora --launchpad-platform zora_creator --launchpad-platform baseapp --launchpad-platform basememe --launchpad-platform virtuals_v2 --launchpad-platform klik \
+  --limit 80
 ```
 
 ## Notes

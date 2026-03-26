@@ -61,11 +61,14 @@ export function registerMarketCommands(program: Command): void {
     .command("trenches")
     .description("Get Trenches token data (new creation, near completion, completed)")
     .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .option("--type <type...>", "Categories to query, repeatable: new_creation / near_completion / completed (default: all three)")
+    .option("--launchpad-platform <platform...>", "Launchpad platform filter, repeatable (default: all platforms for the chain)")
+    .option("--limit <n>", "Max results per category, max 80 (default: 80)", parseInt)
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       validateChain(opts.chain);
       const client = new OpenApiClient(getConfig());
-      const data = await client.getTrenches(opts.chain).catch(exitOnError);
+      const data = await client.getTrenches(opts.chain, opts.type, opts.launchpadPlatform, opts.limit).catch(exitOnError);
       printResult(data, opts.raw);
     });
 }

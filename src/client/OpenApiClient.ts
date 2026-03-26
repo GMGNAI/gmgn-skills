@@ -126,8 +126,8 @@ export class OpenApiClient {
     return this.normalRequest("GET", "/v1/user/wallet_token_balance", { chain, wallet_address: walletAddress, token_address: tokenAddress });
   }
 
-  async getTrenches(chain: string): Promise<unknown> {
-    const body = buildTrenchesBody(chain);
+  async getTrenches(chain: string, types?: string[], platforms?: string[], limit?: number): Promise<unknown> {
+    const body = buildTrenchesBody(chain, types, platforms, limit);
     return this.normalRequest("POST", "/v1/trenches", { chain }, body);
   }
 
@@ -330,21 +330,23 @@ const TRENCHES_QUOTE_ADDRESS_TYPES: Record<string, number[]> = {
   base: [11, 3, 12, 13, 0],
 };
 
-function buildTrenchesBody(chain: string): Record<string, unknown> {
-  const launchpad_platform = TRENCHES_PLATFORMS[chain] ?? [];
+function buildTrenchesBody(chain: string, types?: string[], platforms?: string[], limit?: number): Record<string, unknown> {
+  const selectedTypes = types?.length ? types : ["new_creation", "near_completion", "completed"];
+  const launchpad_platform = platforms?.length ? platforms : (TRENCHES_PLATFORMS[chain] ?? []);
   const quote_address_type = TRENCHES_QUOTE_ADDRESS_TYPES[chain] ?? [];
+  const actualLimit = limit ?? 80;
   const section = {
     filters: ["offchain", "onchain"],
     launchpad_platform,
     quote_address_type,
     launchpad_platform_v2: true,
+    limit: actualLimit,
   };
-  return {
-    new_creation:    { ...section, limit: 60 },
-    near_completion: { ...section, limit: 120 },
-    completed:       { ...section, limit: 60 },
-    version: "v2",
-  };
+  const body: Record<string, unknown> = { version: "v2" };
+  for (const type of selectedTypes) {
+    body[type] = { ...section };
+  }
+  return body;
 }
 
 function buildUrl(base: string, query: Record<string, string | number | string[]>): string {
