@@ -72,7 +72,7 @@ gmgn-cli portfolio token-balance \
   --chain sol --wallet <wallet_address> --token <token_address>
 ```
 
-## Holdings Options
+## `portfolio holdings` Options
 
 | Option | Description |
 |--------|-------------|
@@ -87,7 +87,7 @@ gmgn-cli portfolio token-balance \
 | `--hide-closed` | Hide closed positions |
 | `--hide-open` | Hide open positions |
 
-## Activity Options
+## `portfolio activity` Options
 
 | Option | Description |
 |--------|-------------|
@@ -98,13 +98,13 @@ gmgn-cli portfolio token-balance \
 
 The activity response includes a `next` field. Pass it to `--cursor` to fetch the next page.
 
-## Stats Options
+## `portfolio stats` Options
 
 | Option | Description |
 |--------|-------------|
 | `--period <period>` | Stats period: `7d` / `30d` (default `7d`) |
 
-## Follow-Wallet Options
+## `portfolio follow-wallet` Options
 
 | Option | Description |
 |--------|-------------|
@@ -122,7 +122,7 @@ The activity response includes a `next` field. Pass it to `--cursor` to fetch th
 | `--max-amount-usd <n>` | Maximum trade amount (USD) |
 | `--is-gray` | Gray mode filter |
 
-## KOL / Smart Money Options
+## `portfolio kol` / `portfolio smartmoney` Options
 
 | Option | Description |
 |--------|-------------|

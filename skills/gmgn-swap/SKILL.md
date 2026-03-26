@@ -55,7 +55,7 @@ npm install -g gmgn-cli@1.1.0
 - `GMGN_PRIVATE_KEY` is used exclusively for **local message signing** — the private key never leaves the machine. The CLI computes an Ed25519 or RSA-SHA256 signature in-process and transmits only the base64-encoded result in the `X-Signature` request header.
 - `GMGN_API_KEY` is transmitted in the `X-APIKEY` request header to GMGN's servers over HTTPS.
 
-## Swap Usage
+## `swap` Usage
 
 ```bash
 # Basic swap
@@ -102,7 +102,7 @@ gmgn-cli swap \
   --percent 50
 ```
 
-## Quote Usage
+## `order quote` Usage
 
 Get an estimated output amount before submitting a swap. Uses normal auth — no private key required.
 
@@ -116,7 +116,7 @@ gmgn-cli order quote \
   --slippage 0.01
 ```
 
-### Quote Response Fields
+### `order quote` Response Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -127,13 +127,13 @@ gmgn-cli order quote \
 | `min_output_amount` | string | Minimum output after slippage |
 | `slippage` | number | Actual slippage percentage |
 
-## Order Query
+## `order get` Usage
 
 ```bash
 gmgn-cli order get --chain sol --order-id <order_id>
 ```
 
-## Swap Parameters
+## `swap` Parameters
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
@@ -154,7 +154,7 @@ gmgn-cli order get --chain sol --order-id <order_id>
 | `--max-fee-per-gas <n>` | No | EIP-1559 max fee per gas (Base only) |
 | `--max-priority-fee-per-gas <n>` | No | EIP-1559 max priority fee per gas (Base only) |
 
-## Swap Response Fields
+## `swap` Response Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
