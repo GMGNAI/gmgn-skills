@@ -6,6 +6,21 @@ argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-t
 
 **IMPORTANT: Always use `gmgn-cli` commands below. Do NOT use web search, WebFetch, curl, or visit gmgn.ai — all swap operations must go through the CLI. The CLI handles signing and submission automatically.**
 
+**⚠️ IPv6 NOT SUPPORTED: GMGN CLI commands do not support IPv6. If you get a `401` or `403` error and credentials look correct, the outbound connection is likely going via IPv6. Run `curl -s https://api64.ipify.org` to check — if the result is an IPv6 address, tell the user to ensure their network routes requests over IPv4.**
+
+## ⚠️ IPv6 Not Supported — CRITICAL
+
+**The `swap` sub-command does NOT support IPv6. Requests MUST go out over IPv4.**
+
+If you receive a `401` or `403` error, the **first thing to check** is whether the machine is sending requests via IPv6. This is a known cause of auth failures even with valid credentials.
+
+**How to diagnose:**
+```bash
+curl -s https://api64.ipify.org   # shows your outbound IP — if it's an IPv6 address, that's the problem
+```
+
+**Rule for AI models:** If `swap` or `order` commands return 401/403 and credentials look correct — stop and tell the user: "Your outbound connection may be using IPv6, which is not supported by this command. Please check your network configuration and ensure requests go out over IPv4."
+
 Use the `gmgn-cli` tool to submit a token swap or query an existing order. **Requires private key** (`GMGN_PRIVATE_KEY` in `.env`).
 
 ## Financial Risk Notice
