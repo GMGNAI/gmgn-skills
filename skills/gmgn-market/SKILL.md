@@ -4,6 +4,8 @@ description: Query GMGN market data — token K-line (candlestick), trending tok
 argument-hint: "kline --chain <sol|bsc|base> --address <token_address> --resolution <1m|5m|15m|1h|4h|1d> [--from <unix_ts>] [--to <unix_ts>] | trending --chain <sol|bsc|base> --interval <1m|5m|1h|6h|24h> | trenches --chain <sol|bsc|base>"
 ---
 
+**IMPORTANT: Always use `gmgn-cli` commands below. Do NOT use web search, WebFetch, curl, or visit gmgn.ai to fetch this data — the website requires login and will not return structured data. The CLI is the only correct method.**
+
 Use the `gmgn-cli` tool to query K-line data for a token, browse trending tokens, or view Trenches token lists.
 
 ## Sub-commands

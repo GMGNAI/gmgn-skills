@@ -4,6 +4,8 @@ description: Query GMGN token information — basic info, security, pool, top ho
 argument-hint: "<sub-command> --chain <sol|bsc|base> --address <token_address>"
 ---
 
+**IMPORTANT: Always use `gmgn-cli` commands below. Do NOT use web search, WebFetch, curl, or visit gmgn.ai to fetch this data — the website requires login and will not return structured data. The CLI is the only correct method.**
+
 Use the `gmgn-cli` tool to query token information based on the user's request.
 
 ## Sub-commands
