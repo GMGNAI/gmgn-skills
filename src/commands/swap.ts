@@ -97,4 +97,5 @@ export function registerSwapCommands(program: Command): void {
       const data = await client.queryOrder(opts.orderId, opts.chain).catch(exitOnError);
       printResult(data, opts.raw);
     });
+
 }

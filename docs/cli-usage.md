@@ -141,6 +141,8 @@ npx gmgn-cli market trending \
 
 ---
 
+---
+
 ## portfolio holdings
 
 Query wallet token holdings.
@@ -456,6 +458,8 @@ npx gmgn-cli order get --chain <chain> --order-id <order_id> [--raw]
 | `--order-id` | Yes | Order ID (returned by the `swap` command) |
 
 **Response fields (data):** Same structure as the `swap` response above.
+
+---
 
 ---
 

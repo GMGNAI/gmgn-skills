@@ -365,6 +365,12 @@ npx gmgn-cli track smartmoney --limit 100 --raw
 npx gmgn-cli track smartmoney --chain sol --side sell --limit 50 --raw
 ```
 
+### Trade
+
+```bash
+npx gmgn-cli trade follow-wallet --chain sol
+```
+
 ### Swap（需要私钥）
 
 ```bash

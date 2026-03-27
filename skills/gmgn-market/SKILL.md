@@ -14,7 +14,7 @@ Use the `gmgn-cli` tool to query K-line data for a token, browse trending tokens
 |-------------|-------------|
 | `market kline` | Token candlestick / OHLCV data and trading volume over a time range |
 | `market trending` | Trending tokens ranked by swap activity — use `--interval` to specify the time window (e.g. `1m` for 1-minute hottest, `1h` for 1-hour trending) |
-| `market trenches` | Newly launched launchpad paltform tokens — **use this when the user asks for "new tokens", "just launched tokens", "latest tokens on pump.fun/letsbonk"**. Three categories: `new_creation` (just created), `near_completion` (bonding curve almost full), `completed` (graduated to open market / DEX) |
+| `market trenches` | Newly launched launchpad platform tokens — **use this when the user asks for "new tokens", "just launched tokens", "latest tokens on pump.fun/letsbonk"**. Three categories: `new_creation` (just created), `near_completion` (bonding curve almost full), `completed` (graduated to open market / DEX) |
 
 ## Supported Chains
 

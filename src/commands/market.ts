@@ -71,5 +71,5 @@ export function registerMarketCommands(program: Command): void {
       const data = await client.getTrenches(opts.chain, opts.type, opts.launchpadPlatform, opts.limit).catch(exitOnError);
       printResult(data, opts.raw);
     });
-}
 
+}
