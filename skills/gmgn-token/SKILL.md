@@ -209,23 +209,106 @@ The response has four nested objects: `pool`, `link`, `stat`, `wallet_tags_stat`
 
 ---
 
-### `token holders` / `token traders` — Item Fields
+### `token holders` / `token traders` — Response Fields
 
-Each item in the result array:
+The response is an object with a `list` array. Each item in `list` represents one wallet.
+
+**Identity & Holdings**
 
 | Field | Description |
 |-------|-------------|
 | `address` | Wallet address |
-| `name` | Wallet label or alias (if known) |
-| `tags` | Wallet tags (e.g. `["renowned"]`, `["smart_degen"]`) |
-| `amount_percentage` | Percentage of total supply held (0–1); e.g. `0.05` = 5% |
-| `amount` | Raw token amount held |
-| `value` | USD value of holdings |
-| `profit` | Realized profit in USD (positive = profit, negative = loss) |
-| `unrealized_profit` | Unrealized profit in USD based on current price |
-| `buy_volume_cur` | Total buy volume in USD for the current period |
-| `sell_volume_cur` | Total sell volume in USD for the current period |
-| `profit_change` | Profit change ratio |
+| `account_address` | Token account address (the on-chain account holding the token, distinct from the wallet address) |
+| `addr_type` | Address type: `0` = regular wallet, `2` = exchange / liquidity pool |
+| `exchange` | Exchange or pool name if `addr_type` is `2` (e.g. `pump_amm`, `raydium`) |
+| `wallet_tag_v2` | Rank label in this list (e.g. `TOP1`, `TOP2`, ...) |
+| `native_balance` | Native token balance in smallest unit (lamports for SOL) |
+| `balance` | Current token balance (human-readable units) |
+| `amount_cur` | Same as `balance` — current token amount held |
+| `usd_value` | USD value of current holdings at current price |
+| `amount_percentage` | Ratio of total supply held (0–1); e.g. `0.05` = 5% |
+| `is_on_curve` | `true` = still on bonding curve (pump.fun pre-graduation); `false` = open market |
+| `is_new` | Whether this is a newly created wallet |
+| `is_suspicious` | Whether this wallet is flagged as suspicious |
+| `transfer_in` | Whether the current holding was received via transfer (not bought) |
+
+**Trading Summary**
+
+| Field | Description |
+|-------|-------------|
+| `buy_volume_cur` | Total buy volume in USD |
+| `sell_volume_cur` | Total sell volume in USD |
+| `buy_amount_cur` | Total tokens bought |
+| `sell_amount_cur` | Total tokens sold |
+| `sell_amount_percentage` | Ratio of bought tokens that have been sold (0–1); `1.0` = fully exited |
+| `buy_tx_count_cur` | Number of buy transactions |
+| `sell_tx_count_cur` | Number of sell transactions |
+| `netflow_usd` | Net USD flow = sell income − buy cost (negative = net spent) |
+| `netflow_amount` | Net token flow = bought − sold (positive = still holding net position) |
+
+**Cost & P&L**
+
+| Field | Description |
+|-------|-------------|
+| `avg_cost` | Average buy price in USD per token |
+| `avg_sold` | Average sell price in USD per token |
+| `history_bought_cost` | Total USD spent buying |
+| `history_bought_fee` | Total fees paid on buys in USD |
+| `history_sold_income` | Total USD received from selling |
+| `history_sold_fee` | Total fees paid on sells in USD |
+| `total_cost` | Total cost basis including fees |
+| `profit` | Total profit in USD (realized + unrealized) |
+| `profit_change` | Total profit ratio = profit / total_cost |
+| `realized_profit` | Realized profit in USD from completed sells |
+| `realized_pnl` | Realized profit ratio = realized_profit / buy_cost |
+| `unrealized_profit` | Unrealized profit in USD on current holdings at current price |
+| `unrealized_pnl` | Unrealized profit ratio; `null` if no current holdings |
+
+**Transfer History**
+
+| Field | Description |
+|-------|-------------|
+| `current_transfer_in_amount` | Tokens received via transfer (not bought) in current period |
+| `current_transfer_out_amount` | Tokens sent out via transfer (not sold) in current period |
+| `history_transfer_in_amount` | Historical total tokens received via transfer |
+| `history_transfer_in_cost` | Estimated cost basis of transferred-in tokens |
+| `history_transfer_out_amount` | Historical total tokens sent out via transfer |
+| `history_transfer_out_income` | Estimated income from transferred-out tokens |
+| `history_transfer_out_fee` | Fees paid on transfer-outs |
+| `transfer_in_count` | Number of inbound transfers |
+| `transfer_out_count` | Number of outbound transfers |
+
+**Timing**
+
+| Field | Description |
+|-------|-------------|
+| `start_holding_at` | Unix timestamp when wallet first acquired this token |
+| `end_holding_at` | Unix timestamp when wallet fully exited; `null` if still holding |
+| `last_active_timestamp` | Unix timestamp of most recent on-chain activity for this token |
+| `last_block` | Block number of last activity |
+
+**Wallet Identity**
+
+| Field | Description |
+|-------|-------------|
+| `name` | Wallet display name (if known) |
+| `twitter_username` | Twitter / X username |
+| `twitter_name` | Twitter / X display name |
+| `avatar` | Avatar image URL |
+| `tags` | Platform-level wallet tags (e.g. `["kol"]`, `["smart_degen"]`, `["axiom"]`) |
+| `maker_token_tags` | Token-specific behavior tags for this wallet (e.g. `["bundler"]`, `["paper_hands"]`, `["top_holder"]`) |
+| `created_at` | Wallet creation timestamp (Unix seconds); `0` if unknown |
+
+**Last Transaction Records**
+
+Each of the following is an object with `name`, `address`, `timestamp`, `tx_hash`, `type`:
+
+| Field | Description |
+|-------|-------------|
+| `native_transfer` | Most recent native token (SOL/BNB/ETH) transfer associated with this wallet |
+| `token_transfer` | Most recent token transfer (buy or sell) |
+| `token_transfer_in` | Most recent inbound token transfer |
+| `token_transfer_out` | Most recent outbound token transfer |
 
 ---
 
