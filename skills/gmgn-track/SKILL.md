@@ -35,7 +35,7 @@ Use the `gmgn-cli` tool to query on-chain tracking data based on the user's requ
 - `.env` file with `GMGN_API_KEY` set
 - `GMGN_PRIVATE_KEY` required for `track follow-wallet` (signature auth); not needed for `track kol` / `track smartmoney`
 - Run from the directory where your `.env` file is located, or set `GMGN_HOST` in your environment
-- `gmgn-cli` installed globally: `npm install -g gmgn-cli@1.1.0`
+- `gmgn-cli` installed globally: `npm install -g gmgn-cli`
 
 ## Usage Examples
 

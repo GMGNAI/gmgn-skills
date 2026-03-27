@@ -26,7 +26,7 @@ Use the `gmgn-cli` tool to query token information based on the user's request.
 
 - `.env` file with `GMGN_API_KEY` set
 - Run from the directory where your `.env` file is located, or set `GMGN_HOST` in your environment
-- `gmgn-cli` installed globally: `npm install -g gmgn-cli@1.1.0`
+- `gmgn-cli` installed globally: `npm install -g gmgn-cli`
 
 ## Parameters — `token info` / `token security` / `token pool`
 
