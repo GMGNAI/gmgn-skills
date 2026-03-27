@@ -81,11 +81,9 @@ gmgn-cli portfolio token-balance \
 | `--cursor <cursor>` | Pagination cursor |
 | `--order-by <field>` | Sort field: `usd_value` / `last_active_timestamp` / `realized_profit` / `unrealized_profit` / `total_profit` / `history_bought_cost` / `history_sold_income` (default `usd_value`) |
 | `--direction <asc\|desc>` | Sort direction (default `desc`) |
-| `--sell-out` | Include sold-out positions |
-| `--show-small` | Include small-value positions |
-| `--hide-abnormal` | Hide abnormal positions |
-| `--hide-airdrop` | Hide airdrop positions |
-| `--hide-closed` | Hide closed positions |
+| `--hide-abnormal <bool>` | Hide abnormal positions: `true` / `false` (default: `false`) |
+| `--hide-airdrop <bool>` | Hide airdrop positions: `true` / `false` (default: `true`) |
+| `--hide-closed <bool>` | Hide closed positions: `true` / `false` (default: `true`) |
 | `--hide-open` | Hide open positions |
 
 ## `portfolio activity` Options
