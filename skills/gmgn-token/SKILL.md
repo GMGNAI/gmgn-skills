@@ -47,7 +47,7 @@ Use the `gmgn-cli` tool to query token information based on the user's request.
 | `--limit` | No | `20` | Number of results, max `100` |
 | `--order-by` | No | `amount_percentage` | Sort field — see table below |
 | `--direction` | No | `desc` | Sort direction: `asc` / `desc` |
-| `--tag` | No | — | Wallet filter: `renowned` (KOL wallets) / `smart_degen` (smart money) |
+| `--tag` | No | — | Wallet filter: `renowned` (KOL wallets) / `smart_degen` (smart money). Omit to return all wallets. |
 | `--raw` | No | — | Output raw single-line JSON |
 
 ### `--order-by` Values
