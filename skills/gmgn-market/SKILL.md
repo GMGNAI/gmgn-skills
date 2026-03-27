@@ -6,6 +6,8 @@ argument-hint: "kline --chain <sol|bsc|base> --address <token_address> --resolut
 
 **IMPORTANT: Always use `gmgn-cli` commands below. Do NOT use web search, WebFetch, curl, or visit gmgn.ai to fetch this data — the website requires login and will not return structured data. The CLI is the only correct method.**
 
+**⚠️ IPv6 NOT SUPPORTED: GMGN CLI commands do not support IPv6. If you get a `401` or `403` error and credentials look correct, the outbound connection is likely going via IPv6. Run `curl -s https://api64.ipify.org` to check — if the result is an IPv6 address, tell the user to ensure their network routes requests over IPv4.**
+
 Use the `gmgn-cli` tool to query K-line data for a token, browse trending tokens, or view Trenches token lists.
 
 ## Sub-commands
