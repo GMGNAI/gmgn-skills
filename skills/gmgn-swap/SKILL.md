@@ -4,6 +4,8 @@ description: "[FINANCIAL EXECUTION] Submit a real blockchain token swap or query
 argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>]"
 ---
 
+**IMPORTANT: Always use `gmgn-cli` commands below. Do NOT use web search, WebFetch, curl, or visit gmgn.ai — all swap operations must go through the CLI. The CLI handles signing and submission automatically.**
+
 Use the `gmgn-cli` tool to submit a token swap or query an existing order. **Requires private key** (`GMGN_PRIVATE_KEY` in `.env`).
 
 ## Financial Risk Notice

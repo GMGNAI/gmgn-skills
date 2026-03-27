@@ -148,17 +148,19 @@ export class OpenApiClient {
   }
 
   async getFollowWallet(chain: string, extra: Record<string, string | number | string[]> = {}): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/trade/follow_wallet", { chain, ...extra });
+    return this.criticalRequest("GET", "/v1/trade/follow_wallet", { chain, ...extra }, null);
   }
 
-  async getKol(limit?: number): Promise<unknown> {
+  async getKol(chain?: string, limit?: number): Promise<unknown> {
     const query: Record<string, string | number> = {};
+    if (chain) query["chain"] = chain;
     if (limit != null) query["limit"] = limit;
     return this.normalRequest("GET", "/v1/user/kol", query);
   }
 
-  async getSmartMoney(limit?: number): Promise<unknown> {
+  async getSmartMoney(chain?: string, limit?: number): Promise<unknown> {
     const query: Record<string, string | number> = {};
+    if (chain) query["chain"] = chain;
     if (limit != null) query["limit"] = limit;
     return this.normalRequest("GET", "/v1/user/smartmoney", query);
   }

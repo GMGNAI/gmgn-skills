@@ -21,6 +21,7 @@
 | [`/gmgn-token`](skills/gmgn-token/SKILL.md) | Token 信息、安全、池子、持有者、交易者 | [SKILL.md](skills/gmgn-token/SKILL.md) |
 | [`/gmgn-market`](skills/gmgn-market/SKILL.md) | K 线行情数据、热门代币 | [SKILL.md](skills/gmgn-market/SKILL.md) |
 | [`/gmgn-portfolio`](skills/gmgn-portfolio/SKILL.md) | 钱包持仓、活动、统计 | [SKILL.md](skills/gmgn-portfolio/SKILL.md) |
+| [`/gmgn-track`](skills/gmgn-track/SKILL.md) | 追踪关注钱包交易动态、KOL 交易动态、聪明钱交易动态 | [SKILL.md](skills/gmgn-track/SKILL.md) |
 | [`/gmgn-swap`](skills/gmgn-swap/SKILL.md) | 兑换提交 + 订单查询 | [SKILL.md](skills/gmgn-swap/SKILL.md) |
 
 > 如需查看详细的 CLI 接口说明、传参格式和推荐值，请参阅 [Wiki 文档](https://github.com/GMGNAI/gmgn-skills/wiki/Home-Chinese)。
@@ -28,6 +29,11 @@
 ### 快速开始安装
 
 已准备好？[点击这里开始安装 Skills →](#开始安装-skills)
+
+> **提示：** 如果你的 AI Agent 尝试直接打开 gmgn.ai 网站而不是使用 CLI，请在提示词中加上：
+> ```
+> 用 gmgn-cli 命令，不要直接请求gmgn.ai网页接口。
+> ```
 
 ---
 
@@ -67,7 +73,7 @@
 
 ## 1. 安装
 
-选择以下任意一种方式：
+选择以下任意一种方式
 
 ### 1.1 通过 Agent 安装（推荐）
 
@@ -194,7 +200,7 @@ cp .env.example .env
    ```bash
    echo "$(npm root -g)/gmgn-skills/skills"
    ```
-3. 重启 Cline — `/gmgn-token`、`/gmgn-market`、`/gmgn-portfolio`、`/gmgn-swap` 即可使用
+3. 重启 Cline — `/gmgn-token`、`/gmgn-market`、`/gmgn-portfolio`、`/gmgn-track`、`/gmgn-swap` 即可使用
 
 #### Codex CLI
 
@@ -337,19 +343,26 @@ npx gmgn-cli portfolio activity --chain sol --wallet <addr>
 npx gmgn-cli portfolio stats --chain sol --wallet <addr1> --wallet <addr2>
 
 # API Key 绑定的钱包及主币余额
-npx gmgn-cli portfolio info --chain sol
+npx gmgn-cli portfolio info
 
 # 单个 token 余额
 npx gmgn-cli portfolio token-balance --chain sol --wallet <addr> --token <token_addr>
+```
 
-# 跟单交易记录
-npx gmgn-cli portfolio follow-wallet --chain sol
+### Track
 
-# KOL 交易记录（仅 SOL）
-npx gmgn-cli portfolio kol
+```bash
+# 追踪关注钱包的交易动态（需要 GMGN_PRIVATE_KEY）
+npx gmgn-cli track follow-wallet --chain sol
+npx gmgn-cli track follow-wallet --chain sol --wallet <wallet_address> --side buy
 
-# 聪明钱交易记录（仅 SOL）
-npx gmgn-cli portfolio smartmoney
+# KOL 交易动态
+npx gmgn-cli track kol --limit 100 --raw
+npx gmgn-cli track kol --chain sol --side buy --limit 50 --raw
+
+# 聪明钱交易动态
+npx gmgn-cli track smartmoney --limit 100 --raw
+npx gmgn-cli track smartmoney --chain sol --side sell --limit 50 --raw
 ```
 
 ### Swap（需要私钥）
@@ -399,7 +412,7 @@ npx gmgn-cli order get --chain sol --order-id <order-id>
 
 | 接口类型 | 支持的链 | 链原生货币 |
 |----------|----------|-----------|
-| token / market / portfolio | `sol` / `bsc` / `base` | — |
+| token / market / portfolio / track | `sol` / `bsc` / `base` | — |
 | swap / order | `sol` / `bsc` / `base` | sol: SOL、USDC · bsc: BNB、USDC · base: ETH、USDC |
 
 ---

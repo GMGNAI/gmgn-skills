@@ -8,6 +8,7 @@ import { Command } from "commander";
 import { registerTokenCommands } from "./commands/token.js";
 import { registerMarketCommands } from "./commands/market.js";
 import { registerPortfolioCommands } from "./commands/portfolio.js";
+import { registerTrackCommands } from "./commands/track.js";
 import { registerSwapCommands } from "./commands/swap.js";
 
 const proxy = process.env.HTTPS_PROXY ?? process.env.https_proxy
@@ -50,6 +51,7 @@ program
 registerTokenCommands(program);
 registerMarketCommands(program);
 registerPortfolioCommands(program);
+registerTrackCommands(program);
 registerSwapCommands(program);
 
 program.parseAsync().catch((err) => {

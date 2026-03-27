@@ -21,6 +21,7 @@ With GMGN Agent Skills, you can use AI agents to query real-time trending token 
 | [`/gmgn-token`](skills/gmgn-token/SKILL.md) | Token info, security, pool, holders, traders | [SKILL.md](skills/gmgn-token/SKILL.md) |
 | [`/gmgn-market`](skills/gmgn-market/SKILL.md) | K-line market data, trending tokens | [SKILL.md](skills/gmgn-market/SKILL.md) |
 | [`/gmgn-portfolio`](skills/gmgn-portfolio/SKILL.md) | Wallet holdings, activity, stats | [SKILL.md](skills/gmgn-portfolio/SKILL.md) |
+| [`/gmgn-track`](skills/gmgn-track/SKILL.md) | Follow-wallet trades, KOL trades, Smart Money trades | [SKILL.md](skills/gmgn-track/SKILL.md) |
 | [`/gmgn-swap`](skills/gmgn-swap/SKILL.md) | Swap submission + order query | [SKILL.md](skills/gmgn-swap/SKILL.md) |
 
 > For detailed CLI commands, parameters, and recommended values, see the [Wiki documentation](https://github.com/GMGNAI/gmgn-skills/wiki).
@@ -28,6 +29,11 @@ With GMGN Agent Skills, you can use AI agents to query real-time trending token 
 ### Quick Start
 
 Ready to install skills? [Jump to Installation →](#get-started)
+
+> **Tip:** If your AI agent tries to open or scrape the gmgn.ai website instead of using the CLI, add this to your prompt:
+> ```
+> Use gmgn-cli commands. Do not call gmgn.ai web endpoints directly.
+> ```
 
 ---
 
@@ -194,7 +200,7 @@ Skills are automatically discovered via the `.cursor-plugin/` configuration.
    ```bash
    echo "$(npm root -g)/gmgn-skills/skills"
    ```
-3. Restart Cline — `/gmgn-token`, `/gmgn-market`, `/gmgn-portfolio`, `/gmgn-swap` will be available
+3. Restart Cline — `/gmgn-token`, `/gmgn-market`, `/gmgn-portfolio`, `/gmgn-track`, `/gmgn-swap` will be available
 
 #### Codex CLI
 
@@ -291,6 +297,22 @@ npx gmgn-cli market trenches \
 npx gmgn-cli portfolio holdings --chain sol --wallet <addr>
 ```
 
+### Track
+
+```bash
+# Follow-wallet trade records (requires GMGN_PRIVATE_KEY)
+npx gmgn-cli track follow-wallet --chain sol
+npx gmgn-cli track follow-wallet --chain sol --wallet <wallet_address> --side buy
+
+# KOL trade records
+npx gmgn-cli track kol --limit 100 --raw
+npx gmgn-cli track kol --chain sol --side buy --limit 50 --raw
+
+# Smart Money trade records
+npx gmgn-cli track smartmoney --limit 100 --raw
+npx gmgn-cli track smartmoney --chain sol --side sell --limit 50 --raw
+```
+
 ### Swap (requires private key)
 
 ```bash
@@ -320,7 +342,7 @@ npx gmgn-cli order get --chain sol --order-id <order-id>
 
 | Commands | Chains | Chain Currencies |
 |----------|--------|-----------------|
-| token / market / portfolio | `sol` / `bsc` / `base` | — |
+| token / market / portfolio / track | `sol` / `bsc` / `base` | — |
 | swap / order | `sol` / `bsc` / `base` | sol: SOL, USDC · bsc: BNB, USDC · base: ETH, USDC |
 
 ---
