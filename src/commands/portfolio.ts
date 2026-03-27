@@ -17,11 +17,9 @@ export function registerPortfolioCommands(program: Command): void {
     .option("--order-by <field>", "Sort field: usd_value / last_active_timestamp / realized_profit / unrealized_profit / total_profit / history_bought_cost / history_sold_income", "usd_value")
     .option("--direction <dir>", "Sort direction: asc / desc", "desc")
     .option("--interval <interval>", "Stats interval (default 24h)")
-    .option("--sell-out", "Include sold-out positions")
-    .option("--show-small", "Include small-value positions")
-    .option("--hide-abnormal", "Hide abnormal positions")
-    .option("--hide-airdrop", "Hide airdrop positions")
-    .option("--hide-closed", "Hide closed positions")
+    .option("--hide-abnormal <bool>", "Hide abnormal positions (default: false)", "false")
+    .option("--hide-airdrop <bool>", "Hide airdrop positions (default: true)", "true")
+    .option("--hide-closed <bool>", "Hide closed positions (default: true)", "true")
     .option("--hide-open", "Hide open positions")
     .option("--tx30d", "Only show positions with trades in last 30 days")
     .option("--raw", "Output raw JSON")
@@ -34,11 +32,9 @@ export function registerPortfolioCommands(program: Command): void {
       if (opts.orderBy) extra["order_by"] = opts.orderBy;
       if (opts.direction) extra["direction"] = opts.direction;
       if (opts.interval) extra["interval"] = opts.interval;
-      if (opts.sellOut) extra["sell_out"] = "true";
-      if (opts.showSmall) extra["show_small"] = "true";
-      if (opts.hideAbnormal) extra["hide_abnormal"] = "true";
-      if (opts.hideAirdrop) extra["hide_airdrop"] = "true";
-      if (opts.hideClosed) extra["hide_closed"] = "true";
+      extra["hide_abnormal"] = opts.hideAbnormal;
+      extra["hide_airdrop"]  = opts.hideAirdrop;
+      extra["hide_closed"]   = opts.hideClosed;
       if (opts.hideOpen) extra["hide_open"] = "true";
       if (opts.tx30d) extra["tx30d"] = "true";
 
