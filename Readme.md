@@ -30,6 +30,8 @@ With GMGN Agent Skills, you can use AI agents to query real-time trending token 
 
 Ready to install skills? [Jump to Installation →](#get-started)
 
+Already installed? [Update Skills and CLI →](#9-upgrade-skills-and-cli)
+
 > **Tip:** If your AI agent tries to open or scrape the gmgn.ai website instead of using the CLI, add this to your prompt:
 > ```
 > Use gmgn-cli commands. Do not call gmgn.ai web endpoints directly.
