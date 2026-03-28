@@ -332,7 +332,23 @@ market trending (top 50)  →  AI selects top 5 by multi-factor analysis  →  u
 
 ---
 
-## 7. CLI Reference
+## 7. Workflow Docs
+
+Step-by-step guides for common analysis tasks:
+
+| Workflow | When to use |
+|----------|-------------|
+| [workflow-token-research.md](docs/workflow-token-research.md) | Pre-buy token due diligence (address → buy/watch/skip) |
+| [workflow-project-deep-report.md](docs/workflow-project-deep-report.md) | Comprehensive project analysis with scored dimensions and full written report |
+| [workflow-wallet-analysis.md](docs/workflow-wallet-analysis.md) | Wallet quality assessment (address → follow/skip) |
+| [workflow-smart-money-profile.md](docs/workflow-smart-money-profile.md) | Trading style analysis, copy-trade ROI estimate, smart money leaderboard |
+| [workflow-risk-warning.md](docs/workflow-risk-warning.md) | Active risk monitoring for held positions (whale exit, liquidity, dev dump) |
+| [workflow-early-project-screening.md](docs/workflow-early-project-screening.md) | Screen newly launched launchpad tokens for smart money entry |
+| [workflow-daily-brief.md](docs/workflow-daily-brief.md) | Daily market overview: trending + smart money moves + early watch + risk scan |
+| [workflow-market-opportunities.md](docs/workflow-market-opportunities.md) | Discover trading opportunities from trending data |
+| [workflow-token-due-diligence.md](docs/workflow-token-due-diligence.md) | 4-step token due diligence checklist |
+
+## 8. CLI Reference
 
 Full parameter reference: [docs/cli-usage.md](docs/cli-usage.md). All commands support `--raw` for single-line JSON output (pipe-friendly, e.g. `| jq '.price'`).
 
