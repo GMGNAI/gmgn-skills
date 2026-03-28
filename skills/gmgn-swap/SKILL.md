@@ -2,26 +2,35 @@
 name: gmgn-swap
 description: "[FINANCIAL EXECUTION] Submit a real blockchain token swap or query order status. Executes irreversible on-chain transactions. Requires explicit user confirmation before every swap. Supports sol / bsc / base."
 argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>]"
+metadata:
+  cliHelp: "gmgn-cli swap --help"
 ---
 
 **IMPORTANT: Always use `gmgn-cli` commands below. Do NOT use web search, WebFetch, curl, or visit gmgn.ai — all swap operations must go through the CLI. The CLI handles signing and submission automatically.**
 
+**IMPORTANT: Do NOT guess field names or values. When a field's meaning is unclear, look it up in the Response Fields sections below before using it.**
+
 **⚠️ IPv6 NOT SUPPORTED: GMGN CLI commands do not support IPv6. If you get a `401` or `403` error and credentials look correct, the outbound connection is likely going via IPv6. Run `curl -s https://api64.ipify.org` to check — if the result is an IPv6 address, tell the user to ensure their network routes requests over IPv4.**
 
-## ⚠️ IPv6 Not Supported — CRITICAL
-
-**The `swap` sub-command does NOT support IPv6. Requests MUST go out over IPv4.**
-
-If you receive a `401` or `403` error, the **first thing to check** is whether the machine is sending requests via IPv6. This is a known cause of auth failures even with valid credentials.
-
-**How to diagnose:**
-```bash
-curl -s https://api64.ipify.org   # shows your outbound IP — if it's an IPv6 address, that's the problem
-```
-
-**Rule for AI models:** If `swap` or `order` commands return 401/403 and credentials look correct — stop and tell the user: "Your outbound connection may be using IPv6, which is not supported by this command. Please check your network configuration and ensure requests go out over IPv4."
-
 Use the `gmgn-cli` tool to submit a token swap or query an existing order. **Requires private key** (`GMGN_PRIVATE_KEY` in `.env`).
+
+## Core Concepts
+
+- **Smallest unit** — `--amount` is always in the token's smallest indivisible unit, not human-readable amounts. For SOL: 1 SOL = 1,000,000,000 lamports. For EVM tokens: depends on decimals (most ERC-20 tokens use 18 decimals). Always convert before passing to the command — do not pass human amounts directly.
+
+- **`slippage`** — Price tolerance expressed as a decimal, not a percentage. `0.01` = 1% slippage. `0.5` = 50% slippage. If the price moves beyond this threshold before the transaction confirms, the swap is rejected. Use `--auto-slippage` for volatile tokens to let GMGN set an appropriate value automatically.
+
+- **`--amount` vs `--percent`** — Mutually exclusive. `--amount` specifies an exact input quantity (in smallest unit). `--percent` sells a percentage of the current balance and is only valid when `input_token` is NOT a currency (SOL/BNB/ETH/USDC). Never use `--percent` to spend a fraction of SOL/BNB/ETH.
+
+- **Currency tokens** — Each chain has designated currency tokens (SOL, BNB, ETH, USDC). These are the base assets used to buy other tokens or receive swap proceeds. Their contract addresses are fixed — look them up in the Chain Currencies table, never guess them.
+
+- **Anti-MEV** — MEV (Miner/Maximal Extractable Value) refers to frontrunning and sandwich attacks where bots exploit pending transactions. `--anti-mev` routes the transaction through protected channels to reduce this risk. Enabled by default.
+
+- **Critical auth** — `swap` requires both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY`. The private key never leaves the machine — the CLI uses it only for local signing and sends only the resulting signature. Normal commands (like `order quote`) use API Key alone.
+
+- **`order_id` / `status`** — After submitting a swap, the response includes an `order_id`. Use `order get --order-id` to poll for final status. Possible values: `pending` → `processed` → `confirmed` (success) or `failed` / `expired`. Do not report success until status is `confirmed`.
+
+- **`filled_input_amount` / `filled_output_amount`** — Actual amounts consumed/received, in smallest unit. Convert to human-readable using token decimals before displaying to the user.
 
 ## Financial Risk Notice
 
@@ -158,10 +167,10 @@ gmgn-cli order get --chain sol --order-id <order_id>
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--input-token` | Yes | Input token contract address |
 | `--output-token` | Yes | Output token contract address |
-| `--amount` | No* | Input amount in smallest unit. Required unless `--percent` is used. |
-| `--percent <pct>` | No* | Sell percentage of `input_token`, e.g. `50` = 50%, `1` = 1%. Sets `input_amount` to `0` automatically. **Only valid when `input_token` is NOT a currency (SOL/BNB/ETH/USDC).** |
-| `--slippage <n>` | No | Slippage tolerance, e.g. `0.01` = 1% |
-| `--auto-slippage` | No | Enable automatic slippage |
+| `--amount` | No* | Input amount in smallest unit. **Mutually exclusive with `--percent`** — provide one or the other, never both. Required unless `--percent` is used. |
+| `--percent <pct>` | No* | Sell percentage of `input_token`, e.g. `50` = 50%, `1` = 1%. Sets `input_amount` to `0` automatically. **Mutually exclusive with `--amount`. Only valid when `input_token` is NOT a currency (SOL/BNB/ETH/USDC).** |
+| `--slippage <n>` | No | Slippage tolerance, e.g. `0.01` = 1%. **Mutually exclusive with `--auto-slippage`** — use one or the other. |
+| `--auto-slippage` | No | Enable automatic slippage. **Mutually exclusive with `--slippage`.** |
 | `--min-output <n>` | No | Minimum output amount |
 | `--anti-mev` | No | Enable anti-MEV protection (default true) |
 | `--priority-fee <sol>` | No | Priority fee in SOL (≥ 0.00001, SOL only) |
@@ -184,6 +193,40 @@ gmgn-cli order get --chain sol --order-id <order_id>
 | `output_token` | string | Output token contract address |
 | `filled_input_amount` | string | Actual input consumed (smallest unit); empty if not filled |
 | `filled_output_amount` | string | Actual output received (smallest unit); empty if not filled |
+
+## Output Format
+
+### Pre-swap Confirmation
+
+Before executing, always display a confirmation summary:
+
+```
+⚠️ Swap Confirmation Required
+
+Chain:        {chain}
+Wallet:       {--from}
+Sell:         {input amount in human units} {input token symbol}
+Buy:          {output token symbol}
+Slippage:     {slippage}% (or "auto")
+Est. output:  ~{output_amount from quote} {output token symbol}
+
+Reply "confirm" to proceed.
+```
+
+### Post-swap Receipt
+
+After a confirmed swap, display:
+
+```
+✅ Swap Confirmed
+
+Spent:    {filled_input_amount in human units} {input symbol}
+Received: {filled_output_amount in human units} {output symbol}
+Tx:       {explorer link for hash}
+Order ID: {order_id}
+```
+
+Convert `filled_input_amount` and `filled_output_amount` from smallest unit using token decimals before displaying.
 
 ## Notes
 

@@ -2,26 +2,38 @@
 name: gmgn-track
 description: Query GMGN on-chain tracking data — follow-wallet trade records, KOL trades, and Smart Money trades. Supports sol / bsc / base.
 argument-hint: "<follow-wallet|kol|smartmoney> [--chain <sol|bsc|base>] [--wallet <wallet_address>]"
+metadata:
+  cliHelp: "gmgn-cli track --help"
 ---
 
 **IMPORTANT: Always use `gmgn-cli` commands below. Do NOT use web search, WebFetch, curl, or visit gmgn.ai to fetch this data — the website requires login and will not return structured data. The CLI is the only correct method.**
 
+**IMPORTANT: Do NOT guess field names or values. When a field's meaning is unclear, look it up in the Response Fields sections below before using it.**
+
 **⚠️ IPv6 NOT SUPPORTED: GMGN CLI commands do not support IPv6. If you get a `401` or `403` error and credentials look correct, the outbound connection is likely going via IPv6. Run `curl -s https://api64.ipify.org` to check — if the result is an IPv6 address, tell the user to ensure their network routes requests over IPv4.**
 
-## ⚠️ IPv6 Not Supported — CRITICAL
-
-**The `track follow-wallet` sub-command does NOT support IPv6. Requests MUST go out over IPv4.**
-
-This sub-command is known to fail with `401` or `403` when the outbound connection uses IPv6 — even when credentials are valid.
-
-**How to diagnose:**
-```bash
-curl -s https://api64.ipify.org   # if result is an IPv6 address, that's the problem
-```
-
-**Rule for AI models:** If `track follow-wallet` returns 401/403 and credentials look correct — stop and tell the user: "Your outbound connection may be using IPv6, which is not supported by this command. Please check your network configuration and ensure requests go out over IPv4."
-
 Use the `gmgn-cli` tool to query on-chain tracking data based on the user's request.
+
+## Core Concepts
+
+- **`follow-wallet` vs `kol` vs `smartmoney`** — Three distinct data sources. `follow-wallet` returns trades from wallets the user has personally followed on the GMGN platform (user-specific, requires private key). `kol` and `smartmoney` return trades from platform-tagged public wallet lists (not user-specific, API Key only). Never substitute one for another.
+
+- **KOL (Key Opinion Leader)** — Wallets publicly identified as influencers or well-known traders on GMGN. Tagged as `renowned` in the platform's wallet label system. Their trades carry social/marketing signal, not necessarily alpha.
+
+- **Smart Money (`smart_degen`)** — Wallets with a statistically proven record of profitable trading, identified by GMGN's algorithm. Same concept as `smart_degen` in gmgn-token. Their trades are a stronger alpha signal than KOL trades.
+
+- **`is_open_or_close`** — Indicates whether a trade is a full position event. Interpretation differs by sub-command:
+  - `follow-wallet`: `1` = full position open or close; `0` = partial add or reduce.
+  - `kol` / `smartmoney`: `0` = position opened / added; `1` = position closed / reduced.
+  Do not apply the same interpretation to both sub-commands.
+
+- **`price_change`** — Ratio of price change since the trade was made. `6.66` = the token is now 6.66× what it was when the wallet traded (i.e. +566%). `0.5` = price halved since the trade (-50%). Use this to assess "how well did this trade age."
+
+- **`base_address` vs `quote_address`** — In a trading pair, `base_address` is the token being bought/sold; `quote_address` is what it was priced in (typically SOL native address on Solana). To get the token of interest, always read `base_address`.
+
+- **`maker_info.tags`** — Array of platform labels on the wallet (e.g. `["kol", "gmgn"]`, `["smart_degen", "photon"]`). A wallet can carry multiple tags. Use `tag_rank` (follow-wallet only) to see the wallet's rank within each tag category.
+
+- **Cluster signal** — When multiple followed/tracked wallets trade the same token in the same direction within a short time window, this is a stronger conviction signal than a single wallet. Highlight this pattern when it appears in results.
 
 **When to use which sub-command:**
 - `track follow-wallet` — user asks "what did the wallets I follow trade?", "show me my follow list trades", "追踪关注的钱包交易动态" → requires wallets followed via GMGN platform
@@ -150,7 +162,7 @@ Each item in `list` contains:
 
 ## `track kol` / `track smartmoney` Response Fields
 
-Each item in `list` contains:
+The response is an object with a `list` array. Each item in `list` contains:
 
 | Field | Description |
 |-------|-------------|
@@ -168,6 +180,27 @@ Each item in `list` contains:
 | `timestamp` | Unix timestamp of the trade |
 | `maker_info.twitter_username` | KOL's Twitter username |
 | `maker_info.tags` | Wallet tags (e.g. `kol`, `smart_degen`, `photon`) |
+
+## Output Format
+
+### `track follow-wallet` / `track kol` / `track smartmoney` — Trade Feed
+
+Present as a reverse-chronological trade feed. Do not dump raw JSON.
+
+```
+{timestamp}  {side}  {base_token.symbol}  ${amount_usd}  by {maker_info.name or short address}
+             [{tags}]  Price: ${price_usd}  |  Price now: ${price_now}  ({price_change}x since trade)
+```
+
+Group by token if multiple trades hit the same token. Highlight tokens where several followed wallets traded in the same direction within a short window (cluster signal).
+
+For `follow-wallet`, also show `is_open_or_close`: flag full position opens/closes distinctly from partial adds/reduces.
+
+## Safety Constraints
+
+- **`track follow-wallet` requires `GMGN_PRIVATE_KEY`** — this signing key is linked to your GMGN account. It is used for authentication only (no on-chain access), but must be protected like any credential. Never expose it in logs or command output.
+- **`follow-wallet` reveals your following list** — results expose which wallets you have followed on GMGN. Do not share raw output in public channels.
+- **`track kol` / `track smartmoney` expose no personal data** — these use API Key auth only and return platform-tagged public wallet activity. Safe to share raw output.
 
 ## Notes
 

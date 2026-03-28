@@ -28,12 +28,99 @@
 
 ### 快速开始安装
 
+> **AI Agent 注意：** 如果你是正在协助用户安装或配置 gmgn-cli 的 AI Agent，请直接跳转到 [AI Agent 快速开始](#ai-agent-快速开始) — 其中包含你需要完成的所有步骤，包括如何引导用户完成 API Key 申请。如果用户要求升级，请跳转到 [AI Agent 升级](#ai-agent-升级)。
+
 已准备好？[点击这里开始安装 Skills →](#开始安装-skills)
+
+已安装？[升级 Skills 和 CLI →](#9-升级-skills-和-cli)
 
 > **提示：** 如果你的 AI Agent 尝试直接打开 gmgn.ai 网站而不是使用 CLI，请在提示词中加上：
 > ```
 > 用 gmgn-cli 命令，不要直接请求gmgn.ai网页接口。
 > ```
+
+---
+
+## AI Agent 快速开始
+
+> 以下步骤面向 AI Agent。部分步骤需要用户在浏览器中配合完成。
+
+**第 1 步 — 安装 CLI 和 Skills**
+
+```bash
+npx skills add GMGNAI/gmgn-skills
+```
+
+**第 2 步 — 用公共 Key 验证（无需注册）**
+
+```bash
+GMGN_API_KEY=gmgn_solbscbaseethmonadtron gmgn-cli market trending --chain sol --interval 1h --limit 3
+```
+
+看到 JSON 输出即表示 CLI 正常工作。
+
+**第 3 步 — 引导用户申请个人 API Key**
+
+告知用户："需要个人 API Key，请前往 **https://gmgn.ai/ai** 申请。申请时需要一个 Ed25519 公钥，我可以帮你生成密钥对，告诉我一声就行。"
+
+用户确认后运行：
+
+```bash
+openssl genpkey -algorithm ed25519 -out /tmp/gmgn_private.pem 2>/dev/null && \
+  openssl pkey -in /tmp/gmgn_private.pem -pubout 2>/dev/null
+```
+
+将**公钥**展示给用户，并附上以下说明：
+
+> 以上是你的 Ed25519 公钥。接下来请你完成以下两步：
+> 1. 打开 **https://gmgn.ai/ai**，将上方公钥填入 API Key 生成表单，完成创建。
+> 2. 创建完成后，将页面上显示的 **API Key** 复制并发送给我，我来帮你完成第 4 步配置。
+
+等用户回复 API Key 后，再继续第 4 步。
+
+**第 4 步 — 配置凭证**
+
+用户收到 API Key 后，写入全局配置：
+
+```bash
+mkdir -p ~/.config/gmgn
+# 写入 API Key（替换为用户提供的实际 Key）
+echo 'GMGN_API_KEY=<user_api_key>' > ~/.config/gmgn/.env
+chmod 600 ~/.config/gmgn/.env
+```
+
+如果用户需要 swap 能力，追加私钥：
+
+```bash
+# 追加私钥（使用第 3 步输出的 PEM 内容）
+echo 'GMGN_PRIVATE_KEY="<pem_content>"' >> ~/.config/gmgn/.env
+```
+
+**第 5 步 — 验证**
+
+```bash
+gmgn-cli market trending --chain sol --interval 1h --limit 3
+```
+
+有输出且无报错即配置完成。
+
+---
+
+## AI Agent 升级
+
+> 运行以下命令，将 CLI 和 Skills 同时升级到最新版本。
+
+```bash
+npx skills add GMGNAI/gmgn-skills
+```
+
+升级后检查版本：
+
+```bash
+gmgn-cli --version
+```
+
+> 完整升级说明请参阅[第 9 节 — 升级 Skills 和 CLI](#9-升级-skills-和-cli)。
 
 ---
 
@@ -284,23 +371,23 @@ solana 上的 <token_address> 安全吗，值得买入吗？
 
 ```bash
 # 基本信息 + 实时价格
-npx gmgn-cli token info --chain sol --address <addr>
+gmgn-cli token info --chain sol --address <addr>
 
 # 安全指标（蜜罐、税率、集中度、rug 风险）
-npx gmgn-cli token security --chain sol --address <addr>
+gmgn-cli token security --chain sol --address <addr>
 
 # 流动池信息（DEX、储备量、深度）
-npx gmgn-cli token pool --chain sol --address <addr>
+gmgn-cli token pool --chain sol --address <addr>
 
 # 持仓大户（按持仓比例排序）
-npx gmgn-cli token holders --chain sol --address <addr> --limit 50
+gmgn-cli token holders --chain sol --address <addr> --limit 50
 
 # 聪明钱持仓大户（按买入量排序）
-npx gmgn-cli token holders --chain sol --address <addr> \
+gmgn-cli token holders --chain sol --address <addr> \
   --tag smart_degen --order-by buy_volume_cur --limit 20
 
 # 交易大户（KOL，按已实现盈利排序）
-npx gmgn-cli token traders --chain sol --address <addr> \
+gmgn-cli token traders --chain sol --address <addr> \
   --tag renowned --order-by profit --limit 20
 ```
 
@@ -309,21 +396,21 @@ npx gmgn-cli token traders --chain sol --address <addr> \
 ```bash
 # K 线数据（1h 周期，最近 24 小时）
 # macOS:
-npx gmgn-cli market kline \
+gmgn-cli market kline \
   --chain sol --address <addr> \
   --resolution 1h \
   --from $(date -v-24H +%s) --to $(date +%s)
 # Linux: $(date -d '24 hours ago' +%s)
 
 # 热门代币榜（SOL，1h，按交易量排序）
-npx gmgn-cli market trending \
+gmgn-cli market trending \
   --chain sol \
   --interval 1h \
   --order-by volume --limit 20 \
   --filter not_risk --filter not_honeypot
 
 # 战壕新币列表
-npx gmgn-cli market trenches \
+gmgn-cli market trenches \
   --chain sol \
   --type new_creation --type near_completion --type completed \
   --launchpad-platform Pump.fun --launchpad-platform pump_mayhem --launchpad-platform letsbonk \
@@ -334,42 +421,42 @@ npx gmgn-cli market trenches \
 
 ```bash
 # 钱包持仓
-npx gmgn-cli portfolio holdings --chain sol --wallet <addr>
+gmgn-cli portfolio holdings --chain sol --wallet <addr>
 
 # 交易记录
-npx gmgn-cli portfolio activity --chain sol --wallet <addr>
+gmgn-cli portfolio activity --chain sol --wallet <addr>
 
 # 交易统计（支持多钱包）
-npx gmgn-cli portfolio stats --chain sol --wallet <addr1> --wallet <addr2>
+gmgn-cli portfolio stats --chain sol --wallet <addr1> --wallet <addr2>
 
 # API Key 绑定的钱包及主币余额
-npx gmgn-cli portfolio info
+gmgn-cli portfolio info
 
 # 单个 token 余额
-npx gmgn-cli portfolio token-balance --chain sol --wallet <addr> --token <token_addr>
+gmgn-cli portfolio token-balance --chain sol --wallet <addr> --token <token_addr>
 ```
 
 ### Track
 
 ```bash
 # 追踪关注钱包的交易动态（需要 GMGN_PRIVATE_KEY）
-npx gmgn-cli track follow-wallet --chain sol
-npx gmgn-cli track follow-wallet --chain sol --wallet <wallet_address> --side buy
+gmgn-cli track follow-wallet --chain sol
+gmgn-cli track follow-wallet --chain sol --wallet <wallet_address> --side buy
 
 # KOL 交易动态
-npx gmgn-cli track kol --limit 100 --raw
-npx gmgn-cli track kol --chain sol --side buy --limit 50 --raw
+gmgn-cli track kol --limit 100 --raw
+gmgn-cli track kol --chain sol --side buy --limit 50 --raw
 
 # 聪明钱交易动态
-npx gmgn-cli track smartmoney --limit 100 --raw
-npx gmgn-cli track smartmoney --chain sol --side sell --limit 50 --raw
+gmgn-cli track smartmoney --limit 100 --raw
+gmgn-cli track smartmoney --chain sol --side sell --limit 50 --raw
 ```
 
 ### Swap（需要私钥）
 
 ```bash
 # 提交兑换（固定滑点）
-npx gmgn-cli swap \
+gmgn-cli swap \
   --chain sol \
   --from <wallet-address> \
   --input-token <input-token-addr> \
@@ -378,7 +465,7 @@ npx gmgn-cli swap \
   --slippage 0.01
 
 # 提交兑换（自动滑点）
-npx gmgn-cli swap \
+gmgn-cli swap \
   --chain sol \
   --from <wallet-address> \
   --input-token <input-token-addr> \
@@ -387,7 +474,7 @@ npx gmgn-cli swap \
   --auto-slippage
 
 # 按持仓比例卖出（例：卖出 50%）
-npx gmgn-cli swap \
+gmgn-cli swap \
   --chain sol \
   --from <wallet-address> \
   --input-token <token-addr> \
@@ -396,7 +483,7 @@ npx gmgn-cli swap \
   --auto-slippage
 
 # 获取报价（不提交交易）
-npx gmgn-cli order quote \
+gmgn-cli order quote \
   --chain sol \
   --from <wallet-address> \
   --input-token <input-token-addr> \
@@ -405,7 +492,7 @@ npx gmgn-cli order quote \
   --slippage 0.01
 
 # 查询订单状态
-npx gmgn-cli order get --chain sol --order-id <order-id>
+gmgn-cli order get --chain sol --order-id <order-id>
 ```
 
 ## 8. 支持的链
@@ -449,7 +536,9 @@ gmgn-cli --version
 
 ---
 
-## 10. 安全与免责
+## 10. 安全与免责（使用前必读）
+
+本工具可供 AI Agent 调用以自动执行链上交易，存在模型幻觉、执行不可控、提示词注入等固有风险。AI Agent 在获得授权后，将以您绑定的钱包地址提交真实的链上交易，**交易一经上链即不可撤销**，可能导致资金损失，请您谨慎使用。
 
 **关于 `GMGN_PRIVATE_KEY`**
 
@@ -460,8 +549,10 @@ gmgn-cli --version
 - 限制配置文件权限：`chmod 600 ~/.config/gmgn/.env`
 - 不要将 `.env` 文件提交到版本控制系统，请将其加入 `.gitignore`
 - 不要在日志、截图或聊天中泄露 `GMGN_API_KEY` 或 `GMGN_PRIVATE_KEY`
-- 请使用最新的 gmgn-cli（`npm install -g gmgn-cli`），查看当前版本请使用 `gmgn-cli --version`。
+- 每次 swap 前，仔细核对 AI 呈现的交易摘要（链、钱包、代币地址、金额），确认无误后再回复确认
+- 建议先用小额资金验证配置后再进行大额操作
+- 请使用最新的 gmgn-cli（`npm install -g gmgn-cli`），查看当前版本请使用 `gmgn-cli --version`
 
 **免责声明**
 
-使用本工具及根据其输出做出的任何财务决策，风险由用户自行承担。GMGN 对因凭证管理不当导致的任何交易损失、错误或未授权访问不承担责任。
+使用本工具及根据其输出做出的任何财务决策，风险由用户自行承担。GMGN 对因模型幻觉、提示词注入、凭证管理不当或用户操作失误导致的任何交易损失、错误或未授权访问不承担责任。使用本工具即视为您已充分知悉上述风险并自愿承担全部责任。
