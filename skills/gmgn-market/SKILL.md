@@ -2,13 +2,39 @@
 name: gmgn-market
 description: Query GMGN market data — token K-line (candlestick), trending token swap data, and Trenches token lists. Supports sol / bsc / base.
 argument-hint: "kline --chain <sol|bsc|base> --address <token_address> --resolution <1m|5m|15m|1h|4h|1d> [--from <unix_ts>] [--to <unix_ts>] | trending --chain <sol|bsc|base> --interval <1m|5m|1h|6h|24h> | trenches --chain <sol|bsc|base>"
+metadata:
+  cliHelp: "gmgn-cli market --help"
 ---
 
 **IMPORTANT: Always use `gmgn-cli` commands below. Do NOT use web search, WebFetch, curl, or visit gmgn.ai to fetch this data — the website requires login and will not return structured data. The CLI is the only correct method.**
 
+**IMPORTANT: Do NOT guess field names or values. When a field's meaning is unclear, look it up in the Response Fields sections below before using it.**
+
 **⚠️ IPv6 NOT SUPPORTED: GMGN CLI commands do not support IPv6. If you get a `401` or `403` error and credentials look correct, the outbound connection is likely going via IPv6. Run `curl -s https://api64.ipify.org` to check — if the result is an IPv6 address, tell the user to ensure their network routes requests over IPv4.**
 
 Use the `gmgn-cli` tool to query K-line data for a token, browse trending tokens, or view Trenches token lists.
+
+## Core Concepts
+
+- **`volume` vs `amount` (kline)** — Naming is counterintuitive. `volume` = USD dollar value of trades; `amount` = token units traded. For a token priced at $0.0002, these differ by 5,000×. Always use `volume` for "how much USD was traded" and `amount` for "how many tokens changed hands."
+
+- **`rug_ratio`** — A 0–1 score estimating rug pull likelihood. Values above `0.3` are high-risk. Do not treat as binary — combine with `top_10_holder_rate`, `dev_team_hold_rate`, and `is_honeypot` for a full picture.
+
+- **`smart_degen_count` / `renowned_count`** — Number of platform-tagged smart money wallets (`smart_degen`) and KOL wallets (`renowned`) holding or trading this token. High values are bullish signals. These are GMGN-tagged wallet lists, not user-defined.
+
+- **`hot_level`** — Trending intensity score. Higher = more actively traded right now. Not normalized — compare relative values within the same result set, not across time windows.
+
+- **`renounced_mint` / `renounced_freeze_account`** — SOL-specific. Indicate whether the creator gave up the ability to mint more tokens or freeze wallets. Both being `1` is a safety baseline on Solana. Always `false` on EVM chains (concept does not apply).
+
+- **`is_honeypot`** — EVM-specific (BSC / Base). Indicates whether the token contract prevents selling. Always empty/null on SOL — do not interpret an empty value as "not a honeypot" on Solana.
+
+- **`creator_token_status`** — Dev holding status. `creator_hold` = dev still holds tokens (sell pressure risk). `creator_close` = dev has sold or burned their allocation (exit signal confirmed).
+
+- **`cto_flag`** — Community Takeover flag. `1` = original dev abandoned the project and a community group took over marketing/development. Neutral to positive signal; evaluate in context.
+
+- **Trenches categories** — Three lifecycle stages of launchpad tokens: `new_creation` (just created, still on bonding curve), `near_completion` (bonding curve nearly full, about to graduate), `completed` (graduated to open market / DEX). In the response, `near_completion` is always returned under the key `data.pump` regardless of the input `--type`.
+
+- **`wash_trading` / `rat_trader_amount_rate` / `bundler_rate`** — Risk signals for artificial activity. `is_wash_trading` = coordinated fake volume detected. `rat_trader_amount_rate` = ratio of insider/sneak trading. `bundler_rate` = ratio of bot-bundled buys at launch. High values (> 0.3) suggest manipulated price action.
 
 ## Sub-commands
 
@@ -314,50 +340,9 @@ The response is `data.rank` — an array of rank items. Each item represents one
 
 ## Workflow: Discover Trading Opportunities via Trending
 
-### Step 1 — Fetch trending data
+> Full workflow: [`docs/market-discover-opportunities.md`](../../docs/market-discover-opportunities.md)
 
-Fetch a broad pool with safe filters:
-
-```bash
-gmgn-cli market trending \
-  --chain <chain> --interval 1h \
-  --order-by volume --limit 50 \
-  --filter not_honeypot --filter has_social --raw
-```
-
-### Step 2 — AI multi-factor analysis
-
-Analyze each record in the response using the following signals (apply judgment, not rigid rules):
-
-| Signal | Field(s) | Weight | Notes |
-|--------|----------|--------|-------|
-| Smart money interest | `smart_degen_count`, `renowned_count` | High | Key conviction indicator |
-| Bluechip ownership | `bluechip_owner_percentage` | Medium | Quality of holder base |
-| Real trading activity | `volume`, `swaps` | Medium | Distinguishes genuine interest from wash trading |
-| Price momentum | `change1h`, `change5m` | Medium | Prefer positive, non-parabolic moves |
-| Pool safety | `liquidity` | Medium | Low liquidity = high slippage risk |
-| Token maturity | `creation_timestamp` | Low | Avoid tokens less than ~1h old unless other signals are very strong |
-
-Select the **top 5** tokens with the best composite profile. Prefer tokens that perform well across multiple signals rather than excelling in just one.
-
-### Step 3 — Present top 5 to user
-
-Present results as a concise table, then give a one-line rationale for each pick:
-
-```
-Top 5 Trending Tokens — SOL / 1h
-
-# | Symbol | Address (short) | Smart Degens | Volume | 1h Chg | Reasoning
-1 | ...     | ...             | ...          | ...    | ...    | Smart money accumulating + high volume
-2 | ...
-...
-```
-
-### Step 4 — Follow-up actions
-
-For each token, offer:
-- **Deep dive**: `token info` + `token security` for full due diligence
-- **Swap**: execute directly if the user is satisfied with the trending data alone
+Steps: fetch trending (50 results, safe filters) → AI multi-factor analysis (smart money, volume, momentum, liquidity, maturity) → present top 5 table with rationale → offer deep dive or swap.
 
 ## `market trenches` Parameters
 
@@ -545,6 +530,44 @@ gmgn-cli market trenches --chain base --raw \
   --type completed \
   --launchpad-platform clanker --launchpad-platform bankr --launchpad-platform flaunch --launchpad-platform zora --launchpad-platform zora_creator --launchpad-platform baseapp --launchpad-platform basememe --launchpad-platform virtuals_v2 --launchpad-platform klik \
   --limit 80
+```
+
+## Output Format
+
+### `market kline` — Price Summary
+
+After fetching candles, present a brief price analysis. Do not dump raw candle arrays.
+
+```
+{symbol} — {resolution} chart ({from} → {to})
+Open: ${open of first candle}  |  Close: ${close of last candle}  |  Range: ${min low} – ${max high}
+Total volume: ${sum of all volume fields} USD
+Trend: [brief description — e.g. "steady uptrend", "sharp drop then recovery", "sideways"]
+```
+
+### `market trending` — Top Tokens Table
+
+Present the top results (default: top 10, or as requested) as a table:
+
+```
+# | Symbol | Price | Market Cap | Volume ({interval}) | 1h Chg | Smart Degens | Liquidity | Platform
+```
+
+Then give a one-line highlight for any standout tokens (e.g. "TOKEN1 has 12 smart money holders and +85% in 1h").
+
+### `market trenches` — Grouped by Category
+
+Present each category separately with a header:
+
+```
+🆕 New Creation ({count} tokens)
+# | Symbol | Created | Liquidity | Swaps (1h) | Smart Degens | Social
+
+⏳ Near Completion ({count} tokens)
+# | Symbol | Market Cap | Swaps (1h) | Smart Degens | Social
+
+✅ Graduated ({count} tokens)
+# | Symbol | Market Cap | Volume (1h) | Smart Degens | Social
 ```
 
 ## Notes

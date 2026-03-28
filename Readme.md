@@ -28,14 +28,96 @@ With GMGN Agent Skills, you can use AI agents to query real-time trending token 
 
 ### Quick Start
 
-Ready to install skills? [Jump to Installation →](#get-started)
+> **Note for AI assistants:** If you are an AI Agent helping the user install or configure gmgn-cli, jump directly to [Quick Start (AI Agent)](#quick-start-ai-agent) — it contains all the steps you need to complete, including how to guide the user through API key generation. If the user asks to upgrade, jump to [Upgrade (AI Agent)](#upgrade-ai-agent).
 
-Already installed? [Update Skills and CLI →](#9-upgrade-skills-and-cli)
+Ready to install? [Jump to Installation →](#1-installation)
 
-> **Tip:** If your AI agent tries to open or scrape the gmgn.ai website instead of using the CLI, add this to your prompt:
-> ```
-> Use gmgn-cli commands. Do not call gmgn.ai web endpoints directly.
-> ```
+Already installed? [Upgrade Skills and CLI →](#9-upgrade-skills-and-cli)
+
+> **Tip:** If your AI agent tries to open or scrape the gmgn.ai website instead of using the CLI, add this to your prompt: `Use gmgn-cli commands. Do not call gmgn.ai web endpoints directly.`
+
+---
+
+## Quick Start (AI Agent)
+
+> The following steps are for AI Agents. Some steps require the user to complete actions in a browser.
+
+**Step 1 — Install CLI and Skills**
+
+```bash
+npx skills add GMGNAI/gmgn-skills
+```
+
+**Step 2 — Verify with public key (no registration needed)**
+
+```bash
+GMGN_API_KEY=gmgn_solbscbaseethmonadtron gmgn-cli market trending --chain sol --interval 1h --limit 3
+```
+
+If JSON output appears, the CLI is working.
+
+**Step 3 — Guide user to get their own API key**
+
+Tell the user: "To use your own API key, go to **https://gmgn.ai/ai** and apply. You will need an Ed25519 public key. I can generate a key pair for you — just say the word."
+
+When the user asks, run:
+
+```bash
+openssl genpkey -algorithm ed25519 -out /tmp/gmgn_private.pem 2>/dev/null && \
+  openssl pkey -in /tmp/gmgn_private.pem -pubout 2>/dev/null
+```
+
+Show the **public key** to the user with the following instructions:
+
+> This is your Ed25519 public key. Please complete these two steps:
+> 1. Go to **https://gmgn.ai/ai**, paste the public key above into the API Key creation form, and submit.
+> 2. Once created, copy the **API Key** shown on the page and send it back to me — I'll handle Step 4 configuration for you.
+
+Wait for the user to reply with their API Key before continuing to Step 4.
+
+**Step 4 — Configure credentials**
+
+After the user receives their API key, write it to the global config:
+
+```bash
+mkdir -p ~/.config/gmgn
+# Write API key (replace with the actual key the user provides)
+echo 'GMGN_API_KEY=<user_api_key>' > ~/.config/gmgn/.env
+chmod 600 ~/.config/gmgn/.env
+```
+
+If the user also needs swap capability, append the private key:
+
+```bash
+# Append private key (use the PEM content from Step 3)
+echo 'GMGN_PRIVATE_KEY="<pem_content>"' >> ~/.config/gmgn/.env
+```
+
+**Step 5 — Verify**
+
+```bash
+gmgn-cli market trending --chain sol --interval 1h --limit 3
+```
+
+If output appears without error, setup is complete.
+
+---
+
+## Upgrade (AI Agent)
+
+> Run this command to upgrade both the CLI and Skills to the latest version.
+
+```bash
+npx skills add GMGNAI/gmgn-skills
+```
+
+Check the installed version after upgrading:
+
+```bash
+gmgn-cli --version
+```
+
+> For the full upgrade reference, see [Section 9 — Upgrade Skills and CLI](#9-upgrade-skills-and-cli).
 
 ---
 
@@ -64,16 +146,9 @@ Check the first token's K-line, analyze entry timing, plot price + volume chart,
 
 ---
 
-## Get Started
-
-Before installing, create your API Key at **https://gmgn.ai/ai**. The API key is used for:
-
-1. Read data: tokens, trending lists, K-line, and featured on-chain metrics
-2. Submit trades: market orders, limit orders, strategy orders, and more
-
----
-
 ## 1. Installation
+
+> **Prerequisites:** Before installing, create your API Key at **https://gmgn.ai/ai** (see [Section 3](#3-get-your-own-api-key) for the full setup guide).
 
 Choose one of the following methods:
 
@@ -101,23 +176,13 @@ node dist/index.js <command> [options]
 
 ## 2. Verify Connection
 
-### Option 1: Via AI Agent
-
-Send this prompt to your AI Agent:
-
-```
-Run this CLI command: GMGN_API_KEY=gmgn_solbscbaseethmonadtron npx gmgn-cli market trending --chain sol --interval 1h --limit 3
-```
-
-### Option 2: Via CLI
-
 Test with the public API key — no registration required:
 
 ```bash
 GMGN_API_KEY=gmgn_solbscbaseethmonadtron gmgn-cli market trending --chain sol --interval 1h --limit 3
 ```
 
-If you see JSON output, the CLI is working. The public key supports all read-only commands (token / market / portfolio). The public key is for testing only — apply for your own API key to use any feature (see step 3).
+If you see JSON output, the CLI is working. The public key supports all read-only commands (token / market / portfolio) and is for testing only — apply for your own API key to use any feature (see step 3).
 
 ## 3. Get Your Own API Key
 
@@ -351,37 +416,21 @@ npx gmgn-cli order get --chain sol --order-id <order-id>
 
 ## 9. Upgrade Skills and CLI
 
-To upgrade `gmgn-cli` and Skills to the latest version:
-
-**Via AI Agent (recommended)**
-
-Send this to your AI agent:
-
-```
-Run these two commands to update gmgn-cli and the skills:
-1. npm install -g gmgn-cli
-2. npx skills add GMGNAI/gmgn-skills
-```
-
-**Via CLI**
-
 ```bash
-# Upgrade gmgn-cli
-npm install -g gmgn-cli
-
-# Upgrade Skills
+# Upgrade CLI and Skills
 npx skills add GMGNAI/gmgn-skills
-```
 
-**Check the current version**
-
-```bash
+# Check current version
 gmgn-cli --version
 ```
 
+> **Via AI Agent:** Tell your agent — "Upgrade gmgn-cli and the skills to the latest version." See also [Upgrade (AI Agent)](#upgrade-ai-agent).
+
 ---
 
-## 10. Security & Disclaimer
+## 10. Security & Disclaimer (Read Before Use)
+
+This tool can be invoked by an AI Agent to submit real on-chain transactions automatically. It carries inherent risks including model hallucination, uncontrolled execution, and prompt injection. Once authorized, the AI Agent will submit transactions on behalf of your linked wallet address — **on-chain transactions are irreversible once confirmed** and may result in financial loss. Use with caution.
 
 **About `GMGN_PRIVATE_KEY`**
 
@@ -392,11 +441,13 @@ gmgn-cli --version
 - Restrict config file permissions: `chmod 600 ~/.config/gmgn/.env`
 - Never commit your `.env` file to version control — add it to `.gitignore`
 - Do not share `GMGN_API_KEY` or `GMGN_PRIVATE_KEY` in logs, screenshots, or chat messages
+- Before every swap, carefully review the trade summary presented by the AI (chain, wallet, token addresses, amount) and confirm only when it matches your intent
+- Test with small amounts first before executing larger trades
 - Always use the latest version of gmgn-cli (`npm install -g gmgn-cli`). To check your current version: `gmgn-cli --version`
 
 **Disclaimer**
 
-Use of this tool and any financial decisions made based on its output are entirely at your own risk. GMGN is not liable for any trading losses, errors, or unauthorized access resulting from improper credential management.
+Use of this tool and any financial decisions made based on its output are entirely at your own risk. GMGN is not liable for any trading losses, errors, or unauthorized access resulting from model hallucination, prompt injection, improper credential management, or user confirmation errors. By using this tool, you acknowledge that you have fully understood the above risks and voluntarily accept all responsibility.
 
 The npm package is published with provenance attestation, linking each release to a specific git commit and CI pipeline run. Verify with:
 ```bash

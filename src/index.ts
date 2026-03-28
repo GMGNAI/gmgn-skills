@@ -46,7 +46,7 @@ const program = new Command();
 program
   .name("gmgn-cli")
   .version(version)
-  .description("GMGN OpenAPI CLI — market data, token info, portfolio and swap");
+  .description("GMGN OpenAPI CLI — market data, token info, portfolio, track KOL/smart money trades, and swap");
 
 registerTokenCommands(program);
 registerMarketCommands(program);

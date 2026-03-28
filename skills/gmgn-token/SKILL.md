@@ -2,13 +2,33 @@
 name: gmgn-token
 description: Query GMGN token information — basic info, security, pool, top holders and top traders. Supports sol / bsc / base.
 argument-hint: "<sub-command> --chain <sol|bsc|base> --address <token_address>"
+metadata:
+  cliHelp: "gmgn-cli token --help"
 ---
 
 **IMPORTANT: Always use `gmgn-cli` commands below. Do NOT use web search, WebFetch, curl, or visit gmgn.ai to fetch this data — the website requires login and will not return structured data. The CLI is the only correct method.**
 
 **⚠️ IPv6 NOT SUPPORTED: GMGN CLI commands do not support IPv6. If you get a `401` or `403` error and credentials look correct, the outbound connection is likely going via IPv6. Run `curl -s https://api64.ipify.org` to check — if the result is an IPv6 address, tell the user to ensure their network routes requests over IPv4.**
 
+**IMPORTANT: Do NOT guess field names or values. When a field's meaning is unclear, look it up in the Response Field Reference tables below before using it.**
+
 Use the `gmgn-cli` tool to query token information based on the user's request.
+
+## Core Concepts
+
+- **Token address** — The on-chain contract address that uniquely identifies a token on its chain. Required for all token sub-commands. Format: base58 (SOL) or `0x...` hex (BSC/Base).
+- **Chain** — The blockchain network: `sol` = Solana, `bsc` = BNB Smart Chain, `base` = Base (Coinbase L2).
+- **Market cap** — Not returned directly by `token info`. Calculate as `price × circulating_supply` (both are top-level fields in the response, already in human-readable units).
+- **Liquidity** — USD value of token reserves in the main trading pool. Low liquidity (< $10k) means high price impact / slippage when buying or selling.
+- **Holder** — A wallet that currently holds the token. `token holders` returns wallets ranked by current balance.
+- **Trader** — Any wallet that has transacted with the token (bought or sold), regardless of current holdings. `token traders` covers both current holders and past traders.
+- **Smart money (`smart_degen`)** — Wallets with a proven track record of profitable trading, tagged by GMGN's algorithm. High `smart_degen_count` is a bullish signal.
+- **KOL (`renowned`)** — Known influencer, fund, or public figure wallets, tagged by GMGN. Their positions are publicly tracked.
+- **Honeypot** — A token where buy transactions succeed but sell transactions always fail. User funds become permanently trapped. Only detectable on BSC/Base (`is_honeypot`); not applicable on SOL.
+- **Renounced (mint / freeze / ownership)** — The developer has permanently given up that authority. On SOL: `renounced_mint` (cannot create new supply) and `renounced_freeze_account` (cannot freeze wallets) both `true` is the safe baseline. On EVM: `owner_renounced` `"yes"` means no admin backdoors.
+- **rug_ratio** — A 0–1 risk score estimating the likelihood of a rug pull. Values above `0.3` are high-risk. Do not treat as a binary safe/unsafe flag — use in combination with other signals.
+- **Bonding curve** — Price discovery mechanism used by launchpads (e.g. Pump.fun, letsbonk). Token price rises as more is bought. When the curve fills, the token "graduates" to an open DEX pool. `is_on_curve: true` means the token has not graduated yet.
+- **Wallet tags** — GMGN-assigned labels on wallets: `smart_degen` (smart money), `renowned` (KOL), `sniper` (launched at token open), `bundler` (bot-bundled buy), `rat_trader` (insider/sneak trading). Use `--tag` to filter `token holders` / `token traders` by these labels.
 
 ## Sub-commands
 
@@ -66,6 +86,23 @@ Use the `gmgn-cli` tool to query token information based on the user's request.
 |-------|-------------|
 | `renowned` | KOL / well-known wallets (influencers, funds, public figures) |
 | `smart_degen` | Smart money wallets (historically high-performing traders) |
+
+### `--tag` + `--order-by` Combination Guide
+
+`--tag` and `--order-by` are independent — all `--order-by` values are valid with or without `--tag`. Omitting `--tag` returns all wallets (no filter).
+
+Recommended combinations for common use cases:
+
+| Goal | `--tag` | `--order-by` |
+|------|---------|--------------|
+| Largest smart money holders by supply | `smart_degen` | `amount_percentage` |
+| Smart money with highest realized profit | `smart_degen` | `profit` |
+| Smart money sitting on unrealized gains | `smart_degen` | `unrealized_profit` |
+| Smart money aggressively accumulating | `smart_degen` | `buy_volume_cur` |
+| Smart money distributing (exit signal) | `smart_degen` | `sell_volume_cur` |
+| KOLs who already took profit | `renowned` | `profit` |
+| KOLs still holding with paper gains | `renowned` | `unrealized_profit` |
+| Largest holders overall (no filter) | *(omit)* | `amount_percentage` |
 
 ## Response Field Reference
 
@@ -430,64 +467,50 @@ gmgn-cli token traders --chain bsc --address 0x2170Ed0880ac9A755fd29B2688956BD95
 
 ## Workflow: Full Token Due Diligence
 
-Use this workflow before deciding to buy a token.
+> Full 4-step workflow: [`docs/token-due-diligence.md`](../../docs/token-due-diligence.md)
 
-### Step 1 — Get basic info
-
-```bash
-gmgn-cli token info --chain sol --address <token_address> --raw
-```
-
-Check: `price`, `liquidity`, `holder_count`, `wallet_tags_stat.smart_wallets`, `wallet_tags_stat.renowned_wallets`, `link.website` / `link.twitter_username` / `link.telegram`.
-
-**Red flags**: all `link.*` social fields empty, very low liquidity (<$10k), zero `wallet_tags_stat.smart_wallets` and `renowned_wallets`.
-
-### Step 2 — Check security
-
-```bash
-gmgn-cli token security --chain sol --address <token_address> --raw
-```
-
-Check these fields and their safe thresholds:
-
-| Field | Safe | Warning | Danger |
-|-------|------|---------|--------|
-| `is_honeypot` | `"no"` | — | `"yes"` → Do not buy |
-| `open_source` | `"yes"` | `"unknown"` | `"no"` |
-| `owner_renounced` | `"yes"` | `"unknown"` | `"no"` |
-| `renounced_mint` (SOL) | `true` | — | `false` → mint risk |
-| `renounced_freeze_account` (SOL) | `true` | — | `false` → freeze risk |
-| `buy_tax` / `sell_tax` | `0` | `0.01–0.05` | `>0.10` → high tax |
-| `top_10_holder_rate` | `<0.20` | `0.20–0.40` | `>0.50` → whale risk |
-| `rug_ratio` | `<0.10` | `0.10–0.30` | `>0.30` → high rug risk |
-| `creator_token_status` | `creator_close` | — | `creator_hold` → dev not sold |
-| `sniper_count` | `<5` | `5–20` | `>20` → heavily sniped |
-
-### Step 3 — Check liquidity pool
-
-```bash
-gmgn-cli token pool --chain sol --address <token_address> --raw
-```
-
-Check: liquidity amount, which DEX (`exchange`), pool age (`creation_timestamp`). Low liquidity means high slippage risk when buying or selling.
-
-### Step 4 — Check smart money signals
-
-```bash
-# Is smart money accumulating?
-gmgn-cli token holders --chain sol --address <token_address> \
-  --tag smart_degen --order-by buy_volume_cur --direction desc --limit 20 --raw
-
-# Have KOLs already taken profit?
-gmgn-cli token traders --chain sol --address <token_address> \
-  --tag renowned --order-by profit --direction desc --limit 20 --raw
-```
-
-**Bullish signals**: smart_degen wallets buying heavily, unrealized_profit is large (still holding), renowned wallets accumulating, low sell_volume_cur.
-
-**Bearish signals**: sell_volume_cur > buy_volume_cur for smart money, large realized profits already taken (they may be done), top holders with very high amount_percentage starting to sell.
+Steps: `token info` → `token security` → `token pool` → `token holders/traders` (smart money signals).
 
 ---
+
+## Output Format
+
+### `token info` — Summary Card
+
+Present as a concise card. Do not dump raw JSON.
+
+```
+{symbol} ({name})
+Price: ${price}  |  Market Cap: ~${price × circulating_supply}  |  Liquidity: ${liquidity}
+Holders: {holder_count}  |  Smart Money: {wallet_tags_stat.smart_wallets}  |  KOLs: {wallet_tags_stat.renowned_wallets}
+Social: @{link.twitter_username}  |  {link.website}  |  {link.telegram}
+```
+
+If any social fields are empty, omit them rather than showing `null`.
+
+### `token security` — Risk Summary
+
+Present as a risk table with a clear verdict:
+
+```
+Security check: {symbol}
+✅ / ⚠️ / ❌  Honeypot: {is_honeypot}
+✅ / ⚠️ / ❌  Open source: {open_source}
+✅ / ⚠️ / ❌  Renounced: {owner_renounced} (or renounced_mint + renounced_freeze for SOL)
+✅ / ⚠️ / ❌  Buy/Sell tax: {buy_tax} / {sell_tax}
+✅ / ⚠️ / ❌  Top-10 concentration: {top_10_holder_rate}
+✅ / ⚠️ / ❌  Rug ratio: {rug_ratio}
+```
+
+Then give a one-line verdict: "Safe to proceed", "Proceed with caution", or "High risk — do not buy".
+
+### `token holders` / `token traders` — Ranked Table
+
+```
+# | Wallet (name or short addr) | Hold% | Avg Buy | Realized P&L | Unrealized P&L | Tags
+```
+
+Show top rows only. Highlight wallets tagged `kol`, `smart_degen`, or flagged `bundler` / `rat_trader` in `maker_token_tags`.
 
 ## Notes
 
