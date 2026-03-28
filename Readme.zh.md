@@ -363,7 +363,23 @@ solana 上的 <token_address> 安全吗，值得买入吗？
 
 ---
 
-## 7. CLI 参考
+## 7. 工作流文档
+
+常用分析任务的分步指引：
+
+| 工作流 | 适用场景 |
+|--------|---------|
+| [workflow-token-research.md](docs/workflow-token-research.md) | 买入前 Token 尽调（地址 → 买入/观望/跳过） |
+| [workflow-project-deep-report.md](docs/workflow-project-deep-report.md) | 多维度评分的深度项目报告 |
+| [workflow-wallet-analysis.md](docs/workflow-wallet-analysis.md) | 钱包质量评估（地址 → 是否值得跟随） |
+| [workflow-smart-money-profile.md](docs/workflow-smart-money-profile.md) | 聪明钱行为画像、跟单收益估算、排行榜对比 |
+| [workflow-risk-warning.md](docs/workflow-risk-warning.md) | 持仓风险预警（巨鲸出货、流动性、开发者跑路） |
+| [workflow-early-project-screening.md](docs/workflow-early-project-screening.md) | 筛选新发 Launchpad Token，识别聪明钱早入信号 |
+| [workflow-daily-brief.md](docs/workflow-daily-brief.md) | 每日市场简报：热门趋势 + 聪明钱动向 + 早期机会 + 风险扫描 |
+| [workflow-market-opportunities.md](docs/workflow-market-opportunities.md) | 从趋势数据中发现交易机会 |
+| [workflow-token-due-diligence.md](docs/workflow-token-due-diligence.md) | 4 步 Token 尽调清单 |
+
+## 8. CLI 参考
 
 完整参数说明：[docs/cli-usage.md](docs/cli-usage.md)。所有命令均支持 `--raw` 输出单行 JSON（方便 `jq` 等工具处理）。
 

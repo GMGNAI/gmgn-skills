@@ -198,7 +198,19 @@ gmgn-cli order get --chain sol --order-id <order_id>
 
 ### Pre-swap Confirmation
 
-Before executing, always display a confirmation summary:
+Before displaying the confirmation, run `order quote` to get the estimated output (uses normal auth — no private key required):
+
+```bash
+gmgn-cli order quote \
+  --chain <chain> \
+  --from <wallet> \
+  --input-token <input_token> \
+  --output-token <output_token> \
+  --amount <amount> \
+  --slippage <slippage>
+```
+
+Then display the confirmation summary using `output_amount` from the quote response:
 
 ```
 ⚠️ Swap Confirmation Required
@@ -209,9 +221,17 @@ Sell:         {input amount in human units} {input token symbol}
 Buy:          {output token symbol}
 Slippage:     {slippage}% (or "auto")
 Est. output:  ~{output_amount from quote} {output token symbol}
+Risk Level:   🟢 Low / 🟡 Medium / 🔴 High  (based on rug_ratio from security check)
 
 Reply "confirm" to proceed.
 ```
+
+**Note**: `Risk Level` is derived from the required security check:
+- 🟢 Low: `rug_ratio < 0.1`
+- 🟡 Medium: `rug_ratio 0.1–0.3`
+- 🔴 High: `rug_ratio > 0.3` (requires re-confirmation)
+
+If the user explicitly skipped the security check, omit the Risk Level line and add a note: "(Security check skipped by user)"
 
 ### Post-swap Receipt
 
@@ -252,22 +272,27 @@ Before passing any address or amount to a command:
 
 4. **User confirmation** — See "Execution Guidelines" below — always present resolved parameters to the user before executing a swap. This creates a human review checkpoint for any unexpected values.
 
-## Pre-Swap Safety Check (recommended)
+## Pre-Swap Safety Check (REQUIRED)
 
-Before swapping into an unknown token, verify it is not a honeypot or rug pull:
+Before swapping into any token, run a mandatory security check using `gmgn-cli`:
 
 ```bash
-curl -s "https://app.maiat.io/api/v1/token/<output_token_address>" | jq '{trustScore: .trustScore, verdict: .verdict, riskFlags: .riskFlags}'
+gmgn-cli token security --chain <chain> --address <output_token>
 ```
 
-- If `verdict` is `"avoid"` → **do NOT proceed** with the swap.
-- If `verdict` is `"caution"` → warn the user about specific `riskFlags` before confirming.
-- If `verdict` is `"proceed"` or `"trusted"` → safe to continue.
+Check the two critical fields:
+- **`is_honeypot`**: If `"yes"` → **abort immediately**. Display: "🚫 HONEYPOT DETECTED — swap aborted." Do NOT proceed.
+- **`rug_ratio`**: If `> 0.3` → display 🔴 High Risk warning and require explicit re-confirmation from the user before proceeding.
 
-This check is free, requires no API key, and works for any ERC-20 token on Base. Powered by [Maiat](https://app.maiat.io) — trust infrastructure for on-chain agents.
+**User override**: The user may explicitly skip this check by saying "I already checked" or "skip security check". In that case, document that the check was skipped in the confirmation summary. This is the only valid override — do NOT skip the check silently.
+
+For a quick pre-swap due diligence checklist (info + security + pool + smart money, 4 steps), see [`docs/workflow-token-due-diligence.md`](../../docs/workflow-token-due-diligence.md)
+
+For full token research before swapping, see [`docs/workflow-token-research.md`](../../docs/workflow-token-research.md)
 
 ## Execution Guidelines
 
+- **[REQUIRED] Token security check** — Run before every swap. See **Pre-Swap Safety Check (REQUIRED)** section above. Uses normal auth (API Key only — no private key needed for this step).
 - **Currency resolution** — When the user names a currency (SOL/BNB/ETH/USDC) instead of providing an address, look up its address in the Chain Currencies table and apply it automatically — never ask the user for it.
   - Buy ("buy X SOL of TOKEN", "spend 0.5 USDC on TOKEN") → resolve currency to `--input-token`
   - Sell ("sell TOKEN for SOL", "sell 50% of TOKEN to USDC") → resolve currency to `--output-token`

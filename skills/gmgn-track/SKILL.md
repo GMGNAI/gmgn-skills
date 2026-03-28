@@ -36,9 +36,9 @@ Use the `gmgn-cli` tool to query on-chain tracking data based on the user's requ
 - **Cluster signal** — When multiple followed/tracked wallets trade the same token in the same direction within a short time window, this is a stronger conviction signal than a single wallet. Highlight this pattern when it appears in results.
 
 **When to use which sub-command:**
-- `track follow-wallet` — user asks "what did the wallets I follow trade?", "show me my follow list trades", "追踪关注的钱包交易动态" → requires wallets followed via GMGN platform
-- `track kol` — user asks "what are KOLs buying?", "KOL 最近在买什么", "show me influencer trades" → returns trades from known KOL wallets
-- `track smartmoney` — user asks "what is smart money doing?", "聪明钱最近在买什么", "show me whale trades" → returns trades from smart money / whale wallets
+- `track follow-wallet` — user asks "what did the wallets I follow trade?", "show me my follow list trades", "show my followed wallet activity" → requires wallets followed via GMGN platform
+- `track kol` — user asks "what are KOLs buying?", "show me influencer trades", "what are KOLs doing recently" → returns trades from known KOL wallets
+- `track smartmoney` — user asks "what is smart money doing?", "show me whale trades", "what is smart money buying recently" → returns trades from smart money / whale wallets
 
 **Do NOT confuse these three:**
 - `follow-wallet` = wallets the user has personally followed on GMGN
@@ -181,6 +181,53 @@ The response is an object with a `list` array. Each item in `list` contains:
 | `maker_info.twitter_username` | KOL's Twitter username |
 | `maker_info.tags` | Wallet tags (e.g. `kol`, `smart_degen`, `photon`) |
 
+## Smart Money Behavior Interpretation
+
+After receiving trade data, interpret the signals using these frameworks before presenting results. Do not just list trades — analyze what they mean.
+
+### 1. Signal Strength Levels
+
+| Level | Criteria |
+|-------|----------|
+| Weak | 1 KOL buys |
+| Medium | 2–3 smart money buys in the same direction, OR 1 smart money full position open |
+| Strong | ≥ 3 smart money wallets same direction within 30 min (cluster signal) |
+| Very Strong | Cluster signal + full position opens + KOL joining the same trade |
+
+### 2. Reading `is_open_or_close` — Conviction Signals
+
+The field has opposite meanings by sub-command:
+
+- **`follow-wallet`**: `1` = full position open or close; `0` = partial add or reduce.
+- **`kol` / `smartmoney`**: `0` = position opened / added; `1` = position closed / reduced.
+
+Full position events (full open or full close) carry much stronger conviction than partial adds. A wallet opening a full new position signals high confidence. A wallet doing a full close signals they are exiting completely — treat this as a potential exit signal for that token.
+
+### 3. Using `price_change` to Evaluate Track Record
+
+`price_change` is a ratio of current price vs price at trade time:
+- `price_change > 2` → this wallet's trade aged well (token is now 2x+ since they bought) — strong conviction signal
+- `price_change 1–2` → modest gain, trade is in profit
+- `price_change < 1` → trade is underwater (current price below entry)
+
+Use this to build a mental model of a wallet's past performance before acting on their current trades.
+
+### 4. Cluster Signal Detection
+
+When multiple trades hit the same `base_address` in a short time window, this is a convergence signal — stronger than any single trade. To identify:
+- Group results by `base_address`
+- Count distinct `maker` addresses trading the same direction
+- If ≥ 3 distinct wallets buy the same token within ~30 min → highlight as **cluster signal**
+
+Cluster signals from `smartmoney` are stronger than from `kol` alone.
+
+### 5. Red Flags in Smart Money Data
+
+- **Smart money selling** (`side = sell` + `is_open_or_close` = full close) → exit signal — evaluate whether to exit or reduce position
+- **Only KOL buying, zero smart_degen** → social hype without fundamental backing; higher risk
+- **Renowned buying + smart money selling simultaneously** → divergence signal — insiders may be distributing into retail/KOL demand; high risk
+- **Single very large buy, no follow-through** → may be one-off; wait for confirmation from other wallets
+
 ## Output Format
 
 ### `track follow-wallet` / `track kol` / `track smartmoney` — Trade Feed
@@ -195,6 +242,33 @@ Present as a reverse-chronological trade feed. Do not dump raw JSON.
 Group by token if multiple trades hit the same token. Highlight tokens where several followed wallets traded in the same direction within a short window (cluster signal).
 
 For `follow-wallet`, also show `is_open_or_close`: flag full position opens/closes distinctly from partial adds/reduces.
+
+### Cluster Signal Summary
+
+After presenting the trade feed, check for convergence signals. If ≥ 2 distinct wallets traded the same token in the same direction, display a summary block:
+
+```
+⚡ Convergence Signals
+──────────────────────────────────────────
+TOKEN_X ({short_address})
+  5 smart money wallets — all BUY — $42,300 total — within 15 min
+  Signal strength: STRONG
+
+TOKEN_Y ({short_address})
+  2 KOL wallets — BUY (full open) — $8,100 total
+  Signal strength: MEDIUM
+```
+
+For STRONG signals: proceed to full token research before acting — see [`docs/workflow-token-research.md`](../../docs/workflow-token-research.md)
+For MEDIUM signals: monitor and wait for more wallets to confirm before acting.
+
+If no convergence signals are detected: output "No cluster signals detected in this result set."
+
+To research any token surfaced by smart money activity, follow [`docs/workflow-token-research.md`](../../docs/workflow-token-research.md)
+
+**Smart money leaderboard / wallet profiling:** When the user asks "which smart money wallets are best to follow", "rank wallets by win rate", or wants to compare wallet performance — use `track smartmoney` to collect active wallet addresses, then batch-query their stats via `gmgn-portfolio stats`. Full workflow: [`docs/workflow-smart-money-profile.md`](../../docs/workflow-smart-money-profile.md)
+
+**Daily brief:** When the user asks for a market overview ("what's the market like today", "what is smart money buying today", "give me a daily brief") — combine `track smartmoney` + `track kol` with `gmgn-market trending`. Full workflow: [`docs/workflow-daily-brief.md`](../../docs/workflow-daily-brief.md)
 
 ## Safety Constraints
 

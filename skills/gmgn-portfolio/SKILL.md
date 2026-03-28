@@ -12,6 +12,8 @@ metadata:
 
 Use the `gmgn-cli` tool to query wallet portfolio data based on the user's request.
 
+**For full wallet analysis (holdings + stats + activity + verdict), follow [`docs/workflow-wallet-analysis.md`](../../docs/workflow-wallet-analysis.md)**
+
 ## Core Concepts
 
 - **`realized_profit` vs `unrealized_profit`** — `realized_profit` = profit locked in from completed sells (cash in hand). `unrealized_profit` = paper gains on positions still held, calculated at current price. These are separate numbers — do not add them unless answering "total P&L including open positions."
@@ -180,6 +182,8 @@ The response is an object (or array for batch). Key fields:
 
 ## Output Format
 
+**Do NOT dump raw JSON.** Always parse and present data in the structured formats below. Use `--raw` only when piping to `jq` or further processing.
+
 ### `portfolio holdings` — Holdings Table
 
 Present a table sorted by `usd_value` (descending). Show total portfolio value at the top.
@@ -224,3 +228,14 @@ For batch queries (multiple wallets), present one summary block per wallet.
 - Use `--raw` to get single-line JSON for further processing
 - **Input validation** — Wallet and token addresses are validated against the expected chain format at runtime (sol: base58 32–44 chars; bsc/base/eth: `0x` + 40 hex digits). The CLI exits with an error on invalid input.
 - For follow-wallet, KOL, and Smart Money trade records, use the `gmgn-track` skill (`track follow-wallet` / `track kol` / `track smartmoney`)
+
+## Workflow
+
+For full wallet analysis including trade history and follow-through on top holdings, see [`docs/workflow-wallet-analysis.md`](../../docs/workflow-wallet-analysis.md)
+
+For in-depth trading style analysis, copy-trade ROI estimation, and smart money leaderboard comparison, see [`docs/workflow-smart-money-profile.md`](../../docs/workflow-smart-money-profile.md)
+
+**When to use which:**
+- User asks "is this wallet worth following" → [`docs/workflow-wallet-analysis.md`](../../docs/workflow-wallet-analysis.md)
+- User asks "what's this wallet's trading style", "when does he take profit", "smart money profile", "if I copied this wallet what would my return be" → [`docs/workflow-smart-money-profile.md`](../../docs/workflow-smart-money-profile.md)
+- User wants to compare multiple smart money wallets by winrate/PnL → [`docs/workflow-smart-money-profile.md`](../../docs/workflow-smart-money-profile.md) Step 5 (leaderboard)

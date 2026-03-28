@@ -16,6 +16,11 @@ Use the `gmgn-cli` tool to query K-line data for a token, browse trending tokens
 
 ## Core Concepts
 
+- **`--filter` chain defaults** — SOL and EVM chains have different default safety filters that are applied automatically when `--filter` is omitted. Do not assume the same defaults apply across chains:
+  - **SOL**: defaults to `renounced frozen` (mint and freeze authority renounced)
+  - **BSC / Base (EVM)**: defaults to `not_honeypot verified renounced`
+  - Omitting `--filter` is NOT the same as "no filter" — the chain defaults are always applied. To use a custom filter set, explicitly specify all desired filter tags.
+
 - **`volume` vs `amount` (kline)** — Naming is counterintuitive. `volume` = USD dollar value of trades; `amount` = token units traded. For a token priced at $0.0002, these differ by 5,000×. Always use `volume` for "how much USD was traded" and `amount` for "how many tokens changed hands."
 
 - **`rug_ratio`** — A 0–1 score estimating rug pull likelihood. Values above `0.3` are high-risk. Do not treat as binary — combine with `top_10_holder_rate`, `dev_team_hold_rate`, and `is_honeypot` for a full picture.
@@ -42,7 +47,7 @@ Use the `gmgn-cli` tool to query K-line data for a token, browse trending tokens
 |-------------|-------------|
 | `market kline` | Token candlestick / OHLCV data and trading volume over a time range |
 | `market trending` | Trending tokens ranked by swap activity — use `--interval` to specify the time window (e.g. `1m` for 1-minute hottest, `1h` for 1-hour trending) |
-| `market trenches` | Newly launched launchpad paltform tokens — **use this when the user asks for "new tokens", "just launched tokens", "latest tokens on pump.fun/letsbonk"**. Three categories: `new_creation` (just created), `near_completion` (bonding curve almost full), `completed` (graduated to open market / DEX) |
+| `market trenches` | Newly launched launchpad platform tokens — **use this when the user asks for "new tokens", "just launched tokens", "latest tokens on pump.fun/letsbonk"**. Three categories: `new_creation` (just created), `near_completion` (bonding curve almost full), `completed` (graduated to open market / DEX) |
 
 ## Supported Chains
 
@@ -93,11 +98,11 @@ The response is an object with a `list` array. Each element in `list` is one can
 
 | User says | `--interval` |
 |-----------|-------------|
-| "1分钟热门" / "1m trending" / "hottest right now" | `1m` |
-| "5分钟" / "5m" | `5m` |
-| "1小时" / "1h" / no time specified (default) | `1h` |
-| "6小时" / "6h" | `6h` |
-| "24小时" / "今日" / "daily" | `24h` |
+| "1m trending" / "hottest right now" | `1m` |
+| "5m" / "5 minute" | `5m` |
+| "1h" / "1 hour" / no time specified (default) | `1h` |
+| "6h" / "6 hour" | `6h` |
+| "24h" / "today" / "daily" | `24h` |
 
 | Option | Description |
 |--------|-------------|
@@ -106,7 +111,7 @@ The response is an object with a `list` array. Each element in `list` is one can
 | `--limit <n>` | Number of results (default 100, max 100) |
 | `--order-by <field>` | Sort field: `default` / `swaps` / `marketcap` / `history_highest_market_cap` / `liquidity` / `volume` / `holder_count` / `smart_degen_count` / `renowned_count` / `gas_fee` / `price` / `change1m` / `change5m` / `change1h` / `creation_timestamp` |
 | `--direction <asc\|desc>` | Sort direction (default `desc`) |
-| `--filter <tag...>` | Repeatable filter tags (chain-specific). **sol** (defaults: `renounced frozen`): `renounced` / `frozen` / `burn` / `token_burnt` / `has_social` / `not_social_dup` / `not_image_dup` / `dexscr_update_link` / `not_wash_trading` / `is_internal_market` / `is_out_market`. **evm** (defaults: `not_honeypot verified renounced`): `not_honeypot` / `verified` / `renounced` / `locked` / `token_burnt` / `has_social` / `not_social_dup` / `not_image_dup` / `dexscr_update_link` / `is_internal_market` / `is_out_market` |
+| `--filter <tag...>` | Repeatable filter tags (chain-specific). **⚠️ SOL defaults: `renounced frozen`; BSC/Base defaults: `not_honeypot verified renounced`.** Omitting `--filter` is NOT "no filter" — chain defaults always apply. **sol** tags: `renounced` / `frozen` / `burn` / `token_burnt` / `has_social` / `not_social_dup` / `not_image_dup` / `dexscr_update_link` / `not_wash_trading` / `is_internal_market` / `is_out_market`. **evm** tags: `not_honeypot` / `verified` / `renounced` / `locked` / `token_burnt` / `has_social` / `not_social_dup` / `not_image_dup` / `dexscr_update_link` / `is_internal_market` / `is_out_market` |
 | `--platform <name...>` | Repeatable platform filter (chain-specific). **sol**: `Pump.fun` / `pump_mayhem` / `pump_mayhem_agent` / `pump_agent` / `letsbonk` / `bonkers` / `bags` / `memoo` / `liquid` / `bankr` / `zora` / `surge` / `anoncoin` / `moonshot_app` / `wendotdev` / `heaven` / `sugar` / `token_mill` / `believe` / `trendsfun` / `trends_fun` / `jup_studio` / `Moonshot` / `boop` / `xstocks` / `ray_launchpad` / `meteora_virtual_curve` / `pool_ray` / `pool_meteora` / `pool_pump_amm` / `pool_orca`. **bsc**: `fourmeme` / `fourmeme_agent` / `bn_fourmeme` / `flap` / `clanker` / `lunafun` / `pool_uniswap` / `pool_pancake`. **base**: `clanker` / `bankr` / `flaunch` / `zora` / `zora_creator` / `baseapp` / `basememe` / `virtuals_v2` / `klik` |
 
 ## Usage Examples
@@ -340,9 +345,80 @@ The response is `data.rank` — an array of rank items. Each item represents one
 
 ## Workflow: Discover Trading Opportunities via Trending
 
-> Full workflow: [`docs/market-discover-opportunities.md`](../../docs/market-discover-opportunities.md)
+Full workflow for discovering market opportunities: [`docs/workflow-market-opportunities.md`](../../docs/workflow-market-opportunities.md)
 
 Steps: fetch trending (50 results, safe filters) → AI multi-factor analysis (smart money, volume, momentum, liquidity, maturity) → present top 5 table with rationale → offer deep dive or swap.
+
+When results contain interesting tokens, proceed to full token due diligence: [`docs/workflow-token-research.md`](../../docs/workflow-token-research.md)
+
+**For new / launchpad tokens** (`market trenches`): apply the structured early project screening workflow that includes security check and smart money entry detection — [`docs/workflow-early-project-screening.md`](../../docs/workflow-early-project-screening.md)
+
+**For a daily market overview** (user asks "what's the market like today", "give me a daily brief", "what is smart money buying today"): combine `market trending` + `market trenches` with `gmgn-track smartmoney` — [`docs/workflow-daily-brief.md`](../../docs/workflow-daily-brief.md)
+
+## Token Quality Filter Criteria
+
+When evaluating tokens returned from `market trending` or `market trenches`, apply these criteria to quickly separate high-quality opportunities from noise. Do not present raw results without filtering.
+
+### Pass / Watch / Skip Criteria
+
+| Signal | 🟢 Pass | 🟡 Watch | 🔴 Skip |
+|--------|---------|---------|---------|
+| `smart_degen_count` | ≥ 3 | 1–2 | 0 |
+| `rug_ratio` | < 0.1 | 0.1–0.3 | > 0.3 |
+| `creator_token_status` | `creator_close` | — | `creator_hold` |
+| `is_wash_trading` | `false` | — | `true` → skip immediately |
+| `top_10_holder_rate` | < 0.20 | 0.20–0.50 | > 0.50 |
+| `liquidity` | > $50k | $10k–$50k | < $10k |
+| `has_social` (or any social field present) | yes | — | no (weak signal only) |
+
+**Quick disqualification rule:** If `rug_ratio > 0.3` OR `is_wash_trading = true` OR `is_honeypot = 1` → skip immediately, no further analysis needed.
+
+**Strong buy signal combination:** `smart_degen_count ≥ 3` + `rug_ratio < 0.2` + `creator_close` + `is_wash_trading = false` + `liquidity > $50k` → high-quality opportunity, proceed to full token research.
+
+For full due diligence on any token surfaced here: [`docs/workflow-token-research.md`](../../docs/workflow-token-research.md)
+
+## Token Lifecycle Stage
+
+Use field combinations to determine what stage a token is in. This affects how signals should be interpreted.
+
+### Stage 1 — Early (New Born)
+
+**Indicators:**
+- `creation_timestamp` < 1 hour ago
+- `hot_level` low or just starting to rise
+- `smart_degen_count = 0`, `renowned_count = 0`
+
+**Interpretation:** Too early for smart money signals. No on-chain track record. High risk, high potential reward. **Wait for Stage 2 confirmation before acting.** Only the most risk-tolerant traders enter here.
+
+### Stage 2 — Breakout
+
+**Indicators:**
+- `smart_degen_count ≥ 3` AND rising
+- Volume surging (compare `swaps_1h` vs `swaps_24h / 24` — significantly higher)
+- `price_change_percent1h > 20%`
+- `creator_token_status = creator_hold` is OK at this stage (dev hasn't distributed yet)
+
+**Interpretation:** Strongest entry signal. Smart money is accumulating. Verify security before acting. This window is often short — act on confirmation, not anticipation.
+
+### Stage 3 — Distribution
+
+**Indicators:**
+- `creator_token_status = creator_close` (dev has sold their allocation)
+- `renowned_count` buying (late social signal — KOLs often enter after smart money)
+- `smart_degen_count` plateauing or declining
+- Volume still high but momentum slowing
+
+**Interpretation:** Late stage entry. Smart money may be exiting into retail/KOL demand. Higher risk for new entries. If already holding from Stage 2, evaluate exit levels.
+
+### Stage 4 — Decline
+
+**Indicators:**
+- Volume declining across all windows
+- `holder_count` declining
+- `rat_trader_amount_rate` high (insider/sneak trading dominating)
+- `smart_degen_count = 0` or clearly declining
+
+**Interpretation:** Avoid new entries entirely. If still holding, consider exiting. The opportunity has likely passed.
 
 ## `market trenches` Parameters
 
@@ -448,6 +524,8 @@ Response fields: `data.new_creation`, `data.pump`, `data.completed` — each is 
 | `dexscr_trending_bar` | Whether paid for Dexscreener trending bar placement |
 | `dexscr_boost_fee` | Amount paid for Dexscreener boost (0 = none) |
 
+**After fetching trenches results, apply the Token Quality Filter Criteria section before presenting tokens to the user.** Do not dump raw results — filter first, then surface the strongest candidates.
+
 ### Solana Trenches Examples
 
 ```bash
@@ -550,10 +628,15 @@ Trend: [brief description — e.g. "steady uptrend", "sharp drop then recovery",
 Present the top results (default: top 10, or as requested) as a table:
 
 ```
-# | Symbol | Price | Market Cap | Volume ({interval}) | 1h Chg | Smart Degens | Liquidity | Platform
+# | Symbol | Price | MCap | Volume ({interval}) | 1h Chg | SM | Liq | Platform | Signal
 ```
 
-Then give a one-line highlight for any standout tokens (e.g. "TOKEN1 has 12 smart money holders and +85% in 1h").
+Where **Signal** = quality flag derived from the token's data:
+- 🟢 Pass: `smart_degen_count ≥ 3` AND `rug_ratio < 0.2` AND `is_wash_trading = false`
+- 🔴 Skip: `rug_ratio > 0.3` OR `is_wash_trading = true` OR `is_honeypot = 1`
+- 🟡 Watch: everything else
+
+Then give a one-line highlight for any standout tokens (e.g. "TOKEN1 has 12 smart money holders and +85% in 1h — 🟢 strong signal").
 
 ### `market trenches` — Grouped by Category
 

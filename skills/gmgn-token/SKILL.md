@@ -432,6 +432,20 @@ gmgn-cli token holders --chain sol --address EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGG
   --limit 100 --raw
 ```
 
+### `token traders` — `--tag` + `--order-by` Combination Guide
+
+Use this table to pick the right combination for common `token traders` use cases:
+
+| Use case | `--tag` | `--order-by` |
+|----------|---------|-------------|
+| Smart money with highest buy volume | `smart_degen` | `buy_volume_cur` |
+| Smart money with highest sell volume (exit signal) | `smart_degen` | `sell_volume_cur` |
+| KOLs recently active | `renowned` | `last_active_timestamp` |
+| Smart money most profitable traders | `smart_degen` | `profit` |
+| Snipers still holding | `sniper` | `amount_percentage` |
+| Smart money sitting on biggest unrealized gains | `smart_degen` | `unrealized_profit` |
+| KOLs who already took profit | `renowned` | `profit` |
+
 ### `token traders` — Find Active Traders
 
 ```bash
@@ -465,11 +479,41 @@ gmgn-cli token traders --chain bsc --address 0x2170Ed0880ac9A755fd29B2688956BD95
 
 ---
 
+## Token Quick Scoring Card
+
+After fetching `token security` and `token info`, apply this scoring card to give a structured verdict. Do not skip this step when the user asks for a safety check or due diligence.
+
+| Field | ✅ Safe | ⚠️ Warning | 🚫 Danger (Hard Stop) |
+|-------|---------|-----------|----------------------|
+| `is_honeypot` | `"no"` | — | `"yes"` → **stop immediately** |
+| `open_source` | `"yes"` | `"unknown"` | `"no"` |
+| `owner_renounced` | `"yes"` | `"unknown"` | `"no"` |
+| `renounced_mint` (SOL) | `true` | — | `false` |
+| `renounced_freeze_account` (SOL) | `true` | — | `false` |
+| `rug_ratio` | `< 0.10` | `0.10–0.30` | `> 0.30` |
+| `top_10_holder_rate` | `< 0.20` | `0.20–0.50` | `> 0.50` |
+| `creator_token_status` | `creator_close` | — | `creator_hold` |
+| `buy_tax` / `sell_tax` | `0` | `0.01–0.05` | `> 0.10` |
+| `sniper_count` | `< 5` | `5–20` | `> 20` |
+| `smart_wallets` (from `wallet_tags_stat`) | `≥ 3` | `1–2` | `0` (bearish, not a hard stop) |
+| `renowned_wallets` (from `wallet_tags_stat`) | `≥ 1` | — | `0` (neutral, not a hard stop) |
+
+**Final scoring logic:**
+- If `is_honeypot = "yes"` → **hard stop immediately**, do not proceed regardless of other signals
+- If other 🚫 fields present → **skip** (strong warning — present to user)
+- `smart_wallets = 0` alone is NOT a hard stop — it means no smart money interest yet, which is bearish but not disqualifying for very new tokens
+- If 3+ ⚠️ with no 🚫 → **needs more research** — present findings and ask user how to proceed
+- If mostly ✅ with `smart_wallets ≥ 3` → **worth researching** — proceed to holders/traders analysis
+
 ## Workflow: Full Token Due Diligence
 
-> Full 4-step workflow: [`docs/token-due-diligence.md`](../../docs/token-due-diligence.md)
+When the user asks for a full token research / due diligence, follow the steps in [`docs/workflow-token-research.md`](../../docs/workflow-token-research.md).
 
-Steps: `token info` → `token security` → `token pool` → `token holders/traders` (smart money signals).
+Steps: `token info` → `token security` → `token pool` → market heat check → `token holders/traders` (smart money signals) → Decision Framework.
+
+**For a more comprehensive report** (user asks for a "deep report", "full analysis", "is this worth a large position"), use the extended workflow: [`docs/workflow-project-deep-report.md`](../../docs/workflow-project-deep-report.md). This adds a scored multi-dimension analysis (fundamentals + security + liquidity + smart money conviction + price action) and produces a full written report.
+
+**For active risk monitoring** on a held position (user asks "any risk warnings", "are whales dumping", "is liquidity still healthy"), follow: [`docs/workflow-risk-warning.md`](../../docs/workflow-risk-warning.md). Uses `token security` + `token pool` + `token holders` to flag whale exits, liquidity drain, and developer dumps.
 
 ---
 
@@ -488,21 +532,31 @@ Social: @{link.twitter_username}  |  {link.website}  |  {link.telegram}
 
 If any social fields are empty, omit them rather than showing `null`.
 
-### `token security` — Risk Summary
+### `token security` — Risk Assessment Summary
 
-Present as a risk table with a clear verdict:
+After fetching security data, present a structured risk summary using this format:
 
 ```
-Security check: {symbol}
-✅ / ⚠️ / ❌  Honeypot: {is_honeypot}
-✅ / ⚠️ / ❌  Open source: {open_source}
-✅ / ⚠️ / ❌  Renounced: {owner_renounced} (or renounced_mint + renounced_freeze for SOL)
-✅ / ⚠️ / ❌  Buy/Sell tax: {buy_tax} / {sell_tax}
-✅ / ⚠️ / ❌  Top-10 concentration: {top_10_holder_rate}
-✅ / ⚠️ / ❌  Rug ratio: {rug_ratio}
+Token: {symbol}  |  Chain: {chain}  |  Address: {short address}
+─── Security ──────────────────────────────────────
+Contract verified:    ✅ yes  / 🚫 no / ⚠️ unknown
+Owner renounced:      ✅ yes  / 🚫 no / ⚠️ unknown
+Honeypot:             ✅ no   / 🚫 YES — DO NOT BUY
+Mint renounced (SOL): ✅ yes  / ⚠️ no
+Freeze renounced(SOL):✅ yes  / ⚠️ no
+Rug risk score:       {rug_ratio} → ✅ <0.1 Low / ⚠️ 0.1–0.3 Med / 🚫 >0.3 High
+Top-10 holder %:      {top_10_holder_rate%} → ✅ <20% / ⚠️ 20–50% / 🚫 >50%
+Dev still holding:    ✅ sold (creator_close) / ⚠️ holding (creator_hold)
+Sniper wallets:       ✅ <5  / ⚠️ 5–20 / 🚫 >20
+─── Smart Money ───────────────────────────────────
+SM holders: {smart_wallets}   KOL holders: {renowned_wallets}
+─── Verdict ───────────────────────────────────────
+🟢 Clean — worth researching
+🟡 Mixed signals — proceed with caution
+🔴 Red flags present — skip or verify manually
 ```
 
-Then give a one-line verdict: "Safe to proceed", "Proceed with caution", or "High risk — do not buy".
+**If `is_honeypot = "yes"`, stop immediately and display: "🚫 HONEYPOT DETECTED — Do not buy this token." Do NOT proceed to further analysis steps.**
 
 ### `token holders` / `token traders` — Ranked Table
 

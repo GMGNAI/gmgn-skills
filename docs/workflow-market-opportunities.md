@@ -44,5 +44,5 @@ Top 5 Trending Tokens — SOL / 1h
 ## Step 4 — Follow-up actions
 
 For each token, offer:
-- **Deep dive**: `token info` + `token security` for full due diligence (see [token-due-diligence.md](token-due-diligence.md))
+- **Deep dive**: run full token research workflow — see [workflow-token-research.md](workflow-token-research.md)
 - **Swap**: execute directly if the user is satisfied with the trending data alone
