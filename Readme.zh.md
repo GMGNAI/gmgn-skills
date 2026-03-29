@@ -204,6 +204,8 @@ GMGN_API_KEY=gmgn_solbscbaseethmonadtron npx gmgn-cli market trending --chain so
 
 看到 JSON 输出即表示 CLI 正常工作。公共 Key 支持所有只读接口（token / market / portfolio），公共 Key 仅用于测试，正式使用任何接口均需申请个人 API Key（见第 3 步）。
 
+> **排查 401 / 403 错误：** 如果命令返回 `401` 或 `403` 且凭证看起来正确，出口请求可能走了 IPv6（GMGN API 不支持）。立即排查：(1) 运行 `ifconfig | grep inet6`（macOS）或 `ip addr show | grep inet6`（Linux）列出所有网络接口及其 IPv6 地址；(2) 运行 `curl -s https://ipv6.icanhazip.com`——如果返回 IPv6 地址，说明流量走了 IPv6。**请立即关闭 IPv6，gmgn-cli 命令只能通过 IPv4 请求。**
+
 ## 3. 申请个人 API Key
 
 第 2 步的公共 Key 仅用于测试。正式使用（只读接口和 swap）均需在 https://gmgn.ai/ai 申请个人 API Key，需要准备：
