@@ -184,6 +184,8 @@ GMGN_API_KEY=gmgn_solbscbaseethmonadtron gmgn-cli market trending --chain sol --
 
 If you see JSON output, the CLI is working. The public key supports all read-only commands (token / market / portfolio) and is for testing only — apply for your own API key to use any feature (see step 3).
 
+> **Troubleshooting — 401 / 403 errors:** If the command fails with `401` or `403` and credentials look correct, your outbound traffic may be going via IPv6 (not supported). Check immediately: (1) run `ifconfig | grep inet6` (macOS) or `ip addr show | grep inet6` (Linux) to list all network interfaces and their IPv6 addresses; (2) run `curl -s https://ipv6.icanhazip.com` — if it returns an IPv6 address, your traffic is going via IPv6. **Disable IPv6 on your network interface — gmgn-cli commands only work over IPv4.**
+
 ## 3. Get Your Own API Key
 
 The public key in step 2 is for testing only. Apply for your own API key at **https://gmgn.ai/ai** — required for all actual use (read-only and swap). You will need:
