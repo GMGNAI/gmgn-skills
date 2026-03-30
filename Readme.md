@@ -16,38 +16,48 @@ With GMGN Agent Skills, you can use AI agents to query real-time trending token 
 
 ## Why GMGN Skills
 
-> Purpose-built for on-chain alpha — not a DeFi dashboard, not a general portfolio tracker. GMGN Skills gives AI agents access to the same professional data used by top traders on GMGN.
+> Purpose-built for on-chain alpha. GMGN Skills gives AI agents direct access to the same professional data and trading infrastructure used by top traders on GMGN.
 
-### Data that competitors don't have
+### 1. Real-time on-chain data — faster
 
-| Capability | GMGN Skills | Others |
-|-----------|:-----------:|:------:|
-| Smart Money historical P&L + win rate | ✅ | ❌ |
-| Smart Money convergence signal (≥3 wallets / 30 min) | ✅ | ❌ |
-| Wallet archetype tags (bundler / rat_trader / sniper / KOL / whale) | ✅ | Partial |
-| Rug ratio score (0–1) + honeypot + wash-trade detection | ✅ | Basic only |
-| Bonding curve lifecycle (pre-grad → graduated → open DEX) | ✅ | Partial |
-| 1-minute K-line (OHLCV) | ✅ | ❌ |
-| Strategy orders: take-profit / stop-loss | ✅ | ❌ |
-| Sell by position percentage (`--percent 50`) | ✅ | ❌ |
-| Follow-wallet live feed with size/direction filters | ✅ | ❌ |
+Data across SOL / BSC / Base is live on every query. No polling delays, no stale snapshots.
 
-### Built for speed
+| Data | Granularity |
+|------|-------------|
+| K-line (OHLCV) | `1m` / `5m` / `15m` / `1h` / `4h` / `1d` — minimum **1-minute** candles |
+| Trending tokens | `1m` / `5m` / `1h` / `6h` / `24h` — minimum **1-minute** window |
+| Token price / volume / market cap | Real-time |
+| Smart Money & KOL positions | Real-time |
+| New token discovery (Trenches) | Real-time, by launchpad |
 
-- **Real-time trading data** — Prices, swap counts, buy/sell volume, and market cap update in real time across SOL / BSC / Base. No stale snapshots.
-- **Real-time token analytics** — Every query returns live-computed values for smart money count (`smart_degen`), KOL positions (`renowned`), rat trader ratio (`rat_trader_amount_rate`), bundler bot exposure (`bundler_trader_amount_rate`), sniper wallet count, suspected insider hold rate, and fresh wallet ratio — the same deep signal layer as the GMGN web platform.
-- **Trade execution** — Shares the same RPC routing as GMGN's web trading interface. Order submission latency under 0.3 seconds.
-- **Real-time data granularity**
-  - **K-line** (`market kline`): `1m` / `5m` / `15m` / `1h` / `4h` / `1d` — minimum **1-minute** candles, live-updated
-  - **Trending list** (`market trending`): `1m` / `5m` / `1h` / `6h` / `24h` — minimum **1-minute** window, refreshed every cycle
+### 2. Trade faster
 
-### Only on GMGN
+- Same RPC routing as GMGN's web trading interface — order submission under **0.3 seconds**.
+- Market orders, limit orders, and strategy orders (take-profit / stop-loss) in a single command.
+- Sell by position percentage (`--percent 50`) without calculating exact amounts.
 
-- **Smart Money convergence** — Surfaces tokens where ≥ 3 Smart Money wallets traded the same direction within 30 minutes — the strongest early-entry signal available.
-- **Full wallet P&L breakdown** — Per-wallet realized profit, unrealized profit, average buy/sell price, win rate, and trade style profile. Know exactly how good a wallet is before you follow it.
-- **Copy-trade estimation** — `workflow-smart-money-profile.md` calculates the historical return if you had mirrored a wallet trade-for-trade.
-- **Multi-dimensional wallet tags** — Every holder is classified: smart_degen, renowned, sniper, rat_trader, bundler, whale, fresh wallet. No other skill exposes this.
-- **9 built-in AI workflows** — Token research, project deep report, wallet analysis, smart money profiling, risk warning, early project screening, daily brief, market discovery, and more — all wired to the CLI.
+### 3. More comprehensive token data
+
+Token queries return signals that most on-chain tools don't expose at all:
+
+- **Smart money count** (`smart_degen_count`) and **KOL holders** (`renowned_wallets`) — live
+- **Rat trader ratio** (`rat_trader_amount_rate`) — volume share from insider/sneak wallets
+- **Bundler bot exposure** (`bundler_trader_amount_rate`) — volume from bot-bundled buys
+- **Sniper wallets** (`sniper_count`) — wallets that bought at the exact moment of launch
+- **Suspected insider hold rate** (`suspected_insider_hold_rate`)
+- **Fresh wallet ratio** (`fresh_wallet_rate`)
+- **Rug ratio score** (0–1) + honeypot detection + wash-trade flag
+- **Bonding curve status** (`is_on_curve`) — whether the token has graduated to open DEX
+
+### 4. What you can do with GMGN Skills
+
+- Query token fundamentals, security risk, liquidity pools, top holders, and top traders
+- Fetch K-line / OHLCV data for any token across chains
+- Browse trending tokens and newly launched tokens by launchpad (Pump.fun, letsbonk, fourmeme, clanker…)
+- Analyze any wallet: holdings, realized / unrealized P&L, win rate, trade history
+- Track Smart Money, KOL, and wallets you follow — see what they're buying and selling right now
+- Run full research and analysis via 9 built-in AI workflow docs (token research, wallet analysis, risk warning, daily brief, and more)
+- Execute swaps: market orders, limit orders, take-profit / stop-loss strategy orders
 
 ---
 
