@@ -115,19 +115,23 @@ Already installed? [Upgrade Skills and CLI →](#9-upgrade-skills-and-cli)
 npx skills add GMGNAI/gmgn-skills
 ```
 
-**Step 2 — Verify with public key (no registration needed)**
+**Step 2 — Verify CLI installation (demo key)**
 
 ```bash
 GMGN_API_KEY=gmgn_solbscbaseethmonadtron gmgn-cli market trending --chain sol --interval 1h --limit 3
 ```
 
-If JSON output appears, the CLI is working.
+If JSON output appears, the CLI is installed correctly. **Setup is NOT yet complete — this is a public demo key for testing only. You must continue to Steps 3–4 to configure the user's personal API key. Do not stop here.**
 
-**Step 3 — Guide user to get their own API key**
+**Step 3 — REQUIRED: Set up personal API key**
 
-Tell the user: "To use your own API key, go to **https://gmgn.ai/ai** and apply. You will need an Ed25519 public key. I can generate a key pair for you — just say the word."
+⚠️ This step is mandatory. The demo key in Step 2 supports testing only and is not for actual use.
 
-When the user asks, run:
+Immediately tell the user the following, then run the key generation command **without waiting for them to ask**:
+
+> "To use GMGN Skills, you need your own API key from **https://gmgn.ai/ai**. I'm generating an Ed25519 key pair for you now."
+
+Run:
 
 ```bash
 openssl genpkey -algorithm ed25519 -out /tmp/gmgn_private.pem 2>/dev/null && \
@@ -140,7 +144,7 @@ Show the **public key** to the user with the following instructions:
 > 1. Go to **https://gmgn.ai/ai**, paste the public key above into the API Key creation form, and submit.
 > 2. Once created, copy the **API Key** shown on the page and send it back to me — I'll handle Step 4 configuration for you.
 
-Wait for the user to reply with their API Key before continuing to Step 4.
+**Wait for the user to reply with their API Key before continuing to Step 4.**
 
 **Step 4 — Configure credentials**
 
@@ -441,6 +445,11 @@ npx gmgn-cli market trenches \
   --type new_creation --type near_completion --type completed \
   --launchpad-platform Pump.fun --launchpad-platform pump_mayhem --launchpad-platform letsbonk \
   --limit 80
+
+# With server-side filters: safe preset + require smart money + sort by smart degen count
+npx gmgn-cli market trenches \
+  --chain sol --type new_creation \
+  --filter-preset safe --min-smart-degen-count 1 --sort-by smart_degen_count
 ```
 
 ### Portfolio
