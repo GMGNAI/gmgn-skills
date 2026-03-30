@@ -16,31 +16,35 @@ With GMGN Agent Skills, you can use AI agents to query real-time trending token 
 
 ## Why GMGN Skills
 
-> Built for high-speed multi-chain Meme token trading. gmgn-skills gives AI agents direct access to GMGN's real-time trending tokens, newly created tokens, and professional on-chain data — including Smart Money, KOL, rat trader, and bundler analytics.
+> Built for AI agents to query and trade multi-chain Meme tokens at high speed in real time. gmgn-skills gives AI agents direct access to GMGN's trending tokens, Trenches new token listings, and professional on-chain data — including Smart Money, KOL, rat trader, and bundler analytics.
 >
-> With 100+ professional data dimensions, you can turn your AI agent into a 24/7 automated trading tool — monitoring multi-chain token momentum in real time, placing orders instantly, and managing exits with take-profit / stop-loss, all on autopilot.
+> With 500+ professional data dimensions, you can turn your AI agent into a 24/7 real-time chain-scanning trading tool — monitoring multi-chain token momentum, placing orders instantly, and managing exits with take-profit / stop-loss, all on autopilot.
 
 ### 1. Real-time on-chain data — faster
 
-Data across SOL / BSC / Base is live on every query. No polling delays, no stale snapshots.
+Data across SOL / BSC / Base is live on every query. Supports multi-parameter customization, no snapshot cache — built for AI agent real-time decision-making (including but not limited to):
 
 | Data | Granularity |
 |------|-------------|
-| K-line (OHLCV) | `1m` / `5m` / `15m` / `1h` / `4h` / `1d` — minimum **1-minute** candles |
-| Trending tokens | `1m` / `5m` / `1h` / `6h` / `24h` — minimum **1-minute** window |
-| Token price / volume / market cap | Real-time |
-| Smart Money & KOL positions | Real-time |
-| New token discovery (Trenches) | Real-time, by launchpad |
+| New token discovery (Trenches) | Real-time, filtered by launchpad, dev holdings, KOL entry, rat trader ratio |
+| Trending tokens | Real-time, `1m` / `5m` / `1h` / `6h` / `24h` — minimum **1-minute** window |
+| Token info | Real-time — trade activity / price / volume / market cap |
+| Token security | Real-time — open source, renounced, honeypot detection, etc. |
+| Token analytics | Real-time — Dev / KOL / Smart Money / rat trader / bundler wallet holdings |
+| Monitoring & tracking | Real-time — KOL / Smart Money / followed wallet trade activity |
+| K-line (OHLCV) | Real-time, `1m` / `5m` / `15m` / `1h` / `4h` / `1d` — minimum **1-minute** candles |
+| Wallet holdings | Real-time — holdings / P&L / trade activity |
 
 ### 2. Trade faster
 
-- Same RPC routing as GMGN's web trading interface — order submission under **0.3 seconds**.
+- Same RPC routing as GMGN's web trading interface, multi-region deployment, millisecond response — order submission under **0.3 seconds** end-to-end.
+- Automatic best-route selection, the same routing engine as GMGN web.
 - Market orders, limit orders, and strategy orders (take-profit / stop-loss) in a single command.
 - Sell by position percentage (`--percent 50`) without calculating exact amounts.
 
 ### 3. More comprehensive token data
 
-Token queries return signals that most on-chain tools don't expose at all:
+No more scraping web pages or getting blocked by Cloudflare. Query all the professional analytics needed for high-frequency Meme token trading, with high concurrency in real time (including but not limited to):
 
 - **Smart money count** (`smart_degen_count`) and **KOL holders** (`renowned_wallets`) — live
 - **Rat trader ratio** (`rat_trader_amount_rate`) — volume share from insider/sneak wallets
@@ -53,13 +57,27 @@ Token queries return signals that most on-chain tools don't expose at all:
 
 ### 4. What you can do with GMGN Skills
 
-- Query token fundamentals, security risk, liquidity pools, top holders, and top traders
-- Fetch K-line / OHLCV data for any token across chains
-- Browse trending tokens and newly launched tokens by launchpad (Pump.fun, letsbonk, fourmeme, clanker…)
-- Analyze any wallet: holdings, realized / unrealized P&L, win rate, trade history
-- Track Smart Money, KOL, and wallets you follow — see what they're buying and selling right now
-- Run full research and analysis via 9 built-in AI workflow docs (token research, wallet analysis, risk warning, daily brief, and more)
-- Execute swaps: market orders, limit orders, take-profit / stop-loss strategy orders
+**Real-time chain scanning**
+- Scan Trenches for new tokens, filtered by launchpad (Pump.fun, letsbonk, fourmeme, clanker…), dev holdings, KOL entry, and rat trader ratio in real time
+- Browse multi-chain trending token rankings (minimum 1-minute granularity), sorted by volume, smart money count, market cap, and more
+- Track new tokens in real time — see which tokens KOLs, Smart Money, and wallets you follow are buying, and auto-analyze the latest hot tokens
+- Fetch real-time K-line / OHLCV data for any token (1m / 5m / 15m / 1h / 4h / 1d)
+
+**Token analytics**
+- Query token fundamentals, social links, Bonding Curve status, and liquidity pool details
+- Security check: open source, renounced, honeypot, wash trading, Rug ratio score (0–1)
+- Deep holder analysis: Smart Money / KOL / rat trader / bundler / sniper / whale / fresh wallet — holdings breakdown and rankings
+
+**Wallet & tracking**
+- Analyze any wallet: real-time holdings, realized / unrealized P&L, win rate, trade style, full history
+- Track the latest buys and sells from Smart Money, KOL, and wallets you follow in real time
+
+**Automated trading**
+- Market orders, limit orders, take-profit / stop-loss strategy orders — end-to-end latency under 0.3 seconds
+- One-command sell by position percentage (`--percent 50`), no manual calculation needed
+
+**AI workflows**
+- 9 built-in workflow docs: token research, project deep report, wallet analysis, Smart Money profiling, risk warning, early project screening, daily brief, market discovery, and more — ready to use out of the box
 
 ---
 
