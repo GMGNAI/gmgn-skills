@@ -249,7 +249,17 @@ export class OpenApiClient {
     try {
       return await fetch(url, { method, headers, body: body ?? undefined });
     } catch (err: unknown) {
-      const cause = err instanceof Error ? (err.cause ?? err) : err;
+      const cause = extractRootCause(err);
+      const errorCode = (cause as NodeJS.ErrnoException).code;
+
+      // Detect IPv4 unavailability errors
+      if (errorCode === "EADDRNOTAVAIL" || errorCode === "ENETUNREACH") {
+        throw new Error(
+          `Network unreachable (${errorCode}): Your system may not support IPv4. ` +
+          `Please check your network configuration or contact support.`
+        );
+      }
+
       if (process.env.GMGN_DEBUG) console.error(`${curlStr}\n[error] fetch failed: ${cause}`);
       throw new Error(`${method} ${subPath} fetch failed: ${cause}`);
     }
@@ -361,4 +371,12 @@ function buildUrl(base: string, query: Record<string, string | number | string[]
     }
   }
   return `${base}?${params.toString()}`;
+}
+
+// Recursively extract the root cause from nested Error.cause chain
+function extractRootCause(err: unknown): unknown {
+  if (err instanceof Error && err.cause) {
+    return extractRootCause(err.cause);
+  }
+  return err;
 }

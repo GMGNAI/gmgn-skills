@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createRequire } from "module";
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
-import { setGlobalDispatcher, ProxyAgent, Agent } from "undici";
+import { setGlobalDispatcher, ProxyAgent, Agent, buildConnector } from "undici";
 import { SocksClient } from "socks";
 import * as tls from "tls";
 import { Command } from "commander";
@@ -25,6 +25,7 @@ if (proxy) {
             proxy: { host: u.hostname, port: parseInt(u.port || "1080"), type },
             command: "connect",
             destination: { host: options.hostname!, port: +options.port! },
+            socket_options: { family: 4 } as any,
           });
           if (options.protocol === "https:") {
             callback(null, tls.connect({ socket, servername: options.hostname, rejectUnauthorized: options.rejectUnauthorized !== false }));
@@ -39,6 +40,10 @@ if (proxy) {
   } else {
     setGlobalDispatcher(new ProxyAgent(proxy));
   }
+} else {
+  // Force IPv4 for all connections (no proxy mode)
+  const connector = buildConnector({ family: 4 } as any);
+  setGlobalDispatcher(new Agent({ connect: connector }));
 }
 
 const program = new Command();
