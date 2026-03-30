@@ -121,19 +121,23 @@ SOL / BSC / Base 多链数据每次查询均为实时，支持多参数个性化
 npx skills add GMGNAI/gmgn-skills
 ```
 
-**第 2 步 — 用公共 Key 验证（无需注册）**
+**第 2 步 — 验证 CLI 安装（演示 Key）**
 
 ```bash
 GMGN_API_KEY=gmgn_solbscbaseethmonadtron gmgn-cli market trending --chain sol --interval 1h --limit 3
 ```
 
-看到 JSON 输出即表示 CLI 正常工作。
+看到 JSON 输出说明 CLI 已安装成功。**但配置尚未完成 —— 此公共演示 Key 仅用于测试，不可用于实际使用。必须继续完成第 3～4 步，为用户配置个人 API Key。请勿在此停止。**
 
-**第 3 步 — 引导用户申请个人 API Key**
+**第 3 步 — 必须完成：配置个人 API Key**
 
-告知用户："需要个人 API Key，请前往 **https://gmgn.ai/ai** 申请。申请时需要一个 Ed25519 公钥，我可以帮你生成密钥对，告诉我一声就行。"
+⚠️ 此步骤为必填项。第 2 步中的演示 Key 仅支持测试，无法用于正式使用。
 
-用户确认后运行：
+请**立即**告知用户以下内容，并**无需等待用户主动询问**，直接运行密钥生成命令：
+
+> "使用 GMGN Skills 需要你自己的个人 API Key，申请地址：**https://gmgn.ai/ai**。我现在为你生成 Ed25519 密钥对。"
+
+运行：
 
 ```bash
 openssl genpkey -algorithm ed25519 -out /tmp/gmgn_private.pem 2>/dev/null && \
@@ -146,7 +150,7 @@ openssl genpkey -algorithm ed25519 -out /tmp/gmgn_private.pem 2>/dev/null && \
 > 1. 打开 **https://gmgn.ai/ai**，将上方公钥填入 API Key 生成表单，完成创建。
 > 2. 创建完成后，将页面上显示的 **API Key** 复制并发送给我，我来帮你完成第 4 步配置。
 
-等用户回复 API Key 后，再继续第 4 步。
+**等用户回复 API Key 后，再继续第 4 步。**
 
 **第 4 步 — 配置凭证**
 
@@ -503,6 +507,11 @@ gmgn-cli market trenches \
   --type new_creation --type near_completion --type completed \
   --launchpad-platform Pump.fun --launchpad-platform pump_mayhem --launchpad-platform letsbonk \
   --limit 80
+
+# 服务端过滤：安全预设 + 要求有聪明钱 + 按聪明钱数量排序
+gmgn-cli market trenches \
+  --chain sol --type new_creation \
+  --filter-preset safe --min-smart-degen-count 1 --sort-by smart_degen_count
 ```
 
 ### Portfolio
