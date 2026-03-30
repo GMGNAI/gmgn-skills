@@ -16,7 +16,9 @@ With GMGN Agent Skills, you can use AI agents to query real-time trending token 
 
 ## Why GMGN Skills
 
-> Purpose-built for on-chain alpha. GMGN Skills gives AI agents direct access to the same professional data and trading infrastructure used by top traders on GMGN.
+> Built for high-speed multi-chain Meme token trading. gmgn-skills gives AI agents direct access to GMGN's real-time trending tokens, newly created tokens, and professional on-chain data — including Smart Money, KOL, rat trader, and bundler analytics.
+>
+> With 100+ professional data dimensions, you can turn your AI agent into a 24/7 automated trading tool — monitoring multi-chain token momentum in real time, placing orders instantly, and managing exits with take-profit / stop-loss, all on autopilot.
 
 ### 1. Real-time on-chain data — faster
 
