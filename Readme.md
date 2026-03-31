@@ -99,7 +99,7 @@ No more scraping web pages or getting blocked by Cloudflare. Query all the profe
 
 Ready to install? [Jump to Installation →](#1-installation)
 
-Already installed? [Upgrade Skills and CLI →](#9-upgrade-skills-and-cli)
+Already installed? [Upgrade Skills and CLI →](#10-upgrade-skills-and-cli)
 
 > **Tip:** If your AI agent tries to open or scrape the gmgn.ai website instead of using the CLI, add this to your prompt: `Use gmgn-cli commands. Do not call gmgn.ai web endpoints directly.`
 
@@ -176,9 +176,10 @@ If output appears without error, setup is complete.
 
 ## Upgrade (AI Agent)
 
-> Run this command to upgrade both the CLI and Skills to the latest version.
+> Run these two commands to upgrade both the CLI and Skills to the latest version.
 
 ```bash
+npm install -g gmgn-cli
 npx skills add GMGNAI/gmgn-skills
 ```
 
@@ -188,7 +189,7 @@ Check the installed version after upgrading:
 gmgn-cli --version
 ```
 
-> For the full upgrade reference, see [Section 9 — Upgrade Skills and CLI](#9-upgrade-skills-and-cli).
+> For the full upgrade reference, see [Section 9 — Upgrade Skills and CLI](#10-upgrade-skills-and-cli).
 
 ---
 
@@ -373,12 +374,23 @@ Natural language prompts you can send to any AI assistant with gmgn-cli skills i
 ```
 buy 0.1 SOL of <token_address>
 sell 50% of <token_address> on BSC
+sell 30% of my <token_address> position
+get a quote: how much <token_address> can I get for 1 SOL?
 check order status <order_id>
 is <token_address> safe to buy on solana?
 show top holders of <token_address>
+show smart money holdings of <token_address>, sorted by buy volume
+show recent KOL trades for <token_address>
 show my wallet holdings on SOL
 query token details for 0x1234...
+show 24h K-line and volume for <token_address>
 show trading stats for wallet <wallet_address> on BSC
+show recent trades for wallet <wallet_address>
+which wallets are linked to my API key, and what are their balances
+show the latest smart money trades on SOL
+show what KOLs are buying on SOL
+show newly launched tokens on Solana
+show Solana 1-minute trending tokens
 ```
 
 ### Typical Workflows
@@ -428,26 +440,26 @@ Full parameter reference: [docs/cli-usage.md](docs/cli-usage.md). All commands s
 ### Token
 
 ```bash
-npx gmgn-cli token info --chain sol --address <addr>
+gmgn-cli token info --chain sol --address <addr>
 ```
 
 ### Market
 
 ```bash
-npx gmgn-cli market trending \
+gmgn-cli market trending \
   --chain sol \
   --interval 1h \
   --order-by volume --limit 20 \
   --filter not_risk --filter not_honeypot
 
-npx gmgn-cli market trenches \
+gmgn-cli market trenches \
   --chain sol \
   --type new_creation --type near_completion --type completed \
   --launchpad-platform Pump.fun --launchpad-platform pump_mayhem --launchpad-platform letsbonk \
   --limit 80
 
 # With server-side filters: safe preset + require smart money + sort by smart degen count
-npx gmgn-cli market trenches \
+gmgn-cli market trenches \
   --chain sol --type new_creation \
   --filter-preset safe --min-smart-degen-count 1 --sort-by smart_degen_count
 ```
@@ -455,30 +467,43 @@ npx gmgn-cli market trenches \
 ### Portfolio
 
 ```bash
-npx gmgn-cli portfolio holdings --chain sol --wallet <addr>
+# Holdings
+gmgn-cli portfolio holdings --chain sol --wallet <addr>
+
+# Activity
+gmgn-cli portfolio activity --chain sol --wallet <addr>
+
+# Stats (supports multiple wallets)
+gmgn-cli portfolio stats --chain sol --wallet <addr1> --wallet <addr2>
+
+# Wallets and balances linked to API key
+gmgn-cli portfolio info
+
+# Single token balance
+gmgn-cli portfolio token-balance --chain sol --wallet <addr> --token <token_addr>
 ```
 
 ### Track
 
 ```bash
 # Follow-wallet trade records (requires GMGN_PRIVATE_KEY)
-npx gmgn-cli track follow-wallet --chain sol
-npx gmgn-cli track follow-wallet --chain sol --wallet <wallet_address> --side buy
+gmgn-cli track follow-wallet --chain sol
+gmgn-cli track follow-wallet --chain sol --wallet <wallet_address> --side buy
 
 # KOL trade records
-npx gmgn-cli track kol --limit 100 --raw
-npx gmgn-cli track kol --chain sol --side buy --limit 50 --raw
+gmgn-cli track kol --limit 100 --raw
+gmgn-cli track kol --chain sol --side buy --limit 50 --raw
 
 # Smart Money trade records
-npx gmgn-cli track smartmoney --limit 100 --raw
-npx gmgn-cli track smartmoney --chain sol --side sell --limit 50 --raw
+gmgn-cli track smartmoney --limit 100 --raw
+gmgn-cli track smartmoney --chain sol --side sell --limit 50 --raw
 ```
 
 ### Swap (requires private key)
 
 ```bash
 # Submit swap with fixed slippage
-npx gmgn-cli swap \
+gmgn-cli swap \
   --chain sol \
   --from <wallet-address> \
   --input-token <input-token-addr> \
@@ -487,7 +512,7 @@ npx gmgn-cli swap \
   --slippage 0.01
 
 # Submit swap with automatic slippage
-npx gmgn-cli swap \
+gmgn-cli swap \
   --chain sol \
   --from <wallet-address> \
   --input-token <input-token-addr> \
@@ -495,11 +520,29 @@ npx gmgn-cli swap \
   --amount 1000000 \
   --auto-slippage
 
+# Sell by position percentage (e.g. sell 50%)
+gmgn-cli swap \
+  --chain sol \
+  --from <wallet-address> \
+  --input-token <token-addr> \
+  --output-token <usdc-addr> \
+  --percent 50 \
+  --auto-slippage
+
+# Get quote (no transaction submitted)
+gmgn-cli order quote \
+  --chain sol \
+  --from <wallet-address> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --amount 1000000 \
+  --slippage 0.01
+
 # Query order
-npx gmgn-cli order get --chain sol --order-id <order-id>
+gmgn-cli order get --chain sol --order-id <order-id>
 ```
 
-## 8. Supported Chains
+## 9. Supported Chains
 
 | Commands | Chains | Chain Currencies |
 |----------|--------|-----------------|
@@ -508,10 +551,13 @@ npx gmgn-cli order get --chain sol --order-id <order-id>
 
 ---
 
-## 9. Upgrade Skills and CLI
+## 10. Upgrade Skills and CLI
 
 ```bash
-# Upgrade CLI and Skills
+# Upgrade CLI
+npm install -g gmgn-cli
+
+# Upgrade Skills
 npx skills add GMGNAI/gmgn-skills
 
 # Check current version
@@ -522,7 +568,7 @@ gmgn-cli --version
 
 ---
 
-## 10. Security & Disclaimer (Read Before Use)
+## 11. Security & Disclaimer (Read Before Use)
 
 This tool can be invoked by an AI Agent to submit real on-chain transactions automatically. It carries inherent risks including model hallucination, uncontrolled execution, and prompt injection. Once authorized, the AI Agent will submit transactions on behalf of your linked wallet address — **on-chain transactions are irreversible once confirmed** and may result in financial loss. Use with caution.
 
