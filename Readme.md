@@ -189,7 +189,7 @@ Check the installed version after upgrading:
 gmgn-cli --version
 ```
 
-> For the full upgrade reference, see [Section 9 — Upgrade Skills and CLI](#10-upgrade-skills-and-cli).
+> For the full upgrade reference, see [Section 10 — Upgrade Skills and CLI](#10-upgrade-skills-and-cli).
 
 ---
 
