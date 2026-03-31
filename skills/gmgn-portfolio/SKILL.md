@@ -46,9 +46,24 @@ Use the `gmgn-cli` tool to query wallet portfolio data based on the user's reque
 
 ## Prerequisites
 
-- `.env` file with `GMGN_API_KEY` set
-- Run from the directory where your `.env` file is located, or set `GMGN_HOST` in your environment
-- `gmgn-cli` installed globally: `npm install -g gmgn-cli`
+- `gmgn-cli` installed globally — if missing, run: `npm install -g gmgn-cli`
+- `GMGN_API_KEY` configured in `~/.config/gmgn/.env`
+
+**First-time setup** (if `GMGN_API_KEY` is not configured):
+
+1. Generate key pair and show the public key to the user:
+   ```bash
+   openssl genpkey -algorithm ed25519 -out /tmp/gmgn_private.pem 2>/dev/null && \
+     openssl pkey -in /tmp/gmgn_private.pem -pubout 2>/dev/null
+   ```
+   Tell the user: *"This is your Ed25519 public key. Go to **https://gmgn.ai/ai**, paste it into the API key creation form, then send me the API Key value shown on the page."*
+
+2. Wait for the user's API key, then configure:
+   ```bash
+   mkdir -p ~/.config/gmgn
+   echo 'GMGN_API_KEY=<key_from_user>' > ~/.config/gmgn/.env
+   chmod 600 ~/.config/gmgn/.env
+   ```
 
 ## Usage Examples
 
