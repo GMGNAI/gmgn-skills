@@ -450,7 +450,7 @@ Presets are applied server-side: the API filters tokens before returning results
 |--------|----------------------------|
 | `safe` | `max_rug_ratio=0.3` + `max_bundler_rate=0.3` + `max_insider_ratio=0.3` |
 | `smart-money` | `min_smart_degen_count=1` |
-| `strict` | `max_rug_ratio=0.3` + `max_bundler_rate=0.3` + `max_insider_ratio=0.3` + `min_smart_degen_count=1` |
+| `strict` | `max_rug_ratio=0.3` + `max_bundler_rate=0.3` + `max_insider_ratio=0.3` + `min_smart_degen_count=1` + `min_volume_24h=1000` |
 
 **Preset + explicit flag interaction:** Explicit filter flags always override preset values. For example, `--filter-preset safe --max-rug-ratio 0.1` applies the `safe` preset but overrides rug_ratio threshold to `0.1`.
 
@@ -464,6 +464,11 @@ All filter flags are sent as part of the API request body — the server filters
 
 | Flag pair | Type | Description |
 |-----------|------|-------------|
+| `--min-volume-24h` / `--max-volume-24h` | float | 24h trading volume (USD) |
+| `--min-net-buy-24h` / `--max-net-buy-24h` | float | 24h net buy volume (USD) |
+| `--min-swaps-24h` / `--max-swaps-24h` | int | 24h total swap count |
+| `--min-buys-24h` / `--max-buys-24h` | int | 24h buy count |
+| `--min-sells-24h` / `--max-sells-24h` | int | 24h sell count |
 | `--min-visiting-count` / `--max-visiting-count` | int | Visitor count |
 | `--min-progress` / `--max-progress` | float | Bonding curve progress (0–1) |
 | `--min-marketcap` / `--max-marketcap` | float | Market cap (USD) |
@@ -503,14 +508,14 @@ gmgn-cli market trenches --chain sol --type new_creation --min-smart-degen-count
 gmgn-cli market trenches --chain sol --type new_creation \
   --filter-preset safe --min-smart-degen-count 1 --sort-by smart_degen_count
 
-# Strict preset — safe + smart money (server-side)
+# Strict preset — safe + smart money + min $1k volume (server-side)
 gmgn-cli market trenches --chain sol --type new_creation --type near_completion \
   --filter-preset strict --sort-by smart_degen_count
 
 # Manual range filters (all sent server-side)
 gmgn-cli market trenches --chain sol --type new_creation \
   --max-rug-ratio 0.3 --max-bundler-rate 0.3 --max-insider-ratio 0.3 \
-  --min-smart-degen-count 1
+  --min-smart-degen-count 1 --min-volume-24h 1000
 
 # Filter by token age: only tokens created within the last 30 minutes
 gmgn-cli market trenches --chain sol --type new_creation --max-created 30m

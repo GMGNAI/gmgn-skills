@@ -130,7 +130,17 @@ interface TrenchesFilterField {
 // All server-side filter fields for market trenches
 // API field names map to CLI flags by replacing _ with - (e.g. min_volume_24h → --min-volume-24h)
 const TRENCHES_FILTER_FIELDS: TrenchesFilterField[] = [
-  // Visitor count (24h trading volume / swap counts are not supported by the API)
+  // Trading activity (24h)
+  { api: "min_volume_24h",    type: "float",  desc: "Min 24h trading volume (USD)" },
+  { api: "max_volume_24h",    type: "float",  desc: "Max 24h trading volume (USD)" },
+  { api: "min_net_buy_24h",   type: "float",  desc: "Min 24h net buy volume (USD)" },
+  { api: "max_net_buy_24h",   type: "float",  desc: "Max 24h net buy volume (USD)" },
+  { api: "min_swaps_24h",     type: "int",    desc: "Min 24h total swap count" },
+  { api: "max_swaps_24h",     type: "int",    desc: "Max 24h total swap count" },
+  { api: "min_buys_24h",      type: "int",    desc: "Min 24h buy count" },
+  { api: "max_buys_24h",      type: "int",    desc: "Max 24h buy count" },
+  { api: "min_sells_24h",     type: "int",    desc: "Min 24h sell count" },
+  { api: "max_sells_24h",     type: "int",    desc: "Max 24h sell count" },
   { api: "min_visiting_count", type: "int",   desc: "Min visitor count" },
   { api: "max_visiting_count", type: "int",   desc: "Max visitor count" },
   // Market & liquidity
@@ -205,6 +215,7 @@ const TRENCHES_FILTER_PRESETS: Record<string, Record<string, number | string>> =
     max_bundler_rate: 0.3,
     max_insider_ratio: 0.3,
     min_smart_degen_count: 1,
+    min_volume_24h: 1000,
   },
 };
 
