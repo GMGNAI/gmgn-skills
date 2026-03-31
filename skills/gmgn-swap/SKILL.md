@@ -67,13 +67,26 @@ Currency tokens are the base/native assets of each chain. They are used to buy o
 
 ## Prerequisites
 
-Both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY` must be set in `.env`. The private key must correspond to the wallet bound to the API Key.
+Both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY` must be configured in `~/.config/gmgn/.env`. The private key must correspond to the wallet bound to the API Key.
 
-`gmgn-cli` must be installed globally before use (one-time setup):
+- `gmgn-cli` installed globally — if missing, run: `npm install -g gmgn-cli`
 
-```bash
-npm install -g gmgn-cli
-```
+**First-time setup** (if credentials are not configured):
+
+1. Generate key pair and show the public key to the user:
+   ```bash
+   openssl genpkey -algorithm ed25519 -out /tmp/gmgn_private.pem 2>/dev/null && \
+     openssl pkey -in /tmp/gmgn_private.pem -pubout 2>/dev/null
+   ```
+   Tell the user: *"This is your Ed25519 public key. Go to **https://gmgn.ai/ai**, paste it into the API key creation form (enable swap capability), then send me the API Key value shown on the page."*
+
+2. Wait for the user's API key, then configure both credentials:
+   ```bash
+   mkdir -p ~/.config/gmgn
+   echo 'GMGN_API_KEY=<key_from_user>' > ~/.config/gmgn/.env
+   echo 'GMGN_PRIVATE_KEY="<pem_content_from_step_1>"' >> ~/.config/gmgn/.env
+   chmod 600 ~/.config/gmgn/.env
+   ```
 
 ### Credential Model
 
