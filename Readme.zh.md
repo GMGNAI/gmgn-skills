@@ -102,7 +102,7 @@ SOL / BSC / Base 多链数据每次查询均为实时，支持多参数个性化
 
 已准备好？[点击这里开始安装 Skills →](#开始安装-skills)
 
-已安装？[升级 Skills 和 CLI →](#9-升级-skills-和-cli)
+已安装？[升级 Skills 和 CLI →](#10-升级-skills-和-cli)
 
 > **提示：** 如果你的 AI Agent 尝试直接打开 gmgn.ai 网站而不是使用 CLI，请在提示词中加上：
 > ```
@@ -182,9 +182,10 @@ gmgn-cli market trending --chain sol --interval 1h --limit 3
 
 ## AI Agent 升级
 
-> 运行以下命令，将 CLI 和 Skills 同时升级到最新版本。
+> 运行以下两条命令，将 CLI 和 Skills 同时升级到最新版本。
 
 ```bash
+npm install -g gmgn-cli
 npx skills add GMGNAI/gmgn-skills
 ```
 
@@ -194,7 +195,7 @@ npx skills add GMGNAI/gmgn-skills
 gmgn-cli --version
 ```
 
-> 完整升级说明请参阅[第 9 节 — 升级 Skills 和 CLI](#9-升级-skills-和-cli)。
+> 完整升级说明请参阅[第 10 节 — 升级 Skills 和 CLI](#10-升级-skills-和-cli)。
 
 ---
 
@@ -220,15 +221,6 @@ gmgn-cli --version
 
 ![代币分析 1](static/market-tokenanalysis-cn01.png)
 ![代币分析 2](static/market-tokenanalysis-cn02.png)
-
----
-
-## 开始安装 Skills
-
-安装前，请先在 **https://gmgn.ai/ai** 创建 API Key，用于：
-
-1. 读取数据：代币、榜单、K 线、特色数据指标
-2. 提交交易：市价立即交易、创建限价单、策略单等
 
 ---
 
@@ -260,20 +252,10 @@ node dist/index.js <command> [options]
 
 ## 2. 验证连通性
 
-### 方式一：通过 AI Agent 验证
-
-发送以下提示词给你的 AI Agent：
-
-```
-执行这个cli命令：GMGN_API_KEY=gmgn_solbscbaseethmonadtron npx gmgn-cli market trending --chain sol --interval 1h --limit 3
-```
-
-### 方式二：通过 CLI 验证
-
 使用公共 API Key 测试，无需注册：
 
 ```bash
-GMGN_API_KEY=gmgn_solbscbaseethmonadtron npx gmgn-cli market trending --chain sol --interval 1h --limit 3
+GMGN_API_KEY=gmgn_solbscbaseethmonadtron gmgn-cli market trending --chain sol --interval 1h --limit 3
 ```
 
 看到 JSON 输出即表示 CLI 正常工作。公共 Key 支持所有只读接口（token / market / portfolio），公共 Key 仅用于测试，正式使用任何接口均需申请个人 API Key（见第 3 步）。
@@ -592,7 +574,7 @@ gmgn-cli order quote \
 gmgn-cli order get --chain sol --order-id <order-id>
 ```
 
-## 8. 支持的链
+## 9. 支持的链
 
 | 接口类型 | 支持的链 | 链原生货币 |
 |----------|----------|-----------|
@@ -601,7 +583,7 @@ gmgn-cli order get --chain sol --order-id <order-id>
 
 ---
 
-## 9. 升级 Skills 和 CLI
+## 10. 升级 Skills 和 CLI
 
 将 `gmgn-cli` 和 Skills 升级到最新版本：
 
@@ -633,7 +615,7 @@ gmgn-cli --version
 
 ---
 
-## 10. 安全与免责（使用前必读）
+## 11. 安全与免责（使用前必读）
 
 本工具可供 AI Agent 调用以自动执行链上交易，存在模型幻觉、执行不可控、提示词注入等固有风险。AI Agent 在获得授权后，将以您绑定的钱包地址提交真实的链上交易，**交易一经上链即不可撤销**，可能导致资金损失，请您谨慎使用。
 
