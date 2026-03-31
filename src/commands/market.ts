@@ -193,7 +193,9 @@ const TRENCHES_FILTER_FIELDS: TrenchesFilterField[] = [
   { api: "max_creator_created_open_count",  type: "int",   desc: "Max creator graduated token count" },
   { api: "min_creator_created_open_ratio",  type: "float", desc: "Min creator graduation ratio (0–1)" },
   { api: "max_creator_created_open_ratio",  type: "float", desc: "Max creator graduation ratio (0–1)" },
-  // Social (x_follower is not supported by the API — silently ignored)
+  // Social
+  { api: "min_x_follower",            type: "int",   desc: "Min Twitter / X follower count" },
+  { api: "max_x_follower",            type: "int",   desc: "Max Twitter / X follower count" },
   { api: "min_twitter_rename_count",  type: "int",   desc: "Min Twitter rename count (high = suspicious)" },
   { api: "max_twitter_rename_count",  type: "int",   desc: "Max Twitter rename count" },
   { api: "min_tg_call_count",         type: "int",   desc: "Min Telegram call count" },

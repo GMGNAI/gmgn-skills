@@ -492,6 +492,7 @@ All filter flags are sent as part of the API request body — the server filters
 | `--min-creator-created-count` / `--max-creator-created-count` | int | Creator's total token creation count |
 | `--min-creator-created-open-count` / `--max-creator-created-open-count` | int | Creator's graduated token count |
 | `--min-creator-created-open-ratio` / `--max-creator-created-open-ratio` | float | Creator's graduation ratio (0–1) |
+| `--min-x-follower` / `--max-x-follower` | int | Twitter / X follower count |
 | `--min-twitter-rename-count` / `--max-twitter-rename-count` | int | Twitter rename count |
 | `--min-tg-call-count` / `--max-tg-call-count` | int | Telegram call count |
 
