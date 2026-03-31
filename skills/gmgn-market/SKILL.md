@@ -437,8 +437,88 @@ Use field combinations to determine what stage a token is in. This affects how s
 | `--type` | No | Categories to query, repeatable: `new_creation` / `near_completion` / `completed` (default: all three) |
 | `--launchpad-platform` | No | Launchpad platform filter, repeatable (default: all platforms for the chain) |
 | `--limit` | No | Max results per category, max 80 (default: 80) |
+| `--filter-preset` | No | Named server-side filter preset: `safe` / `smart-money` / `strict` |
+| `--sort-by` | No | Client-side sort per category: `smart_degen_count` / `renowned_count` / `volume_24h` / `volume_1h` / `swaps_24h` / `swaps_1h` / `rug_ratio` / `holder_count` / `usd_market_cap` / `created_timestamp` |
+| `--direction` | No | Sort direction: `asc` / `desc` (default: `desc`; `asc` for `rug_ratio`) |
+| `--min-*` / `--max-*` | No | Server-side filter range flags — see Filter Fields Reference below |
+
+### Filter Presets
+
+Presets are applied server-side: the API filters tokens before returning results.
+
+| Preset | Server-side filters applied |
+|--------|----------------------------|
+| `safe` | `max_rug_ratio=0.3` + `max_bundler_rate=0.3` + `max_insider_ratio=0.3` |
+| `smart-money` | `min_smart_degen_count=1` |
+| `strict` | `max_rug_ratio=0.3` + `max_bundler_rate=0.3` + `max_insider_ratio=0.3` + `min_smart_degen_count=1` |
+
+**Preset + explicit flag interaction:** Explicit filter flags always override preset values. For example, `--filter-preset safe --max-rug-ratio 0.1` applies the `safe` preset but overrides rug_ratio threshold to `0.1`.
+
+**All filter flags are sent as part of the API request body (server-side)** — the server filters tokens before returning results. Use `--limit 80` (the default maximum) to maximise the pool.
 
 Response fields: `data.new_creation`, `data.pump`, `data.completed` — each is an array of `RankItem` (same fields as `market trending` rank items). **Important: `data.pump` in the response corresponds to `--type near_completion` in the request. The API always returns this category under the key `pump`, not `near_completion`.**
+
+### Server-Side Filter Fields
+
+All filter flags are sent as part of the API request body — the server filters tokens before returning results. Flags follow the naming convention `--min-{field}` / `--max-{field}`.
+
+| Flag pair | Type | Description |
+|-----------|------|-------------|
+| `--min-visiting-count` / `--max-visiting-count` | int | Visitor count |
+| `--min-progress` / `--max-progress` | float | Bonding curve progress (0–1) |
+| `--min-marketcap` / `--max-marketcap` | float | Market cap (USD) |
+| `--min-liquidity` / `--max-liquidity` | float | Liquidity (USD) |
+| `--min-created` / `--max-created` | string | Token age (e.g. `1m` / `5m` / `1h` / `24h`) |
+| `--min-holder-count` / `--max-holder-count` | int | Holder count |
+| `--min-top-holder-rate` / `--max-top-holder-rate` | float | Top-10 holder concentration (0–1) |
+| `--min-rug-ratio` / `--max-rug-ratio` | float | Rug pull risk score (0–1) |
+| `--min-bundler-rate` / `--max-bundler-rate` | float | Bundle-bot trading ratio (0–1) |
+| `--min-insider-ratio` / `--max-insider-ratio` | float | Insider trading ratio (0–1) |
+| `--min-entrapment-ratio` / `--max-entrapment-ratio` | float | Entrapment trading ratio (0–1) |
+| `--min-private-vault-hold-rate` / `--max-private-vault-hold-rate` | float | Private vault holding ratio (0–1) |
+| `--min-top70-sniper-hold-rate` / `--max-top70-sniper-hold-rate` | float | Top-70 sniper holding ratio (0–1) |
+| `--min-bot-count` / `--max-bot-count` | int | Bot wallet count |
+| `--min-bot-degen-rate` / `--max-bot-degen-rate` | float | Bot-degen wallet ratio (0–1) |
+| `--min-fresh-wallet-rate` / `--max-fresh-wallet-rate` | float | Fresh wallet ratio (0–1) |
+| `--min-total-fee` / `--max-total-fee` | float | Total fee |
+| `--min-smart-degen-count` / `--max-smart-degen-count` | int | Smart-money holder count |
+| `--min-renowned-count` / `--max-renowned-count` | int | KOL / renowned wallet count |
+| `--min-creator-balance-rate` / `--max-creator-balance-rate` | float | Creator holding ratio (0–1) |
+| `--min-creator-created-count` / `--max-creator-created-count` | int | Creator's total token creation count |
+| `--min-creator-created-open-count` / `--max-creator-created-open-count` | int | Creator's graduated token count |
+| `--min-creator-created-open-ratio` / `--max-creator-created-open-ratio` | float | Creator's graduation ratio (0–1) |
+| `--min-twitter-rename-count` / `--max-twitter-rename-count` | int | Twitter rename count |
+| `--min-tg-call-count` / `--max-tg-call-count` | int | Telegram call count |
+
+### Trenches Filter Examples
+
+```bash
+# Apply the safe preset (server-side)
+gmgn-cli market trenches --chain sol --type new_creation --filter-preset safe
+
+# Require at least 1 smart money holder (server-side)
+gmgn-cli market trenches --chain sol --type new_creation --min-smart-degen-count 1
+
+# Safe preset + require smart money + sort by smart degen count (server-side filter, client-side sort)
+gmgn-cli market trenches --chain sol --type new_creation \
+  --filter-preset safe --min-smart-degen-count 1 --sort-by smart_degen_count
+
+# Strict preset — safe + smart money (server-side)
+gmgn-cli market trenches --chain sol --type new_creation --type near_completion \
+  --filter-preset strict --sort-by smart_degen_count
+
+# Manual range filters (all sent server-side)
+gmgn-cli market trenches --chain sol --type new_creation \
+  --max-rug-ratio 0.3 --max-bundler-rate 0.3 --max-insider-ratio 0.3 \
+  --min-smart-degen-count 1
+
+# Filter by token age: only tokens created within the last 30 minutes
+gmgn-cli market trenches --chain sol --type new_creation --max-created 30m
+
+# Filter by market cap range
+gmgn-cli market trenches --chain sol --type new_creation \
+  --min-marketcap 10000 --max-marketcap 500000
+```
 
 ## `market trenches` Response Fields
 
@@ -525,6 +605,44 @@ Response fields: `data.new_creation`, `data.pump`, `data.completed` — each is 
 | `dexscr_boost_fee` | Amount paid for Dexscreener boost (0 = none) |
 
 **After fetching trenches results, apply the Token Quality Filter Criteria section before presenting tokens to the user.** Do not dump raw results — filter first, then surface the strongest candidates.
+
+### Trenches Filter Examples
+
+```bash
+# Quick safe screen — exclude rugs, wash trading, and bundlers
+gmgn-cli market trenches --chain sol --type new_creation \
+  --filter-preset safe --raw
+
+# Smart money screen — only tokens with smart money or KOL presence
+gmgn-cli market trenches --chain sol \
+  --type new_creation --type near_completion \
+  --filter-preset smart-money \
+  --sort-by smart_degen_count --raw
+
+# Strict screen — safe + smart money + minimum volume, sorted by smart degens
+gmgn-cli market trenches --chain sol --type completed \
+  --filter-preset strict --sort-by smart_degen_count --raw
+
+# Custom filter — no wash trading, rug_ratio <= 0.2, at least 1 smart degen
+gmgn-cli market trenches --chain sol \
+  --type new_creation --type near_completion \
+  --exclude-wash-trading --max-rug-ratio 0.2 --min-smart-degen 1 \
+  --sort-by smart_degen_count --raw
+
+# BSC — safe screen on new tokens from fourmeme
+gmgn-cli market trenches --chain bsc --type new_creation \
+  --launchpad-platform fourmeme --launchpad-platform fourmeme_agent \
+  --filter-preset safe --sort-by volume_1h --raw
+
+# Sort by rug_ratio ascending (safest first), no other filters
+gmgn-cli market trenches --chain sol --type completed \
+  --sort-by rug_ratio --raw
+
+# Find tokens with many holders and strong 1h swap activity
+gmgn-cli market trenches --chain sol --type completed \
+  --min-holders 100 --min-swaps 50 \
+  --sort-by swaps_1h --raw
+```
 
 ### Solana Trenches Examples
 
