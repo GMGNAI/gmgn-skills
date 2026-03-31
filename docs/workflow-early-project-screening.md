@@ -31,9 +31,33 @@ gmgn-cli market trenches --chain <chain> --type completed
 
 From the results, note each token's `address`, `symbol`, `smart_degen_count`, `renowned_count`, `volume`, `swaps`, and `rug_ratio`.
 
+**Tip — use filter flags to pre-screen at fetch time:**
+
+```bash
+# Fetch with safe baseline filter (server-side)
+gmgn-cli market trenches --chain <chain> \
+  --type new_creation --type near_completion \
+  --filter-preset safe --sort-by smart_degen_count
+
+# Strict: safe + require smart money + min 24h volume $1k
+gmgn-cli market trenches --chain <chain> \
+  --type new_creation --type near_completion \
+  --filter-preset strict --sort-by smart_degen_count
+
+# Custom: manual range filters (all sent server-side)
+gmgn-cli market trenches --chain <chain> \
+  --type new_creation \
+  --max-rug-ratio 0.3 --max-bundler-rate 0.3 --max-insider-ratio 0.3 \
+  --min-smart-degen-count 1 --min-volume-24h 1000
+```
+
+Using `--filter-preset safe` (or `strict`) tells the server to pre-filter results before returning — equivalent to Steps 2's "Discard immediately" criteria, applied before the response is sent.
+
 ---
 
 ## Step 2 — First-Pass Filter (In-Response Scan)
+
+> **If you used `--filter-preset safe` or `--filter-preset strict` in Step 1, the rug_ratio, bundler_rate, and insider_ratio checks below are already applied server-side.** Verify the remaining signals manually.
 
 Before running any CLI commands per token, apply a quick in-response filter on the trenches results:
 

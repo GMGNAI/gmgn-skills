@@ -479,7 +479,7 @@ All filter flags are sent as part of the API request body — the server filters
 | `--min-rug-ratio` / `--max-rug-ratio` | float | Rug pull risk score (0–1) |
 | `--min-bundler-rate` / `--max-bundler-rate` | float | Bundle-bot trading ratio (0–1) |
 | `--min-insider-ratio` / `--max-insider-ratio` | float | Insider trading ratio (0–1) |
-| `--min-entrapment-ratio` / `--max-entrapment-ratio` | float | Entrapment trading ratio (0–1) |
+| `--min-entrapment-ratio` / `--max-entrapment-ratio` | float | Entrapment/Phishing trading ratio (0–1) |
 | `--min-private-vault-hold-rate` / `--max-private-vault-hold-rate` | float | Private vault holding ratio (0–1) |
 | `--min-top70-sniper-hold-rate` / `--max-top70-sniper-hold-rate` | float | Top-70 sniper holding ratio (0–1) |
 | `--min-bot-count` / `--max-bot-count` | int | Bot wallet count |
