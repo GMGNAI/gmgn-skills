@@ -49,6 +49,24 @@ Use the `gmgn-cli` tool to query wallet portfolio data based on the user's reque
 - `gmgn-cli` installed globally — if missing, run: `npm install -g gmgn-cli`
 - `GMGN_API_KEY` configured in `~/.config/gmgn/.env`
 
+## Rate Limit Handling
+
+All portfolio routes used by this skill go through GMGN's leaky-bucket limiter with `rate=10` and `capacity=10`. Sustained throughput is roughly `10 ÷ weight` requests/second, and the max burst is roughly `floor(10 ÷ weight)` when the bucket is full.
+
+| Command | Route | Weight |
+|---------|-------|--------|
+| `portfolio info` | `GET /v1/user/info` | 1 |
+| `portfolio holdings` | `GET /v1/user/wallet_holdings` | 2 |
+| `portfolio activity` | `GET /v1/user/wallet_activity` | 3 |
+| `portfolio stats` | `GET /v1/user/wallet_stats` | 3 |
+| `portfolio token-balance` | `GET /v1/user/wallet_token_balance` | 1 |
+
+When a request returns `429`:
+
+- Read `X-RateLimit-Reset` from the response headers. It is a Unix timestamp in seconds that marks when the limit is expected to reset.
+- The CLI may wait and retry once automatically when the remaining cooldown is short. If it still fails, stop and tell the user the exact retry time instead of sending more requests.
+- For `RATE_LIMIT_EXCEEDED` or `RATE_LIMIT_BANNED`, repeated requests during the cooldown can extend the ban by 5 seconds each time, up to 5 minutes. Do not spam retries.
+
 **First-time setup** (if `GMGN_API_KEY` is not configured):
 
 1. Generate key pair and show the public key to the user:
