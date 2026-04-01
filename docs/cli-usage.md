@@ -457,6 +457,25 @@ npx gmgn-cli order get --chain <chain> --order-id <order_id> [--raw]
 
 **Response fields (data):** Same structure as the `swap` response above.
 
+## Rate Limit Handling
+
+All business routes are protected by GMGN's leaky-bucket limiter. Current production behavior is:
+
+- `rate=10`, `capacity=10`
+- every limited `429` response includes `X-RateLimit-Reset`
+- `X-RateLimit-Reset` is a Unix timestamp in seconds, representing when the current cooldown is expected to end
+
+CLI behavior:
+
+- For read-only commands, `gmgn-cli` may wait until `X-RateLimit-Reset` and retry once automatically when the remaining cooldown is short.
+- For longer cooldowns, or for `swap`, the CLI stops and prints the exact reset time instead of repeatedly sending requests.
+- The auto-retry threshold defaults to `5000ms` and can be overridden with `GMGN_RATE_LIMIT_AUTO_RETRY_MAX_WAIT_MS=<milliseconds>`.
+
+Important notes:
+
+- `RATE_LIMIT_EXCEEDED` and `RATE_LIMIT_BANNED` are request-frequency limits. Continuing to send requests during the cooldown can extend the ban by 5 seconds each time, up to 5 minutes.
+- `ERROR_RATE_LIMIT_BLOCKED` is an error-count block on `POST /v1/trade/swap`. It is triggered by repeatedly hitting the same business error and should be treated as "fix the request first, then retry after reset".
+
 ---
 
 ## Error Codes
@@ -471,6 +490,8 @@ npx gmgn-cli order get --chain <chain> --order-id <order_id> [--raw]
 | `AUTH_CLIENT_ID_REPLAYED` | 401 | client_id replayed within 7s |
 | `AUTH_REPLAY_CHECK_UNAVAILABLE` | 503 | Anti-replay Redis unavailable (critical auth only) |
 | `RATE_LIMIT_EXCEEDED` | 429 | Rate limit exceeded |
+| `RATE_LIMIT_BANNED` | 429 | Temporarily banned due to repeated rate limit violations |
+| `ERROR_RATE_LIMIT_BLOCKED` | 429 | Temporarily blocked after repeated business errors on `swap` |
 | `TRADE_WALLET_MISMATCH` | 403 | `--from` address does not match the wallet bound to the API Key |
 | `CHAIN_NOT_SUPPORTED` | 400 | Unsupported chain |
 | `BAD_REQUEST` | 400 | Missing or invalid request parameters |

@@ -71,6 +71,24 @@ Both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY` must be configured in `~/.config/gmgn
 
 - `gmgn-cli` installed globally — if missing, run: `npm install -g gmgn-cli`
 
+## Rate Limit Handling
+
+All swap-related routes used by this skill go through GMGN's leaky-bucket limiter with `rate=10` and `capacity=10`. Sustained throughput is roughly `10 ÷ weight` requests/second, and the max burst is roughly `floor(10 ÷ weight)` when the bucket is full.
+
+| Command | Route | Weight |
+|---------|-------|--------|
+| `swap` | `POST /v1/trade/swap` | 5 |
+| `order quote` | `GET /v1/trade/quote` | 2 |
+| `order get` | `GET /v1/trade/query_order` | 1 |
+
+When a request returns `429`:
+
+- Read `X-RateLimit-Reset` from the response headers. It is a Unix timestamp in seconds that marks when the limit is expected to reset.
+- `swap` is a real transaction: never loop or auto-submit repeated swap attempts after a `429`. Wait until the reset time, then ask for confirmation again before retrying.
+- The CLI may wait and retry once automatically for short cooldowns on read-only commands such as `order quote` and `order get`. If it still fails, stop and tell the user the exact retry time instead of sending more requests.
+- For `RATE_LIMIT_EXCEEDED` or `RATE_LIMIT_BANNED`, repeated requests during the cooldown can extend the ban by 5 seconds each time, up to 5 minutes.
+- `POST /v1/trade/swap` also has an error-count limiter. Repeatedly triggering the same business error, especially `40003701` (insufficient token balance), can return `ERROR_RATE_LIMIT_BLOCKED`. When this happens, do not retry until the reset time and fix the underlying request first.
+
 **First-time setup** (if credentials are not configured):
 
 1. Generate key pair and show the public key to the user:

@@ -63,6 +63,22 @@ Use the `gmgn-cli` tool to query on-chain tracking data based on the user's requ
 - `GMGN_API_KEY` configured in `~/.config/gmgn/.env`
 - `GMGN_PRIVATE_KEY` required only for `track follow-wallet`; not needed for `track kol` / `track smartmoney`
 
+## Rate Limit Handling
+
+All tracking routes used by this skill go through GMGN's leaky-bucket limiter with `rate=10` and `capacity=10`. Sustained throughput is roughly `10 ÷ weight` requests/second, and the max burst is roughly `floor(10 ÷ weight)` when the bucket is full.
+
+| Command | Route | Weight |
+|---------|-------|--------|
+| `track follow-wallet` | `GET /v1/trade/follow_wallet` | 3 |
+| `track kol` | `GET /v1/user/kol` | 1 |
+| `track smartmoney` | `GET /v1/user/smartmoney` | 1 |
+
+When a request returns `429`:
+
+- Read `X-RateLimit-Reset` from the response headers. It is a Unix timestamp in seconds that marks when the limit is expected to reset.
+- The CLI may wait and retry once automatically when the remaining cooldown is short. If it still fails, stop and tell the user the exact retry time instead of sending more requests.
+- For `RATE_LIMIT_EXCEEDED` or `RATE_LIMIT_BANNED`, repeated requests during the cooldown can extend the ban by 5 seconds each time, up to 5 minutes. Do not spam retries.
+
 **First-time setup** (if `GMGN_API_KEY` is not configured):
 
 1. Generate key pair and show the public key to the user:

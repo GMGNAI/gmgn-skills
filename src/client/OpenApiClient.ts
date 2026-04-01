@@ -8,6 +8,57 @@
 
 import { buildAuthQuery, buildMessage, detectAlgorithm, sign } from "./signer.js";
 
+const RATE_LIMIT_RETRY_BUFFER_MS = 1000;
+const DEFAULT_RATE_LIMIT_AUTO_RETRY_MAX_WAIT_MS = 5000;
+
+interface PreparedRequest {
+  method: string;
+  subPath: string;
+  url: string;
+  headers: Record<string, string>;
+  body: string | null;
+  curlStr: string;
+}
+
+interface ResponseEnvelope {
+  code: number | string;
+  data?: unknown;
+  message?: string;
+  error?: string;
+}
+
+interface OpenApiErrorParams {
+  method: string;
+  path: string;
+  status: number;
+  apiCode?: number | string;
+  apiError?: string;
+  apiMessage?: string;
+  resetAtUnix?: number;
+}
+
+class OpenApiError extends Error {
+  readonly method: string;
+  readonly path: string;
+  readonly status: number;
+  readonly apiCode?: number | string;
+  readonly apiError?: string;
+  readonly apiMessage?: string;
+  readonly resetAtUnix?: number;
+
+  constructor(params: OpenApiErrorParams) {
+    super(buildOpenApiErrorMessage(params));
+    this.name = "OpenApiError";
+    this.method = params.method;
+    this.path = params.path;
+    this.status = params.status;
+    this.apiCode = params.apiCode;
+    this.apiError = params.apiError;
+    this.apiMessage = params.apiMessage;
+    this.resetAtUnix = params.resetAtUnix;
+  }
+}
+
 export interface Config {
   apiKey: string;
   privateKeyPem?: string;
@@ -196,18 +247,24 @@ export class OpenApiClient {
     queryExtra: Record<string, string | number | string[]>,
     body: unknown = null
   ): Promise<unknown> {
-    const { timestamp, client_id } = buildAuthQuery();
-    const query: Record<string, string | number | string[]> = { ...queryExtra, timestamp, client_id };
-
-    const url = buildUrl(`${this.host}${subPath}`, query);
-    const headers: Record<string, string> = {
-      "X-APIKEY": this.apiKey,
-      "Content-Type": "application/json",
-    };
-    const bodyStr = body !== null ? JSON.stringify(body) : null;
-    const curlStr = formatCurl(method, url, headers, bodyStr);
-    const res = await this.doFetch(method, subPath, url, headers, bodyStr, curlStr);
-    return this.parseResponse(method, subPath, res, curlStr);
+    return this.executePreparedRequest(() => {
+      const { timestamp, client_id } = buildAuthQuery();
+      const query: Record<string, string | number | string[]> = { ...queryExtra, timestamp, client_id };
+      const url = buildUrl(`${this.host}${subPath}`, query);
+      const headers: Record<string, string> = {
+        "X-APIKEY": this.apiKey,
+        "Content-Type": "application/json",
+      };
+      const bodyStr = body !== null ? JSON.stringify(body) : null;
+      return {
+        method,
+        subPath,
+        url,
+        headers,
+        body: bodyStr,
+        curlStr: formatCurl(method, url, headers, bodyStr),
+      };
+    }, true);
   }
 
   private async criticalRequest(
@@ -220,22 +277,65 @@ export class OpenApiClient {
       throw new Error("GMGN_PRIVATE_KEY is required for swap/order commands");
     }
 
-    const { timestamp, client_id } = buildAuthQuery();
-    const query: Record<string, string | number> = { ...queryExtra, timestamp, client_id };
+    return this.executePreparedRequest(() => {
+      const { timestamp, client_id } = buildAuthQuery();
+      const query: Record<string, string | number> = { ...queryExtra, timestamp, client_id };
+      const bodyStr = body !== null ? JSON.stringify(body) : "";
+      const message = buildMessage(subPath, query, bodyStr, timestamp);
+      const signature = sign(message, this.privateKeyPem!, detectAlgorithm(this.privateKeyPem!));
 
-    const bodyStr = body !== null ? JSON.stringify(body) : "";
-    const message = buildMessage(subPath, query, bodyStr, timestamp);
-    const signature = sign(message, this.privateKeyPem, detectAlgorithm(this.privateKeyPem));
+      const url = buildUrl(`${this.host}${subPath}`, query);
+      const headers: Record<string, string> = {
+        "X-APIKEY": this.apiKey,
+        "X-Signature": signature,
+        "Content-Type": "application/json",
+      };
+      return {
+        method,
+        subPath,
+        url,
+        headers,
+        body: bodyStr || null,
+        curlStr: formatCurl(method, url, headers, bodyStr || null),
+      };
+    }, method !== "POST");
+  }
 
-    const url = buildUrl(`${this.host}${subPath}`, query);
-    const headers: Record<string, string> = {
-      "X-APIKEY": this.apiKey,
-      "X-Signature": signature,
-      "Content-Type": "application/json",
-    };
-    const curlStr = formatCurl(method, url, headers, bodyStr || null);
-    const res = await this.doFetch(method, subPath, url, headers, bodyStr || null, curlStr);
-    return this.parseResponse(method, subPath, res, curlStr);
+  private async executePreparedRequest(
+    prepare: () => PreparedRequest,
+    autoRetryOnRateLimit: boolean
+  ): Promise<unknown> {
+    const maxAttempts = autoRetryOnRateLimit ? 2 : 1;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      const request = prepare();
+      const res = await this.doFetch(
+        request.method,
+        request.subPath,
+        request.url,
+        request.headers,
+        request.body,
+        request.curlStr
+      );
+
+      try {
+        return this.parseResponse(request.method, request.subPath, res, request.curlStr);
+      } catch (err) {
+        const retryDelayMs = getRateLimitRetryDelayMs(err, attempt, maxAttempts, autoRetryOnRateLimit);
+        if (retryDelayMs == null) {
+          throw err;
+        }
+
+        if (process.env.GMGN_DEBUG) {
+          console.error(
+            `[gmgn-cli] ${request.method} ${request.subPath} hit rate limit, retrying once in ${Math.ceil(retryDelayMs / 1000)}s`
+          );
+        }
+        await sleep(retryDelayMs);
+      }
+    }
+
+    throw new Error("Unexpected retry loop exit");
   }
 
   private async doFetch(
@@ -278,6 +378,8 @@ export class OpenApiClient {
       throw new Error(msg);
     };
 
+    const resetAtUnix = parseRateLimitReset(res.headers.get("x-ratelimit-reset"));
+
     let text!: string;
     try {
       text = await res.text();
@@ -285,7 +387,7 @@ export class OpenApiClient {
       fail(`${method} ${path} failed: HTTP ${res.status} (failed to read response body: ${err})`);
     }
 
-    let json!: { code: number | string; data?: unknown; message?: string; error?: string };
+    let json!: ResponseEnvelope;
     try {
       json = JSON.parse(text);
     } catch {
@@ -293,14 +395,114 @@ export class OpenApiClient {
     }
 
     if (json.code !== 0) {
-      fail(
-        `${method} ${path} failed: HTTP ${res.status} code=${json.code} error=${json.error ?? ""} message=${json.message ?? ""}`,
-        text
-      );
+      if (process.env.GMGN_DEBUG) {
+        console.error(`${curlStr}\n${formatResponse(res, text)}`);
+      }
+      throw new OpenApiError({
+        method,
+        path,
+        status: res.status,
+        apiCode: json.code,
+        apiError: json.error,
+        apiMessage: json.message,
+        resetAtUnix,
+      });
     }
 
     return json.data;
   }
+}
+
+function getRateLimitRetryDelayMs(
+  err: unknown,
+  attempt: number,
+  maxAttempts: number,
+  autoRetryOnRateLimit: boolean
+): number | null {
+  if (!autoRetryOnRateLimit || attempt >= maxAttempts) {
+    return null;
+  }
+  if (!(err instanceof OpenApiError)) {
+    return null;
+  }
+  if (err.apiError !== "RATE_LIMIT_EXCEEDED" && err.apiError !== "RATE_LIMIT_BANNED") {
+    return null;
+  }
+  if (err.resetAtUnix == null) {
+    return null;
+  }
+
+  const waitMs = Math.max(err.resetAtUnix * 1000 - Date.now(), 0) + RATE_LIMIT_RETRY_BUFFER_MS;
+  return waitMs <= getAutoRetryMaxWaitMs() ? waitMs : null;
+}
+
+function parseRateLimitReset(raw: string | null): number | undefined {
+  if (raw == null || raw.trim() === "") {
+    return undefined;
+  }
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function getAutoRetryMaxWaitMs(): number {
+  const raw = process.env.GMGN_RATE_LIMIT_AUTO_RETRY_MAX_WAIT_MS;
+  if (!raw) {
+    return DEFAULT_RATE_LIMIT_AUTO_RETRY_MAX_WAIT_MS;
+  }
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_RATE_LIMIT_AUTO_RETRY_MAX_WAIT_MS;
+}
+
+function buildOpenApiErrorMessage(params: OpenApiErrorParams): string {
+  const parts = [`${params.method} ${params.path} failed: HTTP ${params.status}`];
+  if (params.apiCode != null) parts.push(`code=${params.apiCode}`);
+  if (params.apiError) parts.push(`error=${params.apiError}`);
+  if (params.apiMessage) parts.push(`message=${params.apiMessage}`);
+
+  let message = parts.join(" ");
+
+  if (params.status !== 429) {
+    return message;
+  }
+
+  const resetText = params.resetAtUnix != null
+    ? formatRateLimitReset(params.resetAtUnix)
+    : "an unknown time";
+
+  if (params.apiError === "ERROR_RATE_LIMIT_BLOCKED") {
+    return `${message}. Repeated business errors triggered a temporary block until ${resetText}. Fix the underlying request before retrying.`;
+  }
+
+  if (params.apiError === "RATE_LIMIT_EXCEEDED" || params.apiError === "RATE_LIMIT_BANNED") {
+    return `${message}. Rate limit resets at ${resetText}. Stop sending requests before then; repeated requests can extend the ban by 5s up to 5 minutes.`;
+  }
+
+  return `${message}. Received HTTP 429; retry after ${resetText}.`;
+}
+
+function formatRateLimitReset(resetAtUnix: number): string {
+  const resetAt = new Date(resetAtUnix * 1000);
+  const remainingSeconds = Math.max(Math.ceil((resetAt.getTime() - Date.now()) / 1000), 0);
+  return `${formatLocalTimestamp(resetAt)} (~${remainingSeconds}s remaining)`;
+}
+
+function formatLocalTimestamp(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+  const offsetMinutes = -date.getTimezoneOffset();
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const absOffsetMinutes = Math.abs(offsetMinutes);
+  const offsetHours = String(Math.floor(absOffsetMinutes / 60)).padStart(2, "0");
+  const offsetMins = String(absOffsetMinutes % 60).padStart(2, "0");
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} GMT${sign}${offsetHours}:${offsetMins}`;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function formatResponse(res: Response, body: string | null): string {
