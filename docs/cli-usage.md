@@ -400,6 +400,8 @@ npx gmgn-cli swap \
   [--gas-price <gwei>] \
   [--max-fee-per-gas <amount>] \
   [--max-priority-fee-per-gas <amount>] \
+  [--condition-orders <json>] \
+  [--sell-ratio-type <buy_amount|hold_amount>] \
   [--raw]
 ```
 
@@ -421,6 +423,16 @@ npx gmgn-cli swap \
 | `--gas-price` | No | Gas price in gwei (BSC ≥ 0.05 gwei / BASE/ETH ≥ 0.01 gwei) |
 | `--max-fee-per-gas` | No | EIP-1559 max fee per gas (Base/ETH only) |
 | `--max-priority-fee-per-gas` | No | EIP-1559 max priority fee per gas (Base/ETH only) |
+| `--condition-orders` | No | JSON array of take-profit/stop-loss conditions attached after a successful swap (see example below); only `profit_stop` and `loss_stop` are supported |
+| `--sell-ratio-type` | No | Sell ratio base for `--condition-orders`: `buy_amount` (default) / `hold_amount` |
+
+**`--condition-orders` example** (100% sell at 2× price, 100% sell at 50% price):
+
+```json
+[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]
+```
+
+> Strategy creation is **best-effort**: if the swap succeeds but strategy creation fails, the swap result is still returned (with `strategy_order_id` absent). Only `order_type`, `side`, `price_scale`, and `sell_ratio` are accepted per condition — extra fields cause a 400 error.
 
 **Response fields (data):**
 
@@ -439,6 +451,7 @@ npx gmgn-cli swap \
 | `output_token` | string | Output token contract address |
 | `filled_input_amount` | string | Actual input consumed (smallest unit); empty if not filled |
 | `filled_output_amount` | string | Actual output received (smallest unit); empty if not filled |
+| `strategy_order_id` | string | Strategy order ID; only present when `--condition-orders` was passed and strategy creation succeeded |
 
 ---
 
@@ -467,9 +480,10 @@ gmgn-cli order strategy create \
   --from <wallet_address> \
   --base-token <base_token_address> \
   --quote-token <quote_token_address> \
-  --side <buy|sell> \
-  --open-price <price> \
+  --order-type <limit_order> \
+  --sub-order-type <buy_low|buy_high|stop_loss|take_profit> \
   --check-price <price> \
+  [--open-price <price>] \
   [--amount-in <amount> | --amount-in-percent <pct>] \
   [--slippage <n> | --auto-slippage] \
   [--limit-price-mode <exact|slippage>] \
@@ -477,7 +491,7 @@ gmgn-cli order strategy create \
   [--sell-ratio-type <buy_amount|hold_amount>] \
   [--priority-fee <sol>] \
   [--tip-fee <amount>] \
-  [--gas-price <amount>] \
+  [--gas-price <gwei>] \
   [--anti-mev] \
   [--raw]
 ```
@@ -488,9 +502,10 @@ gmgn-cli order strategy create \
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--base-token` | Yes | Base token contract address |
 | `--quote-token` | Yes | Quote token contract address |
-| `--side` | Yes | `buy` / `sell` |
-| `--open-price` | Yes | Open price |
+| `--order-type` | Yes | Order type: `limit_order` |
+| `--sub-order-type` | Yes | Sub-order type: `buy_low` / `buy_high` / `stop_loss` / `take_profit` |
 | `--check-price` | Yes | Trigger check price |
+| `--open-price` | No | Open/entry price |
 | `--amount-in` | No* | Input amount (smallest unit); required unless `--amount-in-percent` is used |
 | `--amount-in-percent` | No* | Input as percentage (e.g. `50` = 50%); required unless `--amount-in` is used |
 | `--limit-price-mode` | No | `exact` / `slippage` (default: `slippage`) |
@@ -498,10 +513,15 @@ gmgn-cli order strategy create \
 | `--sell-ratio-type` | No | `buy_amount` (default) / `hold_amount` |
 | `--slippage` | No | Slippage tolerance, e.g. `0.01` = 1% |
 | `--auto-slippage` | No | Enable automatic slippage |
-| `--priority-fee` | No | Priority fee in SOL (SOL only) |
-| `--tip-fee` | No | Tip fee |
-| `--gas-price` | No | Gas price in wei (EVM chains) |
+| `--priority-fee` | No | Priority fee in SOL (**required for SOL chain**) |
+| `--tip-fee` | No | Tip fee (**required for SOL chain**) |
+| `--gas-price` | No | Gas price in gwei (**required for BSC**; ≥ 0.05 / BASE/ETH ≥ 0.01) |
 | `--anti-mev` | No | Enable anti-MEV protection |
+
+> **Chain-specific fee requirements:**
+> - **SOL:** `--priority-fee` and `--tip-fee` are both **required** (returns 400 if missing)
+> - **BSC:** `--gas-price` is **required** (returns 400 if missing)
+> - **ETH/BASE:** no required fee fields
 
 **Response fields (data):**
 
@@ -517,7 +537,7 @@ gmgn-cli order strategy create \
 List strategy orders. Uses normal auth.
 
 ```bash
-gmgn-cli order strategy list --chain <chain> [--type <open|history>] [--from <address>] [--base-token <address>] [--page-token <token>] [--limit <n>] [--raw]
+gmgn-cli order strategy list --chain <chain> [--type <open|history>] [--from <address>] [--group-tag <tag>] [--base-token <address>] [--page-token <token>] [--limit <n>] [--raw]
 ```
 
 | Option | Required | Description |
@@ -525,6 +545,7 @@ gmgn-cli order strategy list --chain <chain> [--type <open|history>] [--from <ad
 | `--chain` | Yes | `sol` / `bsc` / `base` |
 | `--type` | No | `open` (default) / `history` |
 | `--from` | No | Filter by wallet address |
+| `--group-tag` | No | Filter by group: `LimitOrder` / `STMix` |
 | `--base-token` | No | Filter by token address |
 | `--page-token` | No | Pagination cursor from previous response |
 | `--limit` | No | Results per page |
@@ -544,7 +565,7 @@ gmgn-cli order strategy list --chain <chain> [--type <open|history>] [--from <ad
 Cancel a strategy order. **Requires `GMGN_PRIVATE_KEY` configured in `.env`.**
 
 ```bash
-gmgn-cli order strategy cancel --chain <chain> --from <wallet_address> --order-id <id> [--close-sell-model <model>] [--raw]
+gmgn-cli order strategy cancel --chain <chain> --from <wallet_address> --order-id <id> [--order-type <type>] [--close-sell-model <model>] [--raw]
 ```
 
 | Option | Required | Description |
@@ -552,6 +573,7 @@ gmgn-cli order strategy cancel --chain <chain> --from <wallet_address> --order-i
 | `--chain` | Yes | `sol` / `bsc` / `base` |
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--order-id` | Yes | Order ID to cancel |
+| `--order-type` | No | Order type: `limit_order` / `smart_trade` |
 | `--close-sell-model` | No | Sell model when closing |
 
 ---
@@ -662,4 +684,5 @@ Important notes:
 | `BAD_REQUEST` | 400 | Missing or invalid request parameters |
 | `INTERNAL_API_UNAVAILABLE` | 502 | Downstream market API unavailable |
 | `BROKER_UNAVAILABLE` | 502 | Downstream trade broker unavailable |
+| `TRADING_BOT_UNAVAILABLE` | 502 | Trading bot service unreachable (strategy endpoints) |
 | `INTERNAL_ERROR` | 500 | Internal server error |

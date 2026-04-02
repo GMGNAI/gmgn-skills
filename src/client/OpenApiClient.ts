@@ -85,6 +85,15 @@ export interface SwapParams {
   gas_price?: string;
   max_fee_per_gas?: string;
   max_priority_fee_per_gas?: string;
+  condition_orders?: StrategyConditionOrder[];
+  sell_ratio_type?: string;
+}
+
+export interface StrategyConditionOrder {
+  order_type: string;   // "profit_stop" | "loss_stop"
+  side: string;         // "sell"
+  price_scale: string;
+  sell_ratio: string;
 }
 
 export interface StrategyCreateParams {
@@ -92,9 +101,10 @@ export interface StrategyCreateParams {
   from_address: string;
   base_token: string;
   quote_token: string;
-  side: string;
-  open_price: string;
+  order_type: string;
+  sub_order_type: string;
   check_price: string;
+  open_price?: string;
   amount_in?: string;
   amount_in_percent?: string;
   limit_price_mode?: string;
@@ -118,6 +128,7 @@ export interface StrategyCancelParams {
   chain: string;
   from_address: string;
   order_id: string;
+  order_type?: string;
   close_sell_model?: string;
 }
 
