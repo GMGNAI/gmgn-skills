@@ -48,6 +48,9 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. **Req
 | `swap` | Submit a token swap |
 | `order quote` | Get a swap quote (no transaction submitted) |
 | `order get` | Query order status |
+| `order strategy create` | Create a limit/strategy order (requires private key) |
+| `order strategy list` | List strategy orders (normal auth) |
+| `order strategy cancel` | Cancel a strategy order (requires private key) |
 
 ## Supported Chains
 
@@ -279,11 +282,119 @@ Order ID: {order_id}
 
 Convert `filled_input_amount` and `filled_output_amount` from smallest unit using token decimals before displaying.
 
+## `order strategy create` Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--from` | Yes | Wallet address (must match API Key binding) |
+| `--base-token` | Yes | Base token contract address |
+| `--quote-token` | Yes | Quote token contract address |
+| `--side` | Yes | Direction: `buy` / `sell` |
+| `--open-price` | Yes | Open price; compared with `--check-price` to infer order type |
+| `--check-price` | Yes | Trigger check price; compared with `--open-price` to infer order type |
+| `--amount-in` | No* | Input amount (smallest unit). Mutually exclusive with `--amount-in-percent` |
+| `--amount-in-percent` | No* | Input as percentage (e.g. `50` = 50%). Mutually exclusive with `--amount-in` |
+| `--limit-price-mode` | No | `exact` / `slippage` (default: `slippage`) |
+| `--expire-in` | No | Order expiry in seconds |
+| `--sell-ratio-type` | No | `buy_amount` (default) / `hold_amount` |
+| `--slippage` | No | Slippage tolerance, e.g. `0.01` = 1%. Mutually exclusive with `--auto-slippage` |
+| `--auto-slippage` | No | Enable automatic slippage |
+| `--priority-fee` | No | Priority fee in SOL (SOL only) |
+| `--tip-fee` | No | Tip fee |
+| `--gas-price` | No | Gas price in wei (EVM chains) |
+| `--anti-mev` | No | Enable anti-MEV protection |
+
+Order direction is inferred automatically from `--side` and the comparison between `--open-price` and `--check-price`:
+
+| `--side` | open_price vs check_price | Inferred type |
+|----------|--------------------------|---------------|
+| `buy` | open_price > check_price | buy_low |
+| `buy` | open_price < check_price | buy_high |
+| `sell` | open_price > check_price | stop_loss |
+| `sell` | open_price < check_price | take_profit |
+
+**`order strategy create` Response Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `order_id` | string | Created strategy order ID |
+| `is_update` | bool | `true` if an existing order was updated, `false` if newly created |
+
+## `order strategy list` Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--type` | No | `open` (default) / `history` |
+| `--from` | No | Filter by wallet address |
+| `--base-token` | No | Filter by token address |
+| `--page-token` | No | Pagination cursor from previous response |
+| `--limit` | No | Results per page (default 10 for history) |
+
+**`order strategy list` Response Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `next_page_token` | string | Cursor for next page; empty when no more data |
+| `total` | int | Total count (only returned when `--type open`) |
+| `list` | array | Strategy order list |
+
+## `order strategy cancel` Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--from` | Yes | Wallet address (must match API Key binding) |
+| `--order-id` | Yes | Order ID to cancel |
+| `--close-sell-model` | No | Sell model when closing the order |
+
+## `order strategy` Usage Examples
+
+```bash
+# Create a take-profit order: sell when price rises above open price
+gmgn-cli order strategy create \
+  --chain sol \
+  --from <wallet_address> \
+  --base-token <token_address> \
+  --quote-token <sol_address> \
+  --side sell \
+  --open-price 0.001 \
+  --check-price 0.002 \
+  --amount-in 1000000 \
+  --slippage 0.01
+
+# Create a stop-loss order: sell when price drops below open price
+gmgn-cli order strategy create \
+  --chain sol \
+  --from <wallet_address> \
+  --base-token <token_address> \
+  --quote-token <sol_address> \
+  --side sell \
+  --open-price 0.001 \
+  --check-price 0.0005 \
+  --amount-in-percent 100 \
+  --slippage 0.01
+
+# List open strategy orders
+gmgn-cli order strategy list --chain sol
+
+# List history orders with pagination
+gmgn-cli order strategy list --chain sol --type history --limit 20
+
+# Cancel a strategy order
+gmgn-cli order strategy cancel \
+  --chain sol \
+  --from <wallet_address> \
+  --order-id <order_id>
+```
+
 ## Notes
 
 - Swap uses **critical auth** (API Key + signature) — CLI handles signing automatically, no manual processing needed
 - After submitting a swap, use `order get` to poll for confirmation
 - `--amount` is in the **smallest unit** (e.g., lamports for SOL)
+- `order strategy create` and `order strategy cancel` use critical auth (require `GMGN_PRIVATE_KEY`); `order strategy list` uses normal auth
 - Use `--raw` to get single-line JSON for further processing
 
 ## Input Validation

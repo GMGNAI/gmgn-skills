@@ -457,6 +457,171 @@ npx gmgn-cli order get --chain <chain> --order-id <order_id> [--raw]
 
 **Response fields (data):** Same structure as the `swap` response above.
 
+## order strategy create
+
+Create a limit/strategy order. **Requires `GMGN_PRIVATE_KEY` configured in `.env`.**
+
+```bash
+gmgn-cli order strategy create \
+  --chain <chain> \
+  --from <wallet_address> \
+  --base-token <base_token_address> \
+  --quote-token <quote_token_address> \
+  --side <buy|sell> \
+  --open-price <price> \
+  --check-price <price> \
+  [--amount-in <amount> | --amount-in-percent <pct>] \
+  [--slippage <n> | --auto-slippage] \
+  [--limit-price-mode <exact|slippage>] \
+  [--expire-in <seconds>] \
+  [--sell-ratio-type <buy_amount|hold_amount>] \
+  [--priority-fee <sol>] \
+  [--tip-fee <amount>] \
+  [--gas-price <amount>] \
+  [--anti-mev] \
+  [--raw]
+```
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--from` | Yes | Wallet address (must match API Key binding) |
+| `--base-token` | Yes | Base token contract address |
+| `--quote-token` | Yes | Quote token contract address |
+| `--side` | Yes | `buy` / `sell` |
+| `--open-price` | Yes | Open price |
+| `--check-price` | Yes | Trigger check price |
+| `--amount-in` | No* | Input amount (smallest unit); required unless `--amount-in-percent` is used |
+| `--amount-in-percent` | No* | Input as percentage (e.g. `50` = 50%); required unless `--amount-in` is used |
+| `--limit-price-mode` | No | `exact` / `slippage` (default: `slippage`) |
+| `--expire-in` | No | Order expiry in seconds |
+| `--sell-ratio-type` | No | `buy_amount` (default) / `hold_amount` |
+| `--slippage` | No | Slippage tolerance, e.g. `0.01` = 1% |
+| `--auto-slippage` | No | Enable automatic slippage |
+| `--priority-fee` | No | Priority fee in SOL (SOL only) |
+| `--tip-fee` | No | Tip fee |
+| `--gas-price` | No | Gas price in wei (EVM chains) |
+| `--anti-mev` | No | Enable anti-MEV protection |
+
+**Response fields (data):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `order_id` | string | Created strategy order ID |
+| `is_update` | bool | `true` if an existing order was updated |
+
+---
+
+## order strategy list
+
+List strategy orders. Uses normal auth.
+
+```bash
+gmgn-cli order strategy list --chain <chain> [--type <open|history>] [--from <address>] [--base-token <address>] [--page-token <token>] [--limit <n>] [--raw]
+```
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--type` | No | `open` (default) / `history` |
+| `--from` | No | Filter by wallet address |
+| `--base-token` | No | Filter by token address |
+| `--page-token` | No | Pagination cursor from previous response |
+| `--limit` | No | Results per page |
+
+**Response fields (data):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `next_page_token` | string | Cursor for next page; empty when no more data |
+| `total` | int | Total count (only when `--type open`) |
+| `list` | array | Strategy order list |
+
+---
+
+## order strategy cancel
+
+Cancel a strategy order. **Requires `GMGN_PRIVATE_KEY` configured in `.env`.**
+
+```bash
+gmgn-cli order strategy cancel --chain <chain> --from <wallet_address> --order-id <id> [--close-sell-model <model>] [--raw]
+```
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--from` | Yes | Wallet address (must match API Key binding) |
+| `--order-id` | Yes | Order ID to cancel |
+| `--close-sell-model` | No | Sell model when closing |
+
+---
+
+## cooking stats
+
+Get token creation statistics grouped by launchpad.
+
+```bash
+gmgn-cli cooking stats [--raw]
+```
+
+No additional options required. Returns an array of `{ launchpad, token_count }` entries.
+
+---
+
+## cooking create
+
+Create a token on a launchpad platform. **Requires `GMGN_PRIVATE_KEY` configured in `.env`.**
+
+```bash
+gmgn-cli cooking create \
+  --chain <chain> \
+  --dex <dex> \
+  --from <wallet_address> \
+  --name <name> \
+  --symbol <symbol> \
+  --buy-amt <amount> \
+  [--image <base64> | --image-url <url>] \
+  [--slippage <n> | --auto-slippage] \
+  [--website <url>] [--twitter <url>] [--telegram <url>] \
+  [--priority-fee <sol>] [--tip-fee <amount>] [--gas-price <amount>] \
+  [--anti-mev] \
+  [--raw]
+```
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `ton` |
+| `--dex` | Yes | Launchpad: `pump` / `raydium` / `pancakeswap` / `flap` / `fourmeme` / `bonk` / `bags` / ... |
+| `--from` | Yes | Wallet address (must match API Key binding) |
+| `--name` | Yes | Token name |
+| `--symbol` | Yes | Token symbol |
+| `--buy-amt` | Yes | Initial buy amount in native token (e.g. `0.01` SOL) |
+| `--image` | No* | Token logo as base64-encoded data (max 2MB decoded); required unless `--image-url` is used |
+| `--image-url` | No* | Token logo URL; required unless `--image` is used |
+| `--website` | No | Website URL |
+| `--twitter` | No | Twitter link |
+| `--telegram` | No | Telegram link |
+| `--slippage` | No | Slippage tolerance, e.g. `0.01` = 1% |
+| `--auto-slippage` | No | Enable automatic slippage |
+| `--priority-fee` | No | Priority fee in SOL (SOL only) |
+| `--tip-fee` | No | Tip fee |
+| `--gas-price` | No | Gas price in wei (EVM chains) |
+| `--anti-mev` | No | Enable anti-MEV protection |
+
+**Response fields (data):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | string | `pending` / `confirmed` / `failed` |
+| `hash` | string | Transaction hash |
+| `order_id` | string | Order ID for polling |
+| `error_code` | string | Error code on failure |
+| `error_status` | string | Error description on failure |
+
+Token creation is asynchronous. Poll `order get` with the returned `order_id` if `status` is `pending`.
+
+---
+
 ## Rate Limit Handling
 
 All business routes are protected by GMGN's leaky-bucket limiter. Current production behavior is:

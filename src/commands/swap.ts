@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { OpenApiClient, SwapParams } from "../client/OpenApiClient.js";
+import { OpenApiClient, SwapParams, StrategyCreateParams, StrategyCancelParams } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
 import { validateAddress, validateChain, validatePercent, validatePositiveInt } from "../validate.js";
@@ -95,6 +95,109 @@ export function registerSwapCommands(program: Command): void {
       validateChain(opts.chain);
       const client = new OpenApiClient(getConfig(true));
       const data = await client.queryOrder(opts.orderId, opts.chain).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
+  const strategy = order.command("strategy").description("Limit/strategy order management");
+
+  strategy
+    .command("create")
+    .description("Create a limit/strategy order (requires private key)")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
+    .requiredOption("--base-token <address>", "Base token contract address")
+    .requiredOption("--quote-token <address>", "Quote token contract address")
+    .requiredOption("--side <side>", "Direction: buy / sell")
+    .requiredOption("--open-price <price>", "Open price")
+    .requiredOption("--check-price <price>", "Trigger check price")
+    .option("--amount-in <amount>", "Input amount (smallest unit)")
+    .option("--amount-in-percent <pct>", "Input amount as a percentage (e.g. 50 = 50%)")
+    .option("--limit-price-mode <mode>", "Price mode: exact / slippage (default: slippage)")
+    .option("--expire-in <seconds>", "Order expiry in seconds", parseInt)
+    .option("--sell-ratio-type <type>", "Sell ratio basis: buy_amount (default) / hold_amount")
+    .option("--slippage <n>", "Slippage tolerance (e.g. 0.01 = 1%)", parseFloat)
+    .option("--auto-slippage", "Enable automatic slippage")
+    .option("--priority-fee <sol>", "Priority fee in SOL (SOL only)")
+    .option("--tip-fee <amount>", "Tip fee")
+    .option("--gas-price <amount>", "Gas price in wei (EVM chains)")
+    .option("--anti-mev", "Enable anti-MEV protection")
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      if (!opts.amountIn && !opts.amountInPercent) {
+        console.error("[gmgn-cli] Either --amount-in or --amount-in-percent must be provided");
+        process.exit(1);
+      }
+      if (!opts.slippage && !opts.autoSlippage) {
+        console.error("[gmgn-cli] Either --slippage or --auto-slippage must be provided");
+        process.exit(1);
+      }
+      validateChain(opts.chain);
+      const params: StrategyCreateParams = {
+        chain: opts.chain,
+        from_address: opts.from,
+        base_token: opts.baseToken,
+        quote_token: opts.quoteToken,
+        side: opts.side,
+        open_price: opts.openPrice,
+        check_price: opts.checkPrice,
+      };
+      if (opts.amountIn) params.amount_in = opts.amountIn;
+      if (opts.amountInPercent) params.amount_in_percent = opts.amountInPercent;
+      if (opts.limitPriceMode) params.limit_price_mode = opts.limitPriceMode;
+      if (opts.expireIn != null) params.expire_in = opts.expireIn;
+      if (opts.sellRatioType) params.sell_ratio_type = opts.sellRatioType;
+      if (opts.slippage != null) params.slippage = opts.slippage;
+      if (opts.autoSlippage) params.auto_slippage = true;
+      if (opts.priorityFee) params.priority_fee = opts.priorityFee;
+      if (opts.tipFee) params.tip_fee = opts.tipFee;
+      if (opts.gasPrice) params.gas_price = opts.gasPrice;
+      if (opts.antiMev) params.is_anti_mev = true;
+      const client = new OpenApiClient(getConfig(true));
+      const data = await client.createStrategyOrder(params).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
+  strategy
+    .command("list")
+    .description("List strategy orders (normal auth)")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .option("--type <type>", "open (default) / history")
+    .option("--from <address>", "Filter by wallet address")
+    .option("--base-token <address>", "Filter by token address")
+    .option("--page-token <token>", "Pagination cursor from previous response")
+    .option("--limit <n>", "Results per page", parseInt)
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      validateChain(opts.chain);
+      const extra: Record<string, string | number> = {};
+      if (opts.type) extra["type"] = opts.type;
+      if (opts.from) extra["from_address"] = opts.from;
+      if (opts.baseToken) extra["base_token"] = opts.baseToken;
+      if (opts.pageToken) extra["page_token"] = opts.pageToken;
+      if (opts.limit != null) extra["limit"] = opts.limit;
+      const client = new OpenApiClient(getConfig());
+      const data = await client.getStrategyOrders(opts.chain, extra).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
+  strategy
+    .command("cancel")
+    .description("Cancel a strategy order (requires private key)")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
+    .requiredOption("--order-id <id>", "Order ID to cancel")
+    .option("--close-sell-model <model>", "Sell model when closing")
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      validateChain(opts.chain);
+      const params: StrategyCancelParams = {
+        chain: opts.chain,
+        from_address: opts.from,
+        order_id: opts.orderId,
+      };
+      if (opts.closeSellModel) params.close_sell_model = opts.closeSellModel;
+      const client = new OpenApiClient(getConfig(true));
+      const data = await client.cancelStrategyOrder(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
 }
