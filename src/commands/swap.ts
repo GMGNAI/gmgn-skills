@@ -24,6 +24,8 @@ export function registerSwapCommands(program: Command): void {
     .option("--gas-price <gwei>", "Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01)")
     .option("--max-fee-per-gas <amount>", "EIP-1559 max fee per gas (Base)")
     .option("--max-priority-fee-per-gas <amount>", "EIP-1559 max priority fee per gas (Base)")
+    .option("--condition-orders <json>", 'JSON array of take-profit/stop-loss conditions, e.g. \'[{"order_type":"profit_stop","side":"sell","price_scale":"150","sell_ratio":"100"}]\'')
+    .option("--sell-ratio-type <type>", "Sell ratio base: buy_amount (default) / hold_amount; only used with --condition-orders")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       if (opts.percent == null && !opts.amount) {
@@ -54,6 +56,15 @@ export function registerSwapCommands(program: Command): void {
       if (opts.gasPrice) params.gas_price = String(Math.round(parseFloat(opts.gasPrice) * 1e9));
       if (opts.maxFeePerGas) params.max_fee_per_gas = opts.maxFeePerGas;
       if (opts.maxPriorityFeePerGas) params.max_priority_fee_per_gas = opts.maxPriorityFeePerGas;
+      if (opts.conditionOrders) {
+        try {
+          params.condition_orders = JSON.parse(opts.conditionOrders);
+        } catch {
+          console.error("[gmgn-cli] --condition-orders must be valid JSON");
+          process.exit(1);
+        }
+      }
+      if (opts.sellRatioType) params.sell_ratio_type = opts.sellRatioType;
 
       const client = new OpenApiClient(getConfig(true));
       const data = await client.swap(params).catch(exitOnError);
@@ -107,9 +118,10 @@ export function registerSwapCommands(program: Command): void {
     .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
     .requiredOption("--base-token <address>", "Base token contract address")
     .requiredOption("--quote-token <address>", "Quote token contract address")
-    .requiredOption("--side <side>", "Direction: buy / sell")
-    .requiredOption("--open-price <price>", "Open price")
+    .requiredOption("--order-type <type>", "Order type: limit_order")
+    .requiredOption("--sub-order-type <type>", "Sub-order type: buy_low / buy_high / stop_loss / take_profit")
     .requiredOption("--check-price <price>", "Trigger check price")
+    .option("--open-price <price>", "Open/entry price")
     .option("--amount-in <amount>", "Input amount (smallest unit)")
     .option("--amount-in-percent <pct>", "Input amount as a percentage (e.g. 50 = 50%)")
     .option("--limit-price-mode <mode>", "Price mode: exact / slippage (default: slippage)")
@@ -117,9 +129,9 @@ export function registerSwapCommands(program: Command): void {
     .option("--sell-ratio-type <type>", "Sell ratio basis: buy_amount (default) / hold_amount")
     .option("--slippage <n>", "Slippage tolerance (e.g. 0.01 = 1%)", parseFloat)
     .option("--auto-slippage", "Enable automatic slippage")
-    .option("--priority-fee <sol>", "Priority fee in SOL (SOL only)")
-    .option("--tip-fee <amount>", "Tip fee")
-    .option("--gas-price <amount>", "Gas price in wei (EVM chains)")
+    .option("--priority-fee <sol>", "Priority fee in SOL (required for SOL chain)")
+    .option("--tip-fee <amount>", "Tip fee (required for SOL chain)")
+    .option("--gas-price <gwei>", "Gas price in gwei (required for BSC; ≥ 0.05 gwei / BASE/ETH ≥ 0.01 gwei)")
     .option("--anti-mev", "Enable anti-MEV protection")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
@@ -137,10 +149,11 @@ export function registerSwapCommands(program: Command): void {
         from_address: opts.from,
         base_token: opts.baseToken,
         quote_token: opts.quoteToken,
-        side: opts.side,
-        open_price: opts.openPrice,
+        order_type: opts.orderType,
+        sub_order_type: opts.subOrderType,
         check_price: opts.checkPrice,
       };
+      if (opts.openPrice) params.open_price = opts.openPrice;
       if (opts.amountIn) params.amount_in = opts.amountIn;
       if (opts.amountInPercent) params.amount_in_percent = opts.amountInPercent;
       if (opts.limitPriceMode) params.limit_price_mode = opts.limitPriceMode;
@@ -150,7 +163,7 @@ export function registerSwapCommands(program: Command): void {
       if (opts.autoSlippage) params.auto_slippage = true;
       if (opts.priorityFee) params.priority_fee = opts.priorityFee;
       if (opts.tipFee) params.tip_fee = opts.tipFee;
-      if (opts.gasPrice) params.gas_price = opts.gasPrice;
+      if (opts.gasPrice) params.gas_price = String(Math.round(parseFloat(opts.gasPrice) * 1e9));
       if (opts.antiMev) params.is_anti_mev = true;
       const client = new OpenApiClient(getConfig(true));
       const data = await client.createStrategyOrder(params).catch(exitOnError);
@@ -163,6 +176,7 @@ export function registerSwapCommands(program: Command): void {
     .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
     .option("--type <type>", "open (default) / history")
     .option("--from <address>", "Filter by wallet address")
+    .option("--group-tag <tag>", "Filter by group: LimitOrder / STMix")
     .option("--base-token <address>", "Filter by token address")
     .option("--page-token <token>", "Pagination cursor from previous response")
     .option("--limit <n>", "Results per page", parseInt)
@@ -172,6 +186,7 @@ export function registerSwapCommands(program: Command): void {
       const extra: Record<string, string | number> = {};
       if (opts.type) extra["type"] = opts.type;
       if (opts.from) extra["from_address"] = opts.from;
+      if (opts.groupTag) extra["group_tag"] = opts.groupTag;
       if (opts.baseToken) extra["base_token"] = opts.baseToken;
       if (opts.pageToken) extra["page_token"] = opts.pageToken;
       if (opts.limit != null) extra["limit"] = opts.limit;
@@ -186,6 +201,7 @@ export function registerSwapCommands(program: Command): void {
     .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
     .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
     .requiredOption("--order-id <id>", "Order ID to cancel")
+    .option("--order-type <type>", "Order type: limit_order / smart_trade")
     .option("--close-sell-model <model>", "Sell model when closing")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
@@ -195,6 +211,7 @@ export function registerSwapCommands(program: Command): void {
         from_address: opts.from,
         order_id: opts.orderId,
       };
+      if (opts.orderType) params.order_type = opts.orderType;
       if (opts.closeSellModel) params.close_sell_model = opts.closeSellModel;
       const client = new OpenApiClient(getConfig(true));
       const data = await client.cancelStrategyOrder(params).catch(exitOnError);
