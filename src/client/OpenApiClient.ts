@@ -87,6 +87,63 @@ export interface SwapParams {
   max_priority_fee_per_gas?: string;
 }
 
+export interface StrategyCreateParams {
+  chain: string;
+  from_address: string;
+  base_token: string;
+  quote_token: string;
+  side: string;
+  open_price: string;
+  check_price: string;
+  amount_in?: string;
+  amount_in_percent?: string;
+  limit_price_mode?: string;
+  price_gap_ratio?: string;
+  expire_in?: number;
+  sell_ratio_type?: string;
+  slippage?: number;
+  auto_slippage?: boolean;
+  fee?: string;
+  gas_price?: string;
+  max_fee_per_gas?: string;
+  max_priority_fee_per_gas?: string;
+  is_anti_mev?: boolean;
+  anti_mev_mode?: string;
+  priority_fee?: string;
+  tip_fee?: string;
+  custom_rpc?: string;
+}
+
+export interface StrategyCancelParams {
+  chain: string;
+  from_address: string;
+  order_id: string;
+  close_sell_model?: string;
+}
+
+export interface CreateTokenParams {
+  chain: string;
+  dex: string;
+  from_address: string;
+  name: string;
+  symbol: string;
+  buy_amt: string;
+  image?: string;
+  image_url?: string;
+  website?: string;
+  twitter?: string;
+  telegram?: string;
+  slippage?: number;
+  auto_slippage?: boolean;
+  priority_fee?: string;
+  tip_fee?: string;
+  gas_price?: string;
+  max_priority_fee_per_gas?: string;
+  max_fee_per_gas?: string;
+  is_anti_mev?: boolean;
+  anti_mev_mode?: string;
+}
+
 export class OpenApiClient {
   private readonly apiKey: string;
   private readonly privateKeyPem: string | undefined;
@@ -237,6 +294,30 @@ export class OpenApiClient {
 
   async queryOrder(orderId: string, chain: string): Promise<unknown> {
     return this.criticalRequest("GET", "/v1/trade/query_order", { order_id: orderId, chain }, null);
+  }
+
+  // ---- Strategy order endpoints ----
+
+  async createStrategyOrder(params: StrategyCreateParams): Promise<unknown> {
+    return this.criticalRequest("POST", "/v1/trade/strategy/create", {}, params);
+  }
+
+  async getStrategyOrders(chain: string, extra: Record<string, string | number> = {}): Promise<unknown> {
+    return this.normalRequest("GET", "/v1/trade/strategy/orders", { chain, ...extra });
+  }
+
+  async cancelStrategyOrder(params: StrategyCancelParams): Promise<unknown> {
+    return this.criticalRequest("POST", "/v1/trade/strategy/cancel", {}, params);
+  }
+
+  // ---- Cooking endpoints ----
+
+  async getCookingStatistics(): Promise<unknown> {
+    return this.normalRequest("GET", "/v1/cooking/statistics", {});
+  }
+
+  async createToken(params: CreateTokenParams): Promise<unknown> {
+    return this.criticalRequest("POST", "/v1/cooking/create_token", {}, params);
   }
 
   // ---- Internal methods ----
