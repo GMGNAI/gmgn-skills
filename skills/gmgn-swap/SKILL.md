@@ -213,6 +213,61 @@ gmgn-cli order get --chain sol --order-id <order_id>
 | `--gas-price <gwei>` | No | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01) |
 | `--max-fee-per-gas <n>` | No | EIP-1559 max fee per gas (Base only) |
 | `--max-priority-fee-per-gas <n>` | No | EIP-1559 max priority fee per gas (Base only) |
+| `--condition-orders <json>` | No | JSON array of condition sub-orders (take-profit / stop-loss) to attach after a successful swap. **Max 10 sub-orders.** Strategy creation is best-effort: if the swap succeeds but strategy creation fails, the swap result is still returned. See ConditionOrder fields below. |
+| `--sell-ratio-type <type>` | No | Sell ratio basis for `--condition-orders`: `buy_amount` (default) — when triggered, sells a fixed token amount stored at strategy creation time; `hold_amount` — when triggered, sells a fixed percentage of the position held at trigger time |
+
+### ConditionOrder Fields (for `--condition-orders`)
+
+Each element in the `--condition-orders` JSON array supports:
+
+| Field | Required | Type | Description |
+|-------|----------|------|-------------|
+| `order_type` | Yes | string | Sub-order type. Supported: `profit_stop` (take-profit), `loss_stop` (stop-loss). Not yet supported: `profit_stop_trace`, `loss_stop_trace`, `follow_dev_sell`, `migrated_sell` |
+| `side` | Yes | string | Always `"sell"` |
+| `price_scale` | Yes | string | Price ratio relative to entry price, as a string percentage. e.g. `"200"` = 2× entry (take-profit), `"50"` = 50% of entry (stop-loss) |
+| `sell_ratio` | Yes | string | Percentage of position to sell when triggered, e.g. `"100"` = 100% |
+
+**Example — attach take-profit at 2× and stop-loss at 50%:**
+
+```json
+[
+  {"order_type": "profit_stop", "side": "sell", "price_scale": "200", "sell_ratio": "100"},
+  {"order_type": "loss_stop",   "side": "sell", "price_scale": "50",  "sell_ratio": "100"}
+]
+```
+
+**Example — buy token A with 0.01 SOL, take-profit 50% at +100%, take-profit remaining 50% at +300%, stop-loss 100% at -65% (`hold_amount` mode):**
+
+```bash
+gmgn-cli swap \
+  --chain sol \
+  --from <wallet_address> \
+  --input-token So11111111111111111111111111111111111111112 \
+  --output-token <token_A_address> \
+  --amount 10000000 \
+  --slippage 0.3 \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"35","sell_ratio":"100"}]' \
+  --sell-ratio-type hold_amount
+```
+
+> `price_scale` is relative to entry: `"200"` = 2× (+100%), `"400"` = 4× (+300%), `"35"` = 35% of entry (-65%).
+> `hold_amount`: the second take-profit fires on whatever is held at trigger time (the remaining 50%). If you added to your position in between, those additional tokens will be included as well.
+
+**Same strategy using `buy_amount` mode — fixed percentage of the original bought amount at each trigger:**
+
+```bash
+gmgn-cli swap \
+  --chain sol \
+  --from <wallet_address> \
+  --input-token So11111111111111111111111111111111111111112 \
+  --output-token <token_A_address> \
+  --amount 10000000 \
+  --slippage 0.3 \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"50"},{"order_type":"loss_stop","side":"sell","price_scale":"35","sell_ratio":"100"}]' \
+  --sell-ratio-type buy_amount
+```
+
+> `buy_amount`: each take-profit sells 50% of the **original** bought amount. Stop-loss sells 100% of the original bought amount.
 
 ## `swap` Response Fields
 
@@ -227,6 +282,7 @@ gmgn-cli order get --chain sol --order-id <order_id>
 | `output_token` | string | Output token contract address |
 | `filled_input_amount` | string | Actual input consumed (smallest unit); empty if not filled |
 | `filled_output_amount` | string | Actual output received (smallest unit); empty if not filled |
+| `strategy_order_id` | string | Strategy order ID; only present when `--condition-orders` was passed and strategy creation succeeded (best-effort) |
 
 ## Output Format
 
@@ -296,7 +352,7 @@ Convert `filled_input_amount` and `filled_output_amount` from smallest unit usin
 | `--amount-in-percent` | No* | Input as percentage (e.g. `50` = 50%). Mutually exclusive with `--amount-in` |
 | `--limit-price-mode` | No | `exact` / `slippage` (default: `slippage`) |
 | `--expire-in` | No | Order expiry in seconds |
-| `--sell-ratio-type` | No | `buy_amount` (default) / `hold_amount` |
+| `--sell-ratio-type` | No | `buy_amount` (default) — when triggered, sells a fixed token amount stored at strategy creation time; `hold_amount` — when triggered, sells a fixed percentage of the position held at trigger time |
 | `--slippage` | No | Slippage tolerance, e.g. `0.01` = 1%. Mutually exclusive with `--auto-slippage` |
 | `--auto-slippage` | No | Enable automatic slippage |
 | `--priority-fee` | No | Priority fee in SOL (SOL only) |

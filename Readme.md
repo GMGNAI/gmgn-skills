@@ -500,6 +500,88 @@ gmgn-cli track smartmoney --limit 100 --raw
 gmgn-cli track smartmoney --chain sol --side sell --limit 50 --raw
 ```
 
+### Swap (requires private key)
+
+```bash
+# Submit swap with fixed slippage
+gmgn-cli swap \
+  --chain sol \
+  --from <wallet-address> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --amount 1000000 \
+  --slippage 0.01
+
+# Submit swap with automatic slippage
+gmgn-cli swap \
+  --chain sol \
+  --from <wallet-address> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --amount 1000000 \
+  --auto-slippage
+
+# Sell by position percentage (e.g. sell 50%)
+gmgn-cli swap \
+  --chain sol \
+  --from <wallet-address> \
+  --input-token <token-addr> \
+  --output-token <usdc-addr> \
+  --percent 50 \
+  --auto-slippage
+
+# Get quote (no transaction submitted)
+gmgn-cli order quote \
+  --chain sol \
+  --from <wallet-address> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --amount 1000000 \
+  --slippage 0.01
+
+# Query order
+gmgn-cli order get --chain sol --order-id <order-id>
+```
+
+### Swap with Take-Profit / Stop-Loss Orders (requires private key)
+
+**`hold_amount` mode** — each condition order fires based on current holdings at trigger time:
+
+```bash
+# Buy token A with 0.01 SOL; take-profit 50% at +100%, take-profit remaining 50% at +300%, stop-loss 100% at -65%
+gmgn-cli swap \
+  --chain sol \
+  --from <wallet_address> \
+  --input-token So11111111111111111111111111111111111111112 \
+  --output-token <token_A_address> \
+  --amount 10000000 \
+  --slippage 0.3 \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"35","sell_ratio":"100"}]' \
+  --sell-ratio-type hold_amount
+```
+
+> `price_scale` is relative to entry: `"200"` = 2× (+100%), `"400"` = 4× (+300%), `"35"` = 35% of entry (-65%).
+> `hold_amount`: the second take-profit fires on whatever is held at that point (the remaining 50%). If you added to your position in between, those additional tokens will be included as well.
+
+**`buy_amount` mode** — each condition order fires based on the original bought amount:
+
+```bash
+# Same strategy using fixed percentages of the original bought amount
+gmgn-cli swap \
+  --chain sol \
+  --from <wallet_address> \
+  --input-token So11111111111111111111111111111111111111112 \
+  --output-token <token_A_address> \
+  --amount 10000000 \
+  --slippage 0.3 \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"50"},{"order_type":"loss_stop","side":"sell","price_scale":"35","sell_ratio":"100"}]' \
+  --sell-ratio-type buy_amount
+```
+
+> `buy_amount`: each take-profit sells 50% of the **original** bought amount. Stop-loss sells 100% of the original bought amount.
+
+---
+
 ### Limit Orders (requires private key)
 
 ```bash
@@ -542,51 +624,8 @@ gmgn-cli cooking \
   --input-token So11111111111111111111111111111111111111112 \
   --output-token <token_address> \
   --amount 1000000000 \
-  --slippage 0.1 \
+  --slippage 0.3 \
   --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
-```
-
-### Swap (requires private key)
-
-```bash
-# Submit swap with fixed slippage
-gmgn-cli swap \
-  --chain sol \
-  --from <wallet-address> \
-  --input-token <input-token-addr> \
-  --output-token <output-token-addr> \
-  --amount 1000000 \
-  --slippage 0.01
-
-# Submit swap with automatic slippage
-gmgn-cli swap \
-  --chain sol \
-  --from <wallet-address> \
-  --input-token <input-token-addr> \
-  --output-token <output-token-addr> \
-  --amount 1000000 \
-  --auto-slippage
-
-# Sell by position percentage (e.g. sell 50%)
-gmgn-cli swap \
-  --chain sol \
-  --from <wallet-address> \
-  --input-token <token-addr> \
-  --output-token <usdc-addr> \
-  --percent 50 \
-  --auto-slippage
-
-# Get quote (no transaction submitted)
-gmgn-cli order quote \
-  --chain sol \
-  --from <wallet-address> \
-  --input-token <input-token-addr> \
-  --output-token <output-token-addr> \
-  --amount 1000000 \
-  --slippage 0.01
-
-# Query order
-gmgn-cli order get --chain sol --order-id <order-id>
 ```
 
 ## 9. Supported Chains

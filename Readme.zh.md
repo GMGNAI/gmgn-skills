@@ -532,6 +532,88 @@ gmgn-cli track smartmoney --limit 100 --raw
 gmgn-cli track smartmoney --chain sol --side sell --limit 50 --raw
 ```
 
+### Swap（需要私钥）
+
+```bash
+# 提交兑换（固定滑点）
+gmgn-cli swap \
+  --chain sol \
+  --from <wallet-address> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --amount 1000000 \
+  --slippage 0.01
+
+# 提交兑换（自动滑点）
+gmgn-cli swap \
+  --chain sol \
+  --from <wallet-address> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --amount 1000000 \
+  --auto-slippage
+
+# 按持仓比例卖出（例：卖出 50%）
+gmgn-cli swap \
+  --chain sol \
+  --from <wallet-address> \
+  --input-token <token-addr> \
+  --output-token <usdc-addr> \
+  --percent 50 \
+  --auto-slippage
+
+# 获取报价（不提交交易）
+gmgn-cli order quote \
+  --chain sol \
+  --from <wallet-address> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --amount 1000000 \
+  --slippage 0.01
+
+# 查询订单状态
+gmgn-cli order get --chain sol --order-id <order-id>
+```
+
+### 带止盈止损的 Swap（需要私钥）
+
+**`hold_amount` 模式** — 按触发时的实际持仓比例卖出：
+
+```bash
+# 用 0.01 SOL 买入代币 A；涨 100% 卖 50%，涨 300% 卖剩余 50%，跌 65% 全卖
+gmgn-cli swap \
+  --chain sol \
+  --from <wallet_address> \
+  --input-token So11111111111111111111111111111111111111112 \
+  --output-token <token_A_address> \
+  --amount 10000000 \
+  --slippage 0.3 \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"35","sell_ratio":"100"}]' \
+  --sell-ratio-type hold_amount
+```
+
+> `price_scale` 相对于入场价：`"200"` = 2×（涨 100%），`"400"` = 4×（涨 300%），`"35"` = 入场价的 35%（跌 65%）。
+> `hold_amount`：第二个止盈单触发时，按触发时持仓（剩余 50%）的 100% 卖出。如果中间有加仓，加仓的部分也会一同被卖掉。
+
+**`buy_amount` 模式** — 按原始买入量的固定百分比卖出：
+
+```bash
+# 相同策略，使用原始买入量的固定百分比
+gmgn-cli swap \
+  --chain sol \
+  --from <wallet_address> \
+  --input-token So11111111111111111111111111111111111111112 \
+  --output-token <token_A_address> \
+  --amount 10000000 \
+  --slippage 0.3 \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"50"},{"order_type":"loss_stop","side":"sell","price_scale":"35","sell_ratio":"100"}]' \
+  --sell-ratio-type buy_amount
+```
+
+> `buy_amount`：每个止盈单各卖原始买入量的 50%，止损单卖原始买入量的 100%。
+
+---
+
 ### 限价单（需要私钥）
 
 ```bash
@@ -574,51 +656,8 @@ gmgn-cli cooking \
   --input-token So11111111111111111111111111111111111111112 \
   --output-token <token_address> \
   --amount 1000000000 \
-  --slippage 0.1 \
+  --slippage 0.3 \
   --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
-```
-
-### Swap（需要私钥）
-
-```bash
-# 提交兑换（固定滑点）
-gmgn-cli swap \
-  --chain sol \
-  --from <wallet-address> \
-  --input-token <input-token-addr> \
-  --output-token <output-token-addr> \
-  --amount 1000000 \
-  --slippage 0.01
-
-# 提交兑换（自动滑点）
-gmgn-cli swap \
-  --chain sol \
-  --from <wallet-address> \
-  --input-token <input-token-addr> \
-  --output-token <output-token-addr> \
-  --amount 1000000 \
-  --auto-slippage
-
-# 按持仓比例卖出（例：卖出 50%）
-gmgn-cli swap \
-  --chain sol \
-  --from <wallet-address> \
-  --input-token <token-addr> \
-  --output-token <usdc-addr> \
-  --percent 50 \
-  --auto-slippage
-
-# 获取报价（不提交交易）
-gmgn-cli order quote \
-  --chain sol \
-  --from <wallet-address> \
-  --input-token <input-token-addr> \
-  --output-token <output-token-addr> \
-  --amount 1000000 \
-  --slippage 0.01
-
-# 查询订单状态
-gmgn-cli order get --chain sol --order-id <order-id>
 ```
 
 ## 9. 支持的链
