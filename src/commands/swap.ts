@@ -121,7 +121,6 @@ export function registerSwapCommands(program: Command): void {
     .requiredOption("--order-type <type>", "Order type: limit_order")
     .requiredOption("--sub-order-type <type>", "Sub-order type: buy_low / buy_high / stop_loss / take_profit")
     .requiredOption("--check-price <price>", "Trigger check price")
-    .option("--open-price <price>", "Open/entry price")
     .option("--amount-in <amount>", "Input amount (smallest unit)")
     .option("--amount-in-percent <pct>", "Input amount as a percentage (e.g. 50 = 50%)")
     .option("--limit-price-mode <mode>", "Price mode: exact / slippage (default: slippage)")
@@ -153,7 +152,6 @@ export function registerSwapCommands(program: Command): void {
         sub_order_type: opts.subOrderType,
         check_price: opts.checkPrice,
       };
-      if (opts.openPrice) params.open_price = opts.openPrice;
       if (opts.amountIn) params.amount_in = opts.amountIn;
       if (opts.amountInPercent) params.amount_in_percent = opts.amountInPercent;
       if (opts.limitPriceMode) params.limit_price_mode = opts.limitPriceMode;

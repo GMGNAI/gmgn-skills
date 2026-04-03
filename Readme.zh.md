@@ -10,7 +10,7 @@
 
 ## GMGN Agent Skills
 
-使用 GMGN Agent Skills，你可以通过 AI Agent 实时查询多个链上热门代币排行榜，代币基础信息，社交媒体信息，实时交易动态，实时战壕新币，报持仓大户（Top Holder），交易大户（Top Trader），聪明钱持仓占比，KOL持仓占比，老鼠仓持仓，捆绑持仓占比，等代币专业数据分析数据，以及支持代币市价单交易、限价单交易、高级止盈止损策略单交易，以及钱包资产管理相关功能，例如查询钱包实时持仓、钱包最近盈亏、钱包交易动态等，全部通过自然语言与 AI Agent 交互即可完成。
+使用 GMGN Agent Skills，你可以通过 AI Agent 实时查询多个链上热门代币排行榜，代币基础信息，社交媒体信息，实时交易动态，实时战壕新币，报持仓大户（Top Holder），交易大户（Top Trader），聪明钱持仓占比，KOL持仓占比，老鼠仓持仓，捆绑持仓占比，等代币专业数据分析数据，以及支持代币市价单交易、限价单交易、高级止盈止损策略单交易、一键 Cooking 策略单（买入 + 条件单一体化），以及钱包资产管理相关功能，例如查询钱包实时持仓、钱包最近盈亏、钱包交易动态等，全部通过自然语言与 AI Agent 交互即可完成。
 
 ---
 
@@ -92,7 +92,8 @@ SOL / BSC / Base 多链数据每次查询均为实时，支持多参数个性化
 | [`/gmgn-market`](skills/gmgn-market/SKILL.md) | K 线行情数据、热门代币 | [SKILL.md](skills/gmgn-market/SKILL.md) |
 | [`/gmgn-portfolio`](skills/gmgn-portfolio/SKILL.md) | 钱包持仓、活动、统计 | [SKILL.md](skills/gmgn-portfolio/SKILL.md) |
 | [`/gmgn-track`](skills/gmgn-track/SKILL.md) | 追踪关注钱包交易动态、KOL 交易动态、聪明钱交易动态 | [SKILL.md](skills/gmgn-track/SKILL.md) |
-| [`/gmgn-swap`](skills/gmgn-swap/SKILL.md) | 兑换提交 + 订单查询 | [SKILL.md](skills/gmgn-swap/SKILL.md) |
+| [`/gmgn-swap`](skills/gmgn-swap/SKILL.md) | 兑换提交 + 限价单 + 策略单 + 订单查询 | [SKILL.md](skills/gmgn-swap/SKILL.md) |
+| [`/gmgn-cooking`](skills/gmgn-cooking/SKILL.md) | 一键 Cooking 策略单（买入 + 止盈止损条件单一体化） | [SKILL.md](skills/gmgn-cooking/SKILL.md) |
 
 > 如需查看详细的 CLI 接口说明、传参格式和推荐值，请参阅 [Wiki 文档](https://github.com/GMGNAI/gmgn-skills/wiki/Home-Chinese)。
 
@@ -345,7 +346,7 @@ cp .env.example .env
    ```bash
    echo "$(npm root -g)/gmgn-skills/skills"
    ```
-3. 重启 Cline — `/gmgn-token`、`/gmgn-market`、`/gmgn-portfolio`、`/gmgn-track`、`/gmgn-swap` 即可使用
+3. 重启 Cline — `/gmgn-token`、`/gmgn-market`、`/gmgn-portfolio`、`/gmgn-track`、`/gmgn-swap`、`/gmgn-cooking` 即可使用
 
 #### Codex CLI
 
@@ -529,6 +530,52 @@ gmgn-cli track kol --chain sol --side buy --limit 50 --raw
 # 聪明钱交易动态
 gmgn-cli track smartmoney --limit 100 --raw
 gmgn-cli track smartmoney --chain sol --side sell --limit 50 --raw
+```
+
+### 限价单（需要私钥）
+
+```bash
+# 创建止盈单
+gmgn-cli order strategy create \
+  --chain sol \
+  --from <wallet_address> \
+  --base-token <token_address> \
+  --quote-token <sol_address> \
+  --sub-order-type take_profit \
+  --check-price 0.002 \
+  --amount-in-percent 100 \
+  --slippage 0.01
+
+# 创建止损单
+gmgn-cli order strategy create \
+  --chain sol \
+  --from <wallet_address> \
+  --base-token <token_address> \
+  --quote-token <sol_address> \
+  --sub-order-type stop_loss \
+  --check-price 0.0005 \
+  --amount-in-percent 100 \
+  --slippage 0.01
+
+# 查看当前挂单
+gmgn-cli order strategy list --chain sol
+
+# 撤销策略单
+gmgn-cli order strategy cancel --chain sol --from <wallet_address> --order-id <order_id>
+```
+
+### Cooking 一键策略单（需要私钥）
+
+```bash
+# 买入代币，同时自动挂止盈 + 止损条件单
+gmgn-cli cooking \
+  --chain sol \
+  --from <wallet_address> \
+  --input-token So11111111111111111111111111111111111111112 \
+  --output-token <token_address> \
+  --amount 1000000000 \
+  --slippage 0.1 \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
 ```
 
 ### Swap（需要私钥）

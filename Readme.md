@@ -10,7 +10,7 @@ English | [简体中文](Readme.zh.md)
 
 ## GMGN Agent Skills
 
-With GMGN Agent Skills, you can use AI agents to query real-time trending token rankings across multiple chains, token fundamentals, social media signals, live trading activity, new tokens in Trenches, top holders, top traders, smart money positions, KOL holdings, insider wallets, bundled wallet exposure, and other professional on-chain analytics. It also supports market orders, limit orders, advanced take-profit/stop-loss strategy orders, and wallet management — including real-time holdings, recent P&L, and transaction history — all through natural language.
+With GMGN Agent Skills, you can use AI agents to query real-time trending token rankings across multiple chains, token fundamentals, social media signals, live trading activity, new tokens in Trenches, top holders, top traders, smart money positions, KOL holdings, insider wallets, bundled wallet exposure, and other professional on-chain analytics. It also supports market orders, limit orders, advanced take-profit/stop-loss strategy orders, one-command cooking orders (buy + condition orders in a single flow), and wallet management — including real-time holdings, recent P&L, and transaction history — all through natural language.
 
 ---
 
@@ -89,7 +89,8 @@ No more scraping web pages or getting blocked by Cloudflare. Query all the profe
 | [`/gmgn-market`](skills/gmgn-market/SKILL.md) | K-line market data, trending tokens | [SKILL.md](skills/gmgn-market/SKILL.md) |
 | [`/gmgn-portfolio`](skills/gmgn-portfolio/SKILL.md) | Wallet holdings, activity, stats | [SKILL.md](skills/gmgn-portfolio/SKILL.md) |
 | [`/gmgn-track`](skills/gmgn-track/SKILL.md) | Follow-wallet trades, KOL trades, Smart Money trades | [SKILL.md](skills/gmgn-track/SKILL.md) |
-| [`/gmgn-swap`](skills/gmgn-swap/SKILL.md) | Swap submission + order query | [SKILL.md](skills/gmgn-swap/SKILL.md) |
+| [`/gmgn-swap`](skills/gmgn-swap/SKILL.md) | Swap submission + limit orders + strategy orders + order query | [SKILL.md](skills/gmgn-swap/SKILL.md) |
+| [`/gmgn-cooking`](skills/gmgn-cooking/SKILL.md) | One-command cooking orders (buy + take-profit/stop-loss in a single flow) | [SKILL.md](skills/gmgn-cooking/SKILL.md) |
 
 > For detailed CLI commands, parameters, and recommended values, see the [Wiki documentation](https://github.com/GMGNAI/gmgn-skills/wiki).
 
@@ -341,7 +342,7 @@ Skills are automatically discovered via the `.cursor-plugin/` configuration.
    ```bash
    echo "$(npm root -g)/gmgn-skills/skills"
    ```
-3. Restart Cline — `/gmgn-token`, `/gmgn-market`, `/gmgn-portfolio`, `/gmgn-track`, `/gmgn-swap` will be available
+3. Restart Cline — `/gmgn-token`, `/gmgn-market`, `/gmgn-portfolio`, `/gmgn-track`, `/gmgn-swap`, `/gmgn-cooking` will be available
 
 #### Codex CLI
 
@@ -497,6 +498,52 @@ gmgn-cli track kol --chain sol --side buy --limit 50 --raw
 # Smart Money trade records
 gmgn-cli track smartmoney --limit 100 --raw
 gmgn-cli track smartmoney --chain sol --side sell --limit 50 --raw
+```
+
+### Limit Orders (requires private key)
+
+```bash
+# Create a take-profit order
+gmgn-cli order strategy create \
+  --chain sol \
+  --from <wallet_address> \
+  --base-token <token_address> \
+  --quote-token <sol_address> \
+  --sub-order-type take_profit \
+  --check-price 0.002 \
+  --amount-in-percent 100 \
+  --slippage 0.01
+
+# Create a stop-loss order
+gmgn-cli order strategy create \
+  --chain sol \
+  --from <wallet_address> \
+  --base-token <token_address> \
+  --quote-token <sol_address> \
+  --sub-order-type stop_loss \
+  --check-price 0.0005 \
+  --amount-in-percent 100 \
+  --slippage 0.01
+
+# List open strategy orders
+gmgn-cli order strategy list --chain sol
+
+# Cancel a strategy order
+gmgn-cli order strategy cancel --chain sol --from <wallet_address> --order-id <order_id>
+```
+
+### Cooking (requires private key)
+
+```bash
+# Buy token and automatically attach take-profit + stop-loss condition orders
+gmgn-cli cooking \
+  --chain sol \
+  --from <wallet_address> \
+  --input-token So11111111111111111111111111111111111111112 \
+  --output-token <token_address> \
+  --amount 1000000000 \
+  --slippage 0.1 \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
 ```
 
 ### Swap (requires private key)
