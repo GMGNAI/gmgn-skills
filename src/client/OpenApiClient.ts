@@ -306,14 +306,14 @@ export class OpenApiClient {
     return this.criticalRequest("GET", "/v1/trade/query_order", { order_id: orderId, chain }, null);
   }
 
-  // ---- Strategy order endpoints ----
+  // ---- Strategy order endpoints (critical auth) ----
 
   async createStrategyOrder(params: StrategyCreateParams): Promise<unknown> {
     return this.criticalRequest("POST", "/v1/trade/strategy/create", {}, params);
   }
 
   async getStrategyOrders(chain: string, extra: Record<string, string | number> = {}): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/trade/strategy/orders", { chain, ...extra });
+    return this.criticalRequest("GET", "/v1/trade/strategy/orders", { chain, ...extra }, null);
   }
 
   async cancelStrategyOrder(params: StrategyCancelParams): Promise<unknown> {

@@ -532,7 +532,7 @@ gmgn-cli order strategy create \
 
 ## order strategy list
 
-List strategy orders. Uses normal auth.
+List strategy orders. **Requires `GMGN_PRIVATE_KEY` configured in `.env`.**
 
 ```bash
 gmgn-cli order strategy list --chain <chain> [--type <open|history>] [--from <address>] [--group-tag <tag>] [--base-token <address>] [--page-token <token>] [--limit <n>] [--raw]

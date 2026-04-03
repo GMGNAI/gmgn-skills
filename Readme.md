@@ -525,7 +525,7 @@ gmgn-cli order strategy create \
   --amount-in-percent 100 \
   --slippage 0.01
 
-# List open strategy orders
+# List open strategy orders (requires private key)
 gmgn-cli order strategy list --chain sol
 
 # Cancel a strategy order
