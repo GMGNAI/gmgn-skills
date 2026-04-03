@@ -556,11 +556,12 @@ gmgn-cli swap \
   --output-token <token_A_address> \
   --amount 10000000 \
   --slippage 0.3 \
-  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"35","sell_ratio":"100"}]' \
+  --anti-mev \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"300","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"65","sell_ratio":"100"}]' \
   --sell-ratio-type hold_amount
 ```
 
-> `price_scale` is relative to entry: `"200"` = 2× (+100%), `"400"` = 4× (+300%), `"35"` = 35% of entry (-65%).
+> `price_scale` for `profit_stop`: gain % from entry (`"100"` = +100% / 2×, `"300"` = +300% / 4×). For `loss_stop`: drop % from entry (`"65"` = drops 65%, triggers at 35% of entry).
 > `hold_amount`: the second take-profit fires on whatever is held at that point (the remaining 50%). If you added to your position in between, those additional tokens will be included as well.
 
 **`buy_amount` mode** — each condition order fires based on the original bought amount:
@@ -574,7 +575,8 @@ gmgn-cli swap \
   --output-token <token_A_address> \
   --amount 10000000 \
   --slippage 0.3 \
-  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"50"},{"order_type":"loss_stop","side":"sell","price_scale":"35","sell_ratio":"100"}]' \
+  --anti-mev \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"300","sell_ratio":"50"},{"order_type":"loss_stop","side":"sell","price_scale":"65","sell_ratio":"100"}]' \
   --sell-ratio-type buy_amount
 ```
 
@@ -625,7 +627,7 @@ gmgn-cli cooking \
   --output-token <token_address> \
   --amount 1000000000 \
   --slippage 0.3 \
-  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
 ```
 
 ## 9. Supported Chains
