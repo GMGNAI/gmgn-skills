@@ -236,7 +236,7 @@ Each element in the `--condition-orders` JSON array supports:
 ]
 ```
 
-**Example — buy token A with 0.01 SOL, take-profit 50% at +100%, take-profit remaining 50% at +300%:**
+**Example — buy token A with 0.01 SOL, take-profit 50% at +100%, take-profit remaining 50% at +300%, stop-loss 100% at -65% (`hold_amount` mode):**
 
 ```bash
 gmgn-cli swap \
@@ -245,15 +245,15 @@ gmgn-cli swap \
   --input-token So11111111111111111111111111111111111111112 \
   --output-token <token_A_address> \
   --amount 10000000 \
-  --slippage 0.1 \
-  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"100"}]' \
+  --slippage 0.3 \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"35","sell_ratio":"100"}]' \
   --sell-ratio-type hold_amount
 ```
 
-> `price_scale` is relative to entry price: `"200"` = 2× (+100%), `"400"` = 4× (+300%).
-> `--sell-ratio-type hold_amount` ensures the second order sells 100% of whatever is held at trigger time (i.e. the remaining 50%).
+> `price_scale` is relative to entry: `"200"` = 2× (+100%), `"400"` = 4× (+300%), `"35"` = 35% of entry (-65%).
+> `hold_amount`: the second take-profit fires on whatever is held at trigger time (the remaining 50%). If you added to your position in between, those additional tokens will be included as well.
 
-Or use `buy_amount` to sell a fixed percentage of the originally bought amount at each trigger:
+**Same strategy using `buy_amount` mode — fixed percentage of the original bought amount at each trigger:**
 
 ```bash
 gmgn-cli swap \
@@ -262,12 +262,12 @@ gmgn-cli swap \
   --input-token So11111111111111111111111111111111111111112 \
   --output-token <token_A_address> \
   --amount 10000000 \
-  --slippage 0.1 \
-  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"50"}]' \
+  --slippage 0.3 \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"50"},{"order_type":"loss_stop","side":"sell","price_scale":"35","sell_ratio":"100"}]' \
   --sell-ratio-type buy_amount
 ```
 
-> `--sell-ratio-type buy_amount`: both orders each sell 50% of the original bought amount — first at +100%, second at +300%. Total sold = 100% of original position.
+> `buy_amount`: each take-profit sells 50% of the **original** bought amount. Stop-loss sells 100% of the original bought amount.
 
 ## `swap` Response Fields
 
