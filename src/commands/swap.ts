@@ -170,7 +170,7 @@ export function registerSwapCommands(program: Command): void {
 
   strategy
     .command("list")
-    .description("List strategy orders (normal auth)")
+    .description("List strategy orders (requires private key)")
     .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
     .option("--type <type>", "open (default) / history")
     .option("--from <address>", "Filter by wallet address")
@@ -188,7 +188,7 @@ export function registerSwapCommands(program: Command): void {
       if (opts.baseToken) extra["base_token"] = opts.baseToken;
       if (opts.pageToken) extra["page_token"] = opts.pageToken;
       if (opts.limit != null) extra["limit"] = opts.limit;
-      const client = new OpenApiClient(getConfig());
+      const client = new OpenApiClient(getConfig(true));
       const data = await client.getStrategyOrders(opts.chain, extra).catch(exitOnError);
       printResult(data, opts.raw);
     });

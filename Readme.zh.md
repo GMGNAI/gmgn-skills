@@ -557,7 +557,7 @@ gmgn-cli order strategy create \
   --amount-in-percent 100 \
   --slippage 0.01
 
-# 查看当前挂单
+# 查看当前挂单（需要私钥）
 gmgn-cli order strategy list --chain sol
 
 # 撤销策略单

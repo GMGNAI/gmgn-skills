@@ -49,7 +49,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. **Req
 | `order quote` | Get a swap quote (no transaction submitted) |
 | `order get` | Query order status |
 | `order strategy create` | Create a limit/strategy order (requires private key) |
-| `order strategy list` | List strategy orders (normal auth) |
+| `order strategy list` | List strategy orders (requires private key) |
 | `order strategy cancel` | Cancel a strategy order (requires private key) |
 
 ## Supported Chains
@@ -383,7 +383,7 @@ gmgn-cli order strategy cancel \
 - Swap uses **critical auth** (API Key + signature) — CLI handles signing automatically, no manual processing needed
 - After submitting a swap, use `order get` to poll for confirmation
 - `--amount` is in the **smallest unit** (e.g., lamports for SOL)
-- `order strategy create` and `order strategy cancel` use critical auth (require `GMGN_PRIVATE_KEY`); `order strategy list` uses normal auth
+- `order strategy create`, `order strategy list`, and `order strategy cancel` use critical auth (require `GMGN_PRIVATE_KEY`)
 - Use `--raw` to get single-line JSON for further processing
 
 ## Input Validation
