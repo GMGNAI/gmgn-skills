@@ -483,7 +483,6 @@ gmgn-cli order strategy create \
   --order-type <limit_order> \
   --sub-order-type <buy_low|buy_high|stop_loss|take_profit> \
   --check-price <price> \
-  [--open-price <price>] \
   [--amount-in <amount> | --amount-in-percent <pct>] \
   [--slippage <n> | --auto-slippage] \
   [--limit-price-mode <exact|slippage>] \
@@ -505,7 +504,6 @@ gmgn-cli order strategy create \
 | `--order-type` | Yes | Order type: `limit_order` |
 | `--sub-order-type` | Yes | Sub-order type: `buy_low` / `buy_high` / `stop_loss` / `take_profit` |
 | `--check-price` | Yes | Trigger check price |
-| `--open-price` | No | Open/entry price |
 | `--amount-in` | No* | Input amount (smallest unit); required unless `--amount-in-percent` is used |
 | `--amount-in-percent` | No* | Input as percentage (e.g. `50` = 50%); required unless `--amount-in` is used |
 | `--limit-price-mode` | No | `exact` / `slippage` (default: `slippage`) |

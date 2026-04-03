@@ -291,8 +291,7 @@ Convert `filled_input_amount` and `filled_output_amount` from smallest unit usin
 | `--base-token` | Yes | Base token contract address |
 | `--quote-token` | Yes | Quote token contract address |
 | `--side` | Yes | Direction: `buy` / `sell` |
-| `--open-price` | Yes | Open price; compared with `--check-price` to infer order type |
-| `--check-price` | Yes | Trigger check price; compared with `--open-price` to infer order type |
+| `--check-price` | Yes | Trigger check price |
 | `--amount-in` | No* | Input amount (smallest unit). Mutually exclusive with `--amount-in-percent` |
 | `--amount-in-percent` | No* | Input as percentage (e.g. `50` = 50%). Mutually exclusive with `--amount-in` |
 | `--limit-price-mode` | No | `exact` / `slippage` (default: `slippage`) |
@@ -305,14 +304,6 @@ Convert `filled_input_amount` and `filled_output_amount` from smallest unit usin
 | `--gas-price` | No | Gas price in wei (EVM chains) |
 | `--anti-mev` | No | Enable anti-MEV protection |
 
-Order direction is inferred automatically from `--side` and the comparison between `--open-price` and `--check-price`:
-
-| `--side` | open_price vs check_price | Inferred type |
-|----------|--------------------------|---------------|
-| `buy` | open_price > check_price | buy_low |
-| `buy` | open_price < check_price | buy_high |
-| `sell` | open_price > check_price | stop_loss |
-| `sell` | open_price < check_price | take_profit |
 
 **`order strategy create` Response Fields:**
 
@@ -352,26 +343,24 @@ Order direction is inferred automatically from `--side` and the comparison betwe
 ## `order strategy` Usage Examples
 
 ```bash
-# Create a take-profit order: sell when price rises above open price
+# Create a take-profit order: sell when price rises to target
 gmgn-cli order strategy create \
   --chain sol \
   --from <wallet_address> \
   --base-token <token_address> \
   --quote-token <sol_address> \
-  --side sell \
-  --open-price 0.001 \
+  --sub-order-type take_profit \
   --check-price 0.002 \
   --amount-in 1000000 \
   --slippage 0.01
 
-# Create a stop-loss order: sell when price drops below open price
+# Create a stop-loss order: sell when price drops to target
 gmgn-cli order strategy create \
   --chain sol \
   --from <wallet_address> \
   --base-token <token_address> \
   --quote-token <sol_address> \
-  --side sell \
-  --open-price 0.001 \
+  --sub-order-type stop_loss \
   --check-price 0.0005 \
   --amount-in-percent 100 \
   --slippage 0.01

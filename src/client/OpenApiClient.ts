@@ -104,7 +104,6 @@ export interface StrategyCreateParams {
   order_type: string;
   sub_order_type: string;
   check_price: string;
-  open_price?: string;
   amount_in?: string;
   amount_in_percent?: string;
   limit_price_mode?: string;
