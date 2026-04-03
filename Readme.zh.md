@@ -588,11 +588,12 @@ gmgn-cli swap \
   --output-token <token_A_address> \
   --amount 10000000 \
   --slippage 0.3 \
-  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"35","sell_ratio":"100"}]' \
+  --anti-mev \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"300","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"65","sell_ratio":"100"}]' \
   --sell-ratio-type hold_amount
 ```
 
-> `price_scale` 相对于入场价：`"200"` = 2×（涨 100%），`"400"` = 4×（涨 300%），`"35"` = 入场价的 35%（跌 65%）。
+> `price_scale` 止盈时为涨幅百分比（`"100"` = 涨 100% / 2×，`"300"` = 涨 300% / 4×）；止损时为跌幅百分比（`"65"` = 跌 65%，触发价为入场价的 35%）。
 > `hold_amount`：第二个止盈单触发时，按触发时持仓（剩余 50%）的 100% 卖出。如果中间有加仓，加仓的部分也会一同被卖掉。
 
 **`buy_amount` 模式** — 按原始买入量的固定百分比卖出：
@@ -606,7 +607,8 @@ gmgn-cli swap \
   --output-token <token_A_address> \
   --amount 10000000 \
   --slippage 0.3 \
-  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"50"},{"order_type":"loss_stop","side":"sell","price_scale":"35","sell_ratio":"100"}]' \
+  --anti-mev \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"300","sell_ratio":"50"},{"order_type":"loss_stop","side":"sell","price_scale":"65","sell_ratio":"100"}]' \
   --sell-ratio-type buy_amount
 ```
 
@@ -657,7 +659,7 @@ gmgn-cli cooking \
   --output-token <token_address> \
   --amount 1000000000 \
   --slippage 0.3 \
-  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
 ```
 
 ## 9. 支持的链

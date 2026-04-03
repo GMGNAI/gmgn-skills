@@ -24,7 +24,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. **Req
 
 - **Currency tokens** — Each chain has designated currency tokens (SOL, BNB, ETH, USDC). These are the base assets used to buy other tokens or receive swap proceeds. Their contract addresses are fixed — look them up in the Chain Currencies table, never guess them.
 
-- **Anti-MEV** — MEV (Miner/Maximal Extractable Value) refers to frontrunning and sandwich attacks where bots exploit pending transactions. `--anti-mev` routes the transaction through protected channels to reduce this risk. Enabled by default.
+- **Anti-MEV** — MEV (Miner/Maximal Extractable Value) refers to frontrunning and sandwich attacks where bots exploit pending transactions. `--anti-mev` routes the transaction through protected channels to reduce this risk. **Recommended: always enable.** Default: on.
 
 - **Critical auth** — `swap` requires both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY`. The private key never leaves the machine — the CLI uses it only for local signing and sends only the resulting signature. Normal commands (like `order quote`) use API Key alone.
 
@@ -36,7 +36,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. **Req
 
 **This skill executes REAL, IRREVERSIBLE blockchain transactions.**
 
-- Every `swap` command submits an on-chain transaction that moves real funds.
+- Every `swap` and `order strategy create` command submits an on-chain transaction that moves real funds.
 - Transactions cannot be undone once confirmed on-chain.
 - The AI agent must **never auto-execute a swap** — explicit user confirmation is required every time, without exception.
 - Only use this skill with funds you are willing to trade. Start with small amounts when testing.
@@ -87,6 +87,7 @@ All swap-related routes used by this skill go through GMGN's leaky-bucket limite
 When a request returns `429`:
 
 - Read `X-RateLimit-Reset` from the response headers. It is a Unix timestamp in seconds that marks when the limit is expected to reset.
+- If the response body contains `reset_at` (e.g., `{"code":429,"error":"RATE_LIMIT_BANNED","message":"...","reset_at":1775184222}`), extract `reset_at` — it is the Unix timestamp when the ban lifts (typically 5 minutes). Convert to local time and tell the user exactly when they can retry.
 - `swap` is a real transaction: never loop or auto-submit repeated swap attempts after a `429`. Wait until the reset time, then ask for confirmation again before retrying.
 - The CLI may wait and retry once automatically for short cooldowns on read-only commands such as `order quote` and `order get`. If it still fails, stop and tell the user the exact retry time instead of sending more requests.
 - For `RATE_LIMIT_EXCEEDED` or `RATE_LIMIT_BANNED`, repeated requests during the cooldown can extend the ban by 5 seconds each time, up to 5 minutes.
@@ -206,7 +207,7 @@ gmgn-cli order get --chain sol --order-id <order_id>
 | `--slippage <n>` | No | Slippage tolerance, e.g. `0.01` = 1%. **Mutually exclusive with `--auto-slippage`** — use one or the other. |
 | `--auto-slippage` | No | Enable automatic slippage. **Mutually exclusive with `--slippage`.** |
 | `--min-output <n>` | No | Minimum output amount |
-| `--anti-mev` | No | Enable anti-MEV protection (default true) |
+| `--anti-mev` | No | Enable anti-MEV protection — **recommended**; protects against frontrunning and sandwich attacks. Default: on |
 | `--priority-fee <sol>` | No | Priority fee in SOL (≥ 0.00001, SOL only) |
 | `--tip-fee <n>` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB) |
 | `--max-auto-fee <n>` | No | Max automatic fee cap |
@@ -224,19 +225,19 @@ Each element in the `--condition-orders` JSON array supports:
 |-------|----------|------|-------------|
 | `order_type` | Yes | string | Sub-order type. Supported: `profit_stop` (take-profit), `loss_stop` (stop-loss). Not yet supported: `profit_stop_trace`, `loss_stop_trace`, `follow_dev_sell`, `migrated_sell` |
 | `side` | Yes | string | Always `"sell"` |
-| `price_scale` | Yes | string | Price ratio relative to entry price, as a string percentage. e.g. `"200"` = 2× entry (take-profit), `"50"` = 50% of entry (stop-loss) |
+| `price_scale` | Yes | string | Gain/drop % from entry. For `profit_stop`: gain % (e.g., `"100"` = +100% / 2× entry, `"300"` = +300% / 4× entry). For `loss_stop`: drop % (e.g., `"65"` = drops 65%, triggers at 35% of entry). |
 | `sell_ratio` | Yes | string | Percentage of position to sell when triggered, e.g. `"100"` = 100% |
 
-**Example — attach take-profit at 2× and stop-loss at 50%:**
+**Example — attach take-profit at 2× (+100%) and stop-loss at -60%:**
 
 ```json
 [
-  {"order_type": "profit_stop", "side": "sell", "price_scale": "200", "sell_ratio": "100"},
-  {"order_type": "loss_stop",   "side": "sell", "price_scale": "50",  "sell_ratio": "100"}
+  {"order_type": "profit_stop", "side": "sell", "price_scale": "100", "sell_ratio": "100"},
+  {"order_type": "loss_stop",   "side": "sell", "price_scale": "60",  "sell_ratio": "100"}
 ]
 ```
 
-**Example — buy token A with 0.01 SOL, take-profit 50% at +100%, take-profit remaining 50% at +300%, stop-loss 100% at -65% (`hold_amount` mode):**
+**Example — buy token A with 0.01 SOL, take-profit 50% at +100%, take-profit remaining 50% at +300%, stop-loss 100% at -65% (trigger at 35% entry price)   (`hold_amount` mode):**
 
 ```bash
 gmgn-cli swap \
@@ -246,11 +247,12 @@ gmgn-cli swap \
   --output-token <token_A_address> \
   --amount 10000000 \
   --slippage 0.3 \
-  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"35","sell_ratio":"100"}]' \
+  --anti-mev \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"300","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"65","sell_ratio":"100"}]' \
   --sell-ratio-type hold_amount
 ```
 
-> `price_scale` is relative to entry: `"200"` = 2× (+100%), `"400"` = 4× (+300%), `"35"` = 35% of entry (-65%).
+> `price_scale` for `profit_stop`: gain % from entry (`"100"` = +100% / 2×, `"300"` = +300% / 4×). For `loss_stop`: drop % from entry (`"65"` = drops 65%, triggers at 35% of entry).
 > `hold_amount`: the second take-profit fires on whatever is held at trigger time (the remaining 50%). If you added to your position in between, those additional tokens will be included as well.
 
 **Same strategy using `buy_amount` mode — fixed percentage of the original bought amount at each trigger:**
@@ -263,7 +265,8 @@ gmgn-cli swap \
   --output-token <token_A_address> \
   --amount 10000000 \
   --slippage 0.3 \
-  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"200","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"400","sell_ratio":"50"},{"order_type":"loss_stop","side":"sell","price_scale":"35","sell_ratio":"100"}]' \
+  --anti-mev \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"50"},{"order_type":"profit_stop","side":"sell","price_scale":"300","sell_ratio":"50"},{"order_type":"loss_stop","side":"sell","price_scale":"65","sell_ratio":"100"}]' \
   --sell-ratio-type buy_amount
 ```
 
@@ -361,7 +364,7 @@ Convert `filled_input_amount` and `filled_output_amount` from smallest unit usin
 | `--anti-mev` | No | Enable anti-MEV protection |
 
 
-**`order strategy create` Response Fields:**
+### `order strategy create` Response Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -379,7 +382,7 @@ Convert `filled_input_amount` and `filled_output_amount` from smallest unit usin
 | `--page-token` | No | Pagination cursor from previous response |
 | `--limit` | No | Results per page (default 10 for history) |
 
-**`order strategy list` Response Fields:**
+### `order strategy list` Response Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
