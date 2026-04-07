@@ -66,6 +66,12 @@ When the user names a platform colloquially (e.g. "pump.fun", "four.meme", "Panc
 - `cooking create`: Both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY` must be configured in `~/.config/gmgn/.env`. The private key must correspond to the wallet bound to the API Key.
 - `gmgn-cli` installed globally — if missing, run: `npm install -g gmgn-cli`
 
+**IMPORTANT — Credential lookup order:** `gmgn-cli` loads `~/.config/gmgn/.env` first, then overlays any `.env` found in the **current working directory** (project-level overrides global). If credentials appear missing or wrong, check whether a `.env` in the workspace directory is shadowing the global config:
+```bash
+ls -la .env 2>/dev/null && echo "WARNING: local .env is overriding ~/.config/gmgn/.env"
+```
+If a local `.env` exists but lacks `GMGN_API_KEY` / `GMGN_PRIVATE_KEY`, either add them to that file or remove it so the global config is used.
+
 ## Rate Limit Handling
 
 All cooking routes go through GMGN's leaky-bucket limiter with `rate=10` and `capacity=10`. Sustained throughput is roughly `10 ÷ weight` requests/second.
@@ -270,13 +276,15 @@ Block explorer links:
 
 ## Guided Launch Flow
 
-When a user says they want to launch / create / deploy a token but has not provided all required information, do NOT ask for everything at once. Collect information in this order, one step at a time:
+When a user says they want to launch / create / deploy a token but has not provided all required information, collect information **one required field at a time** — never bundle multiple required fields into a single question. The user should be able to reply with a single value, not a labeled list.
+
+Ask each required field as a short, direct question. Wait for the answer before moving to the next. Optional fields are grouped into one question after all required fields are collected.
 
 ### Step 1 — Chain & Platform
 
-Ask: *"Which chain and platform do you want to launch on?"*
+Ask: *"Which chain and platform?"*
 
-Show the available options:
+Show the options concisely:
 
 | Chain | Platform | `--dex` |
 |-------|----------|---------|
@@ -294,39 +302,47 @@ Show the available options:
 | Base | Flaunch | `flaunch` |
 | Base | Virtuals | `virtuals_v2` |
 
-If the user is unsure, recommend: **Pump.fun (SOL)** or **FourMeme (BSC)** — the two most active launchpads.
+If the user is unsure, recommend: **Pump.fun (SOL)** or **FourMeme (BSC)**.
 
-### Step 2 — Token Identity
+### Step 2 — Token Name
 
-Ask for name, symbol, and description together:
+Ask: *"Token name?"*
 
-*"What is your token's name, ticker symbol, and a short description?"*
+Wait for the user's reply (e.g. `Doge Killer`).
 
-- Name: the full display name (e.g. `Doge Killer`)
-- Symbol: short uppercase ticker, typically 3–8 characters (e.g. `DOGEK`)
-- Description: optional but recommended — a one-line pitch shown on the launchpad
+### Step 3 — Token Symbol
 
-### Step 3 — Logo
+Ask: *"Ticker symbol?"*
 
-Ask: *"Do you have a logo image? You can share a file path (e.g. `/Users/you/logo.png`) or an image URL."*
+Wait for the user's reply (e.g. `DOGEK`). Typically 3–8 uppercase characters.
 
-- If the user provides a **file path**: silently run `base64 -i <path>` and pass the result to `--image`. Do not mention "base64" to the user.
-- If the user provides a **URL**: use `--image-url` directly.
-- If the user has no logo: note that most platforms accept a launch without one, but it significantly reduces visibility. Ask if they want to proceed without it.
+### Step 4 — Logo
 
-### Step 4 — Social Links (optional)
+Ask: *"Logo image? (file path or URL — skip to launch without one)"*
 
-Ask: *"Do you have a Twitter, Telegram, or website to attach to the token? You can skip this."*
-
-Collect any combination of `--twitter`, `--telegram`, `--website`. If the user skips, proceed to the next step.
+- **File path** → silently run `base64 -i <path>` and pass the result to `--image`. Do not mention "base64" to the user.
+- **URL** → use `--image-url` directly.
+- **Skip / none** → proceed without a logo. Note that most platforms accept this, but it reduces visibility.
 
 ### Step 5 — Initial Buy Amount
 
-Ask: *"How much {SOL / BNB / ETH} do you want to spend on the initial buy?"*
+Ask: *"How much {SOL / BNB / ETH} for the initial buy?"*
 
-Pass the user's answer directly to `--buy-amt` — this is already in full token units (e.g. `0.01` = 0.01 SOL), do NOT convert to lamports or wei.
+Pass the user's answer directly to `--buy-amt` — already in full token units (e.g. `0.01` = 0.01 SOL). Do NOT convert to lamports or wei.
 
-### Step 6 — Confirmation & Execute
+### Step 6 — Optional Details (single question)
+
+Ask all optional fields together in one message:
+
+*"Any optional extras? (skip any you don't need)"*
+- *Description* — one-line pitch shown on the launchpad
+- *Twitter* — Twitter / X URL
+- *Telegram* — Telegram group URL
+- *Website* — project website URL
+
+The user can reply with just the ones they have, or say "skip" / "none" to proceed.
+
+### Step 7 — Confirmation & Execute
 
 Once all information is collected, present the pre-create confirmation summary (see Output Format section) and wait for the user to reply "confirm" before executing.
 
