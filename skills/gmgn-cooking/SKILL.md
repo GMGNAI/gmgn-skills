@@ -167,7 +167,7 @@ Token creation is **asynchronous**. If the initial `cooking create` response sho
    ```bash
    gmgn-cli order get --chain <chain> --order-id <order_id>
    ```
-2. The new token's contract / mint address is in the **`output_token`** field of the `order get` response — it is NOT returned by `cooking create` directly.
+2. The new token's contract / mint address is in the **`report.output_token`** field of the `order get` response (only present when `state = 30` and `status = "successful"`) — it is NOT returned by `cooking create` directly.
 3. Stop polling once `status` is `confirmed`, `failed`, or `expired`.
 4. On `confirmed`: display `output_token` as the token address and include the block explorer link.
 5. On `failed` / `expired`: report the `error_status` and do not retry automatically.
