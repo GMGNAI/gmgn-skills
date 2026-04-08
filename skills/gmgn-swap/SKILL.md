@@ -223,10 +223,11 @@ Each element in the `--condition-orders` JSON array supports:
 
 | Field | Required | Type | Description |
 |-------|----------|------|-------------|
-| `order_type` | Yes | string | Sub-order type. Supported: `profit_stop` (take-profit), `loss_stop` (stop-loss). Not yet supported: `profit_stop_trace`, `loss_stop_trace`, `follow_dev_sell`, `migrated_sell` |
+| `order_type` | Yes | string | Sub-order type: `profit_stop` (fixed take-profit), `loss_stop` (fixed stop-loss), `profit_stop_trace` (trailing take-profit), `loss_stop_trace` (trailing stop-loss) |
 | `side` | Yes | string | Always `"sell"` |
-| `price_scale` | Yes | string | Gain/drop % from entry. For `profit_stop`: gain % (e.g., `"100"` = +100% / 2× entry, `"300"` = +300% / 4× entry). For `loss_stop`: drop % (e.g., `"65"` = drops 65%, triggers at 35% of entry). |
+| `price_scale` | Conditional | string | Gain/drop % from entry. Required for `profit_stop` / `loss_stop` / `profit_stop_trace`; optional for `loss_stop_trace`. For `profit_stop` / `profit_stop_trace`: gain % (e.g. `"100"` = +100% / 2× entry). For `loss_stop` / `loss_stop_trace`: drop % (e.g. `"65"` = drops 65%, triggers at 35% of entry). |
 | `sell_ratio` | Yes | string | Percentage of position to sell when triggered, e.g. `"100"` = 100% |
+| `drawdown_rate` | Conditional | string | Required for `profit_stop_trace` and `loss_stop_trace`. Trailing callback %: after price peaks, how far it must fall before the order fires. E.g. `"50"` = 50% drawdown from peak. |
 
 **Example — attach take-profit at 2× (+100%) and stop-loss at -60%:**
 
@@ -349,7 +350,8 @@ Convert `filled_input_amount` and `filled_output_amount` from smallest unit usin
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--base-token` | Yes | Base token contract address |
 | `--quote-token` | Yes | Quote token contract address |
-| `--side` | Yes | Direction: `buy` / `sell` |
+| `--order-type` | Yes | Order type: `limit_order` |
+| `--sub-order-type` | Yes | Sub-order type: `buy_low` / `buy_high` / `stop_loss` / `take_profit` |
 | `--check-price` | Yes | Trigger check price |
 | `--amount-in` | No* | Input amount (smallest unit). Mutually exclusive with `--amount-in-percent` |
 | `--amount-in-percent` | No* | Input as percentage (e.g. `50` = 50%). Mutually exclusive with `--amount-in` |
@@ -360,7 +362,7 @@ Convert `filled_input_amount` and `filled_output_amount` from smallest unit usin
 | `--auto-slippage` | No | Enable automatic slippage |
 | `--priority-fee` | No | Priority fee in SOL (SOL only) |
 | `--tip-fee` | No | Tip fee |
-| `--gas-price` | No | Gas price in wei (EVM chains) |
+| `--gas-price` | No | Gas price in gwei (BSC ≥ 0.05 gwei / BASE/ETH ≥ 0.01 gwei) |
 | `--anti-mev` | No | Enable anti-MEV protection |
 
 
@@ -378,6 +380,7 @@ Convert `filled_input_amount` and `filled_output_amount` from smallest unit usin
 | `--chain` | Yes | `sol` / `bsc` / `base` |
 | `--type` | No | `open` (default) / `history` |
 | `--from` | No | Filter by wallet address |
+| `--group-tag` | No | Filter by group: `LimitOrder` / `STMix` |
 | `--base-token` | No | Filter by token address |
 | `--page-token` | No | Pagination cursor from previous response |
 | `--limit` | No | Results per page (default 10 for history) |
@@ -397,6 +400,7 @@ Convert `filled_input_amount` and `filled_output_amount` from smallest unit usin
 | `--chain` | Yes | `sol` / `bsc` / `base` |
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--order-id` | Yes | Order ID to cancel |
+| `--order-type` | No | Order type: `limit_order` / `smart_trade` |
 | `--close-sell-model` | No | Sell model when closing the order |
 
 ## `order strategy` Usage Examples
@@ -408,6 +412,7 @@ gmgn-cli order strategy create \
   --from <wallet_address> \
   --base-token <token_address> \
   --quote-token <sol_address> \
+  --order-type limit_order \
   --sub-order-type take_profit \
   --check-price 0.002 \
   --amount-in 1000000 \
@@ -419,6 +424,7 @@ gmgn-cli order strategy create \
   --from <wallet_address> \
   --base-token <token_address> \
   --quote-token <sol_address> \
+  --order-type limit_order \
   --sub-order-type stop_loss \
   --check-price 0.0005 \
   --amount-in-percent 100 \
