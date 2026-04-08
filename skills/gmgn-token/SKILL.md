@@ -237,6 +237,7 @@ The response has five nested objects: `pool`, `dev`, `link`, `stat`, `wallet_tag
 | `stat.bot_degen_count` | Number of bot degen wallets |
 | `stat.bot_degen_rate` | Ratio of bot degen wallets |
 | `stat.fresh_wallet_rate` | Ratio of fresh/new wallets among holders |
+| `stat.private_vault_hold_rate` | Ratio held by private vault (vanish) addresses — displayed as "vanish" in GMGN UI (0–1) |
 
 **`wallet_tags_stat` Object** — Wallet type breakdown
 
