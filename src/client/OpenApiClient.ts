@@ -3,7 +3,7 @@
  *
  * Auth modes:
  *   Normal (market/token/portfolio): X-APIKEY + timestamp + client_id
- *   Critical (swap/order): normal auth + X-Signature (private key signature)
+ *   Critical (swap, order get/strategy, BSC order quote): normal auth + X-Signature (private key signature)
  */
 
 import { buildAuthQuery, buildMessage, detectAlgorithm, sign } from "./signer.js";
@@ -293,9 +293,11 @@ export class OpenApiClient {
     input_amount: string,
     slippage: number
   ): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/trade/quote", {
-      chain, from_address, input_token, output_token, input_amount, slippage,
-    });
+    const query = { chain, from_address, input_token, output_token, input_amount, slippage };
+    if (chain === "bsc") {
+      return this.criticalRequest("GET", "/v1/trade/quote", query, null);
+    }
+    return this.normalRequest("GET", "/v1/trade/quote", query);
   }
 
   // ---- Swap endpoints (critical auth) ----
@@ -367,7 +369,7 @@ export class OpenApiClient {
     body: unknown
   ): Promise<unknown> {
     if (!this.privateKeyPem) {
-      throw new Error("GMGN_PRIVATE_KEY is required for swap/order commands");
+      throw new Error("GMGN_PRIVATE_KEY is required for critical-auth commands (swap, order get/strategy, and order quote on BSC)");
     }
 
     return this.executePreparedRequest(() => {

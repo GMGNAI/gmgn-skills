@@ -14,11 +14,13 @@ export interface Config {
 }
 
 let _config: Config | null = null;
+const PRIVATE_KEY_REQUIRED_MSG =
+  "GMGN_PRIVATE_KEY is required for critical-auth commands (swap, order get/strategy, and order quote on BSC)";
 
 export function getConfig(requirePrivateKey = false): Config {
   if (_config) {
     if (requirePrivateKey && !_config.privateKeyPem) {
-      die("GMGN_PRIVATE_KEY is required for swap/order commands");
+      die(PRIVATE_KEY_REQUIRED_MSG);
     }
     return _config;
   }
@@ -34,7 +36,7 @@ export function getConfig(requirePrivateKey = false): Config {
     // Support escaped newlines (e.g. from single-line .env values)
     privateKeyPem = privateKey.replace(/\\n/g, "\n");
   } else if (requirePrivateKey) {
-    die("GMGN_PRIVATE_KEY is required for swap/order commands");
+    die(PRIVATE_KEY_REQUIRED_MSG);
   }
 
   const host = process.env.GMGN_HOST ?? "https://openapi.gmgn.ai";
