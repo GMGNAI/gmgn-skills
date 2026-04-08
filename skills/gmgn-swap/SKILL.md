@@ -380,7 +380,7 @@ Convert `filled_input_amount` and `filled_output_amount` from smallest unit usin
 | `--chain` | Yes | `sol` / `bsc` / `base` |
 | `--type` | No | `open` (default) / `history` |
 | `--from` | No | Filter by wallet address |
-| `--group-tag` | No | Filter by group: `LimitOrder` / `STMix` |
+| `--group-tag` | No | Filter by order group: `LimitOrder` (limit orders only) / `STMix` (mixed strategy orders: take-profit, stop-loss, trailing take-profit, trailing stop-loss) |
 | `--base-token` | No | Filter by token address |
 | `--page-token` | No | Pagination cursor from previous response |
 | `--limit` | No | Results per page (default 10 for history) |
@@ -400,7 +400,7 @@ Convert `filled_input_amount` and `filled_output_amount` from smallest unit usin
 | `--chain` | Yes | `sol` / `bsc` / `base` |
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--order-id` | Yes | Order ID to cancel |
-| `--order-type` | No | Order type: `limit_order` / `smart_trade` |
+| `--order-type` | No | Order type: `limit_order` (limit order) / `smart_trade` (mixed strategy order: take-profit, stop-loss, trailing take-profit, trailing stop-loss) |
 | `--close-sell-model` | No | Sell model when closing the order |
 
 ## `order strategy` Usage Examples
