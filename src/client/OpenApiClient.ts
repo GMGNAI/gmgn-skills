@@ -90,10 +90,11 @@ export interface SwapParams {
 }
 
 export interface StrategyConditionOrder {
-  order_type: string;   // "profit_stop" | "loss_stop"
+  order_type: string;   // "profit_stop" | "loss_stop" | "profit_stop_trace" | "loss_stop_trace"
   side: string;         // "sell"
-  price_scale: string;
+  price_scale?: string;
   sell_ratio: string;
+  drawdown_rate?: string;
 }
 
 export interface StrategyCreateParams {
@@ -104,6 +105,7 @@ export interface StrategyCreateParams {
   order_type: string;
   sub_order_type: string;
   check_price: string;
+  open_price?: string;
   amount_in?: string;
   amount_in_percent?: string;
   limit_price_mode?: string;

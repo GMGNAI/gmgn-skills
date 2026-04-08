@@ -24,7 +24,7 @@ export function registerSwapCommands(program: Command): void {
     .option("--gas-price <gwei>", "Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01)")
     .option("--max-fee-per-gas <amount>", "EIP-1559 max fee per gas (Base)")
     .option("--max-priority-fee-per-gas <amount>", "EIP-1559 max priority fee per gas (Base)")
-    .option("--condition-orders <json>", 'JSON array of take-profit/stop-loss conditions, e.g. \'[{"order_type":"profit_stop","side":"sell","price_scale":"150","sell_ratio":"100"}]\'')
+    .option("--condition-orders <json>", 'JSON array of take-profit/stop-loss conditions, e.g. \'[{"order_type":"profit_stop","side":"sell","price_scale":"150","sell_ratio":"100"}]\'; trace types: \'[{"order_type":"profit_stop_trace","side":"sell","price_scale":"150","sell_ratio":"100","drawdown_rate":"50"}]\'')
     .option("--sell-ratio-type <type>", "Sell ratio base: buy_amount (default) / hold_amount; only used with --condition-orders")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
