@@ -142,7 +142,7 @@ Recommended combinations for common use cases:
 
 ### `token info` — Key Fields
 
-The response has four nested objects: `pool`, `link`, `stat`, `wallet_tags_stat`. Access fields with dot notation when parsing (e.g. `link.website`, `stat.top_10_holder_rate`).
+The response has five nested objects: `pool`, `dev`, `link`, `stat`, `wallet_tags_stat`. Access fields with dot notation when parsing (e.g. `link.website`, `stat.top_10_holder_rate`, `dev.creator_address`).
 
 **Top-level Fields**
 
@@ -178,6 +178,31 @@ The response has four nested objects: `pool`, `link`, `stat`, `wallet_tags_stat`
 | `pool.quote_reserve_value` | Quote reserve USD value |
 | `pool.fee_ratio` | Pool trading fee ratio (e.g. `0.1` = 0.1%) |
 | `pool.creation_timestamp` | Pool creation time (Unix seconds) |
+
+**`dev` Object** — Token creator / developer info
+
+| Field | Description |
+|-------|-------------|
+| `dev.creator_address` | Creator wallet address |
+| `dev.creator_token_balance` | Creator's current token balance |
+| `dev.creator_token_status` | Creator holding status: `hold` (still holding) / `sell` (sold/exited) |
+| `dev.top_10_holder_rate` | Ratio of supply held by top 10 wallets (0–1) |
+| `dev.twitter_name_change_history` | Array of past Twitter username changes (each entry has `twitter_username`, `rename_timestamp`) |
+| `dev.dexscr_ad` | Creator bought a DEXScreener ad: `1` = yes, `0` = no |
+| `dev.dexscr_update_link` | Creator updated DEXScreener socials/links: `1` = yes, `0` = no |
+| `dev.dexscr_boost_fee` | Creator used DEXScreener Boost: `1` = yes, `0` = no |
+| `dev.dexscr_trending_bar` | Token appeared in DEXScreener trending bar: `1` = yes, `0` = no |
+| `dev.dexscr_ad_ts` | Timestamp of DEXScreener ad purchase (Unix seconds) |
+| `dev.dexscr_update_link_ts` | Timestamp of DEXScreener link update (Unix seconds) |
+| `dev.dexscr_boost_ts` | Timestamp of DEXScreener Boost (Unix seconds) |
+| `dev.dexscr_trending_bar_ts` | Timestamp of DEXScreener trending bar appearance (Unix seconds) |
+| `dev.cto_flag` | Token has been Community Takeover'd (original dev abandoned): `1` = yes, `0` = no |
+| `dev.fund_from` | Address that funded the creator wallet |
+| `dev.fund_from_ts` | Timestamp of that funding event (Unix seconds) |
+| `dev.creator_open_count` | Number of tokens this creator has previously launched |
+| `dev.twitter_del_post_token_count` | Number of posts the creator deleted from Twitter |
+| `dev.twitter_create_token_count` | Number of tokens the creator has promoted on Twitter |
+| `dev.offchain` | Whether the token is an offchain token |
 
 **`link` Object** — Social and explorer links
 
