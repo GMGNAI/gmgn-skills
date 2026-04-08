@@ -164,7 +164,7 @@ echo 'GMGN_API_KEY=<user_api_key>' > ~/.config/gmgn/.env
 chmod 600 ~/.config/gmgn/.env
 ```
 
-如果用户需要 swap 能力或 BSC 链上的 `order quote`，追加私钥：
+如果用户需要 swap 或 order 能力，追加私钥：
 
 ```bash
 # 追加私钥（使用第 3 步输出的 PEM 内容）
@@ -571,7 +571,7 @@ gmgn-cli order quote \
   --amount 1000000 \
   --slippage 0.01
 
-# BSC 报价走关键鉴权，需要 GMGN_PRIVATE_KEY
+# 所有链上的 quote 都走关键鉴权，需要 GMGN_PRIVATE_KEY
 gmgn-cli order quote \
   --chain bsc \
   --from <wallet-address> \
@@ -584,7 +584,7 @@ gmgn-cli order quote \
 gmgn-cli order get --chain sol --order-id <order-id>
 ```
 
-> `order quote` 在 `sol` / `base` 上仍只需要 API Key；在 `bsc` 上改为关键鉴权，必须配置 `GMGN_PRIVATE_KEY`。
+> `order quote` 在 `sol` / `bsc` / `base` 上都走关键鉴权，必须配置 `GMGN_PRIVATE_KEY`。
 
 ### 带止盈止损的 Swap（需要私钥）
 

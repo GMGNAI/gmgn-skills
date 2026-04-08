@@ -158,7 +158,7 @@ echo 'GMGN_API_KEY=<user_api_key>' > ~/.config/gmgn/.env
 chmod 600 ~/.config/gmgn/.env
 ```
 
-If the user also needs swap capability or BSC order quotes, append the private key:
+If the user also needs swap or order capability, append the private key:
 
 ```bash
 # Append private key (use the PEM content from Step 3)
@@ -539,7 +539,7 @@ gmgn-cli order quote \
   --amount 1000000 \
   --slippage 0.01
 
-# BSC quotes use critical auth and require GMGN_PRIVATE_KEY
+# Quotes use critical auth and require GMGN_PRIVATE_KEY on every chain
 gmgn-cli order quote \
   --chain bsc \
   --from <wallet-address> \
@@ -552,7 +552,7 @@ gmgn-cli order quote \
 gmgn-cli order get --chain sol --order-id <order-id>
 ```
 
-> `order quote` uses API Key only on `sol` / `base`. On `bsc`, the same route uses critical auth and requires `GMGN_PRIVATE_KEY`.
+> `order quote` uses critical auth on `sol` / `bsc` / `base` and requires `GMGN_PRIVATE_KEY`.
 
 ### Swap with Take-Profit / Stop-Loss Orders (requires private key)
 
