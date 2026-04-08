@@ -212,6 +212,28 @@ The response is an object (or array for batch). Key fields:
 | `sell_count` | Number of sell transactions |
 | `pnl` | Profit/loss ratio = `realized_profit / total_cost` |
 
+The response also includes a `common` object when available (absent if the upstream identity service is unavailable):
+
+| Field | Description |
+|-------|-------------|
+| `common.avatar` | Wallet avatar URL |
+| `common.name` | Display name |
+| `common.ens` | ENS domain (EVM chains only) |
+| `common.tag` | Primary wallet tag |
+| `common.tags` | All wallet tags (e.g. `["smart_money"]`) |
+| `common.twitter_username` | Twitter handle |
+| `common.twitter_name` | Twitter display name |
+| `common.followers_count` | Twitter follower count |
+| `common.is_blue_verified` | Twitter blue-verified badge |
+| `common.follow_count` | Number of GMGN users following this wallet |
+| `common.remark_count` | Number of GMGN users who have remarked this wallet |
+| `common.created_token_count` | Tokens created by this wallet |
+| `common.fund_from` | Funding source label |
+| `common.fund_from_address` | Address that funded this wallet |
+| `common.fund_amount` | Funding amount |
+
+Use `common.tags` and `common.twitter_username` when building a wallet profile narrative. If `common` is absent in the response, omit identity fields silently — do not report it as an error.
+
 **Do NOT guess field names not listed here.** If a field appears in the response but is not in this table, do not interpret it without reading the raw output first.
 
 ## Output Format
@@ -251,9 +273,10 @@ Win Rate:        {winrate × 100}%
 Total Spent:     ${total_cost}
 Buys / Sells:    {buy_count} / {sell_count}
 PnL Ratio:       {pnl}x
+[Identity:       {common.name or common.twitter_username} | Tags: {common.tags}]
 ```
 
-For batch queries (multiple wallets), present one summary block per wallet.
+Show the `[Identity: ...]` line only if `common` is present in the response. For batch queries (multiple wallets), present one summary block per wallet.
 
 ## Notes
 
