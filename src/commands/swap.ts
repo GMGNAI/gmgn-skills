@@ -75,8 +75,8 @@ export function registerSwapCommands(program: Command): void {
 
   order
     .command("quote")
-    .description("Get a swap quote without submitting a transaction")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .description("Get a swap quote without submitting a transaction (requires critical auth)")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base (requires GMGN_PRIVATE_KEY)")
     .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
     .requiredOption("--input-token <address>", "Input token contract address")
     .requiredOption("--output-token <address>", "Output token contract address")
@@ -89,7 +89,7 @@ export function registerSwapCommands(program: Command): void {
       validateAddress(opts.inputToken, opts.chain, "--input-token");
       validateAddress(opts.outputToken, opts.chain, "--output-token");
       validatePositiveInt(opts.amount, "--amount");
-      const client = new OpenApiClient(getConfig());
+      const client = new OpenApiClient(getConfig(true));
       const data = await client
         .quoteOrder(opts.chain, opts.from, opts.inputToken, opts.outputToken, opts.amount, opts.slippage)
         .catch(exitOnError);

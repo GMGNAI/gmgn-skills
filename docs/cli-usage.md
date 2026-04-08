@@ -344,7 +344,7 @@ npx gmgn-cli portfolio smartmoney [--limit <n>] [--raw]
 
 ## order quote
 
-Get a swap quote without submitting a transaction. Uses normal auth — no private key required.
+Get a swap quote without submitting a transaction. All supported quote chains use critical auth and require `GMGN_PRIVATE_KEY`.
 
 ```bash
 npx gmgn-cli order quote \
@@ -359,7 +359,7 @@ npx gmgn-cli order quote \
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` (all require `GMGN_PRIVATE_KEY` for quote) |
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--input-token` | Yes | Input token contract address |
 | `--output-token` | Yes | Output token contract address |

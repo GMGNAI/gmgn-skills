@@ -12,7 +12,7 @@ metadata:
 
 **⚠️ IPv6 NOT SUPPORTED: If you get a `401` or `403` error and credentials look correct, check for IPv6 immediately: (1) list all network interfaces and their IPv6 addresses — run `ifconfig | grep inet6` (macOS) or `ip addr show | grep inet6` (Linux); (2) send a test request to `https://ipv6.icanhazip.com` — if the response is an IPv6 address, outbound traffic is going via IPv6. Tell the user immediately: "Please disable IPv6 on your network interface — gmgn-cli commands only work over IPv4."**
 
-Use the `gmgn-cli` tool to submit a token swap or query an existing order. **Requires private key** (`GMGN_PRIVATE_KEY` in `.env`).
+Use the `gmgn-cli` tool to submit a token swap or query an existing order. `GMGN_API_KEY` is always required. `GMGN_PRIVATE_KEY` is required for critical-auth commands such as `swap` and all `order` subcommands, including `order quote`.
 
 ## Core Concepts
 
@@ -26,7 +26,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. **Req
 
 - **Anti-MEV** — MEV (Miner/Maximal Extractable Value) refers to frontrunning and sandwich attacks where bots exploit pending transactions. `--anti-mev` routes the transaction through protected channels to reduce this risk. **Recommended: always enable.** Default: on.
 
-- **Critical auth** — `swap` requires both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY`. The private key never leaves the machine — the CLI uses it only for local signing and sends only the resulting signature. Normal commands (like `order quote`) use API Key alone.
+- **Critical auth** — `swap` and all `order` subcommands require both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY`. The private key never leaves the machine — the CLI uses it only for local signing and sends only the resulting signature.
 
 - **`order_id` / `status`** — After submitting a swap, the response includes an `order_id`. Use `order get --order-id` to poll for final status. Possible values: `pending` → `processed` → `confirmed` (success) or `failed` / `expired`. Do not report success until status is `confirmed`.
 
@@ -46,7 +46,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. **Req
 | Sub-command | Description |
 |-------------|-------------|
 | `swap` | Submit a token swap |
-| `order quote` | Get a swap quote (no transaction submitted) |
+| `order quote` | Get a swap quote (no transaction submitted; requires critical auth) |
 | `order get` | Query order status |
 | `order strategy create` | Create a limit/strategy order (requires private key) |
 | `order strategy list` | List strategy orders (requires private key) |
@@ -70,7 +70,7 @@ Currency tokens are the base/native assets of each chain. They are used to buy o
 
 ## Prerequisites
 
-Both `GMGN_API_KEY` and `GMGN_PRIVATE_KEY` must be configured in `~/.config/gmgn/.env`. The private key must correspond to the wallet bound to the API Key.
+`GMGN_API_KEY` must be configured in `~/.config/gmgn/.env`. `GMGN_PRIVATE_KEY` is additionally required for `swap` and all `order` subcommands. The private key must correspond to the wallet bound to the API Key.
 
 - `gmgn-cli` installed globally — if missing, run: `npm install -g gmgn-cli`
 
@@ -165,7 +165,7 @@ gmgn-cli swap \
 
 ## `order quote` Usage
 
-Get an estimated output amount before submitting a swap. Uses normal auth — no private key required.
+Get an estimated output amount before submitting a swap. All supported quote chains use critical auth and require `GMGN_PRIVATE_KEY`.
 
 ```bash
 gmgn-cli order quote \
@@ -292,7 +292,7 @@ gmgn-cli swap \
 
 ### Pre-swap Confirmation
 
-Before displaying the confirmation, run `order quote` to get the estimated output (uses normal auth — no private key required):
+Before displaying the confirmation, run `order quote` to get the estimated output (requires critical auth and `GMGN_PRIVATE_KEY` on every supported quote chain):
 
 ```bash
 gmgn-cli order quote \

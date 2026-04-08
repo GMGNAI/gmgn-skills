@@ -164,7 +164,7 @@ echo 'GMGN_API_KEY=<user_api_key>' > ~/.config/gmgn/.env
 chmod 600 ~/.config/gmgn/.env
 ```
 
-如果用户需要 swap 能力，追加私钥：
+如果用户需要 swap 或 order 能力，追加私钥：
 
 ```bash
 # 追加私钥（使用第 3 步输出的 PEM 内容）
@@ -532,7 +532,7 @@ gmgn-cli track smartmoney --limit 100 --raw
 gmgn-cli track smartmoney --chain sol --side sell --limit 50 --raw
 ```
 
-### Swap（需要私钥）
+### Swap / Quote / Query
 
 ```bash
 # 提交兑换（固定滑点）
@@ -571,9 +571,20 @@ gmgn-cli order quote \
   --amount 1000000 \
   --slippage 0.01
 
+# 所有链上的 quote 都走关键鉴权，需要 GMGN_PRIVATE_KEY
+gmgn-cli order quote \
+  --chain bsc \
+  --from <wallet-address> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --amount 1000000000000000000 \
+  --slippage 0.01
+
 # 查询订单状态
 gmgn-cli order get --chain sol --order-id <order-id>
 ```
+
+> `order quote` 在 `sol` / `bsc` / `base` 上都走关键鉴权，必须配置 `GMGN_PRIVATE_KEY`。
 
 ### 带止盈止损的 Swap（需要私钥）
 
