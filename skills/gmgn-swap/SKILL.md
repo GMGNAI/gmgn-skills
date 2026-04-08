@@ -30,7 +30,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. `GMGN
 
 - **`order_id` / `status`** — After submitting a swap, the response includes an `order_id`. Use `order get --order-id` to poll for final status. Possible values: `pending` → `processed` → `confirmed` (success) or `failed` / `expired`. Do not report success until status is `confirmed`.
 
-- **`filled_input_amount` / `filled_output_amount`** — Actual amounts consumed/received, in smallest unit. Convert to human-readable using token decimals before displaying to the user.
+- **`report.input_amount` / `report.output_amount`** — Actual amounts consumed/received, in smallest unit. Only present when `state = 30` and `status = "successful"`. Convert to human-readable using `report.input_token_decimals` / `report.output_token_decimals` before displaying to the user.
 
 ## Financial Risk Notice
 
@@ -273,20 +273,41 @@ gmgn-cli swap \
 
 > `buy_amount`: each take-profit sells 50% of the **original** bought amount. Stop-loss sells 100% of the original bought amount.
 
-## `swap` Response Fields
+## `swap` / `order get` Response Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `order_id` | string | Order ID for follow-up queries |
-| `hash` | string | Transaction hash |
-| `status` | string | Order status: `pending` / `processed` / `confirmed` / `failed` / `expired` |
-| `error_code` | string | Error code on failure |
-| `error_status` | string | Error description on failure |
-| `input_token` | string | Input token contract address |
-| `output_token` | string | Output token contract address |
-| `filled_input_amount` | string | Actual input consumed (smallest unit); empty if not filled |
-| `filled_output_amount` | string | Actual output received (smallest unit); empty if not filled |
+| Field               | Type   | Description |
+| ------------------- | ------ | ---- |
+| `order_id`          | string | Order ID for follow-up queries |
+| `hash`              | string | Transaction hash |
+| `status`            | string | Order status: `pending` / `processed` / `confirmed` / `failed` / `expired` |
+| `error_code`        | string | Error code on failure |
+| `error_status`      | string | Error description on failure |
 | `strategy_order_id` | string | Strategy order ID; only present when `--condition-orders` was passed and strategy creation succeeded (best-effort) |
+| `report`            | object | Execution report; only present when `state = 30` and `status = "successful"`. See Report Fields below. |
+
+### Report Fields (present only when `status = "successful"`)
+
+| Field                   | Type    | Description |
+| ----------------------- | ------- | ---- |
+| `input_token`           | string  | Input token contract address |
+| `input_token_decimals`  | integer | Input token decimal places |
+| `swap_mode`             | string  | Swap mode: `ExactIn` / `ExactOut` |
+| `input_amount`          | string  | Actual input consumed (smallest unit) |
+| `output_token`          | string  | Output token contract address |
+| `output_token_decimals` | integer | Output token decimal places |
+| `output_amount`         | string  | Actual output received (smallest unit) |
+| `quote_token`           | string  | Quote token contract address |
+| `quote_decimals`        | integer | Quote token decimal places |
+| `quote_amount`          | string  | Quote amount (smallest unit) |
+| `base_token`            | string  | Base token contract address |
+| `base_decimals`         | integer | Base token decimal places |
+| `base_amount`           | string  | Base token amount (smallest unit) |
+| `price`                 | string  | Execution price (quote/base token) |
+| `price_usd`             | string  | Execution price in USD |
+| `height`                | integer | Block height of execution |
+| `order_height`          | integer | Block height when order was placed |
+| `gas_native`            | string  | Gas fee in native token |
+| `gas_usd`               | string  | Gas fee in USD |
 
 ## Output Format
 
@@ -334,13 +355,13 @@ After a confirmed swap, display:
 ```
 ✅ Swap Confirmed
 
-Spent:    {filled_input_amount in human units} {input symbol}
-Received: {filled_output_amount in human units} {output symbol}
+Spent:    {report.input_amount in human units} {input symbol}
+Received: {report.output_amount in human units} {output symbol}
 Tx:       {explorer link for hash}
 Order ID: {order_id}
 ```
 
-Convert `filled_input_amount` and `filled_output_amount` from smallest unit using token decimals before displaying.
+Convert `report.input_amount` and `report.output_amount` from smallest unit using `report.input_token_decimals` and `report.output_token_decimals` before displaying.
 
 ## `order strategy create` Parameters
 
@@ -502,7 +523,7 @@ For full token research before swapping, see [`docs/workflow-token-research.md`]
 - **Percentage sell restriction** — `--percent` is ONLY valid when `input_token` is NOT a currency. Do NOT use `--percent` when `input_token` is SOL/BNB/ETH (native) or USDC. This includes: "sell 50% of my SOL", "use 30% of my BNB to buy X", "spend 50% of my USDC on X" — all unsupported. Explain the restriction to the user and ask for an explicit absolute amount instead.
 - **Chain-wallet compatibility** — SOL addresses are incompatible with EVM chains (bsc/base). Warn the user and abort if the address format does not match the chain.
 - **Credential sensitivity** — `GMGN_API_KEY` and `GMGN_PRIVATE_KEY` can directly execute trades on the linked wallet. Never log, display, or expose these values.
-- **Order polling** — After a swap, if `status` is not yet `confirmed` / `failed` / `expired`, poll with `order get` up to 3 times at 5-second intervals before reporting a timeout. Once confirmed, display the trade result using `filled_input_amount` and `filled_output_amount` (convert from smallest unit using token decimals), e.g. "Spent 0.1 SOL → received 98.5 USDC" or "Sold 1000 TOKEN → received 0.08 SOL".
+- **Order polling** — After a swap, if `status` is not yet `confirmed` / `failed` / `expired`, poll with `order get` up to 3 times at 5-second intervals before reporting a timeout. Once confirmed, display the trade result using `report.input_amount` and `report.output_amount` (convert from smallest unit using `report.input_token_decimals` / `report.output_token_decimals`), e.g. "Spent 0.1 SOL → received 98.5 USDC" or "Sold 1000 TOKEN → received 0.08 SOL".
 - **Block explorer links** — After a successful swap, display a clickable explorer link for the returned `hash`:
 
   | Chain | Explorer |
