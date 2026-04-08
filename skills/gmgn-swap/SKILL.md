@@ -380,7 +380,7 @@ Convert `filled_input_amount` and `filled_output_amount` from smallest unit usin
 | `--chain` | Yes | `sol` / `bsc` / `base` |
 | `--type` | No | `open` (default) / `history` |
 | `--from` | No | Filter by wallet address |
-| `--group-tag` | No | Filter by order group: `LimitOrder` (limit orders only) / `STMix` (mixed strategy orders: take-profit, stop-loss, trailing take-profit, trailing stop-loss) |
+| `--group-tag` | Yes | Filter by order group: `LimitOrder` (limit orders only) / `STMix` (mixed strategy orders: take-profit, stop-loss, trailing take-profit, trailing stop-loss) |
 | `--base-token` | No | Filter by token address |
 | `--page-token` | No | Pagination cursor from previous response |
 | `--limit` | No | Results per page (default 10 for history) |
@@ -430,11 +430,17 @@ gmgn-cli order strategy create \
   --amount-in-percent 100 \
   --slippage 0.01
 
-# List open strategy orders
-gmgn-cli order strategy list --chain sol
+# List open condition orders (profit_stop / loss_stop / trace types) — use STMix
+gmgn-cli order strategy list --chain sol --group-tag STMix
 
-# List history orders with pagination
-gmgn-cli order strategy list --chain sol --type history --limit 20
+# List open limit orders (buy_low / buy_high / stop_loss / take_profit) — use LimitOrder
+gmgn-cli order strategy list --chain sol --group-tag LimitOrder
+
+# List condition order history with pagination
+gmgn-cli order strategy list --chain sol --group-tag STMix --type history --limit 20
+
+# Filter by token
+gmgn-cli order strategy list --chain sol --group-tag STMix --base-token <token_address>
 
 # Cancel a strategy order
 gmgn-cli order strategy cancel \
