@@ -42,6 +42,14 @@ Data across SOL / BSC / Base is live on every query. Supports multi-parameter cu
 - Market orders, limit orders, and strategy orders (take-profit / stop-loss) in a single command.
 - Sell by position percentage (`--percent 50`) without calculating exact amounts.
 
+| Order Type | Description |
+|------------|-------------|
+| Market Order | Instant execution at current market price |
+| Limit Order | Trigger buy or sell at a specified price |
+| Take-Profit / Stop-Loss | Fixed-price exit conditions attached to a swap |
+| Trailing Take-Profit / Trailing Stop-Loss | Tracks price peak; fires after a specified drawdown % — rides momentum while protecting gains |
+| Multi-Wallet Batch Trading | Buy with multiple wallets simultaneously, each with its own take-profit / stop-loss / trailing take-profit / trailing stop-loss orders |
+
 ### 3. More comprehensive token data
 
 No more scraping web pages or getting blocked by Cloudflare. Query all the professional analytics needed for high-frequency Meme token trading, with high concurrency in real time (including but not limited to):
