@@ -162,6 +162,15 @@ The response has five nested objects: `pool`, `dev`, `link`, `stat`, `wallet_tag
 | `open_timestamp` | Time the token opened for trading (Unix seconds) |
 | `biggest_pool_address` | Address of the main liquidity pool |
 | `og` | Whether the token is flagged as an OG token (`true` / `false`) |
+| `launchpad` | Launchpad identifier (e.g. `pump`, `moonshot`) |
+| `launchpad_status` | Launchpad state: `0` = not opened, `1` = live, `2` = migrated |
+| `launchpad_progress` | Launchpad bonding-curve progress (0–1) |
+| `launchpad_platform` | Launchpad platform name |
+| `migrated_pool` | Pool address after migration |
+| `migration_market_cap` | Market cap at migration time (USD, float) |
+| `migration_market_cap_quote` | Quote currency for `migration_market_cap` |
+| `ath_price` | All-time-high price (USD, float) |
+| `locked_ratio` | Ratio of supply locked (0–1, float) |
 
 **`pool` Object** — Main liquidity pool details
 
@@ -203,6 +212,13 @@ The response has five nested objects: `pool`, `dev`, `link`, `stat`, `wallet_tag
 | `dev.twitter_del_post_token_count` | Number of posts the creator deleted from Twitter |
 | `dev.twitter_create_token_count` | Number of tokens the creator has promoted on Twitter |
 | `dev.offchain` | Whether the token is an offchain token |
+| `dev.ath_token_info` | Creator's all-time-high token info object (optional); see sub-fields below |
+| `dev.ath_token_info.ath_token` | Contract address of the creator's best-performing token ever |
+| `dev.ath_token_info.ath_mc` | All-time-high market cap of that token (USD, string) |
+| `dev.ath_token_info.avatar` | Token logo URL |
+| `dev.ath_token_info.symbol` | Token symbol |
+| `dev.ath_token_info.name` | Token name |
+| `dev.ath_token_info.creation_timestamp` | Token creation time (Unix seconds) |
 
 **`link` Object** — Social and explorer links
 
