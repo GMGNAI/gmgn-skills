@@ -228,6 +228,7 @@ The response also includes a `common` object when available (absent if the upstr
 | `common.follow_count` | Number of GMGN users following this wallet |
 | `common.remark_count` | Number of GMGN users who have remarked this wallet |
 | `common.created_token_count` | Tokens created by this wallet |
+| `common.created_at` | Wallet creation time (Unix seconds) — records when the first funding transaction arrived; use this as the wallet's age indicator |
 | `common.fund_from` | Funding source label |
 | `common.fund_from_address` | Address that funded this wallet |
 | `common.fund_amount` | Funding amount |
