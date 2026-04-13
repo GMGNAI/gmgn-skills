@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { OpenApiClient, SwapParams, StrategyCreateParams, StrategyCancelParams } from "../client/OpenApiClient.js";
+import { OpenApiClient, SwapParams, MultiSwapParams, StrategyCreateParams, StrategyCancelParams } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
 import { validateAddress, validateChain, validatePercent, validatePositiveInt } from "../validate.js";
@@ -106,6 +106,78 @@ export function registerSwapCommands(program: Command): void {
       validateChain(opts.chain);
       const client = new OpenApiClient(getConfig(true));
       const data = await client.queryOrder(opts.orderId, opts.chain).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
+  program
+    .command("multi-swap")
+    .description("Submit token swaps across multiple wallets concurrently (up to 100 wallets)")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--accounts <addresses>", "Comma-separated wallet addresses (all must be bound to the API Key)")
+    .requiredOption("--input-token <address>", "Input token contract address")
+    .requiredOption("--output-token <address>", "Output token contract address")
+    .option("--input-amount <json>", 'JSON map of wallet→amount (smallest unit), e.g. \'{"addr1":"1000000","addr2":"2000000"}\'')
+    .option("--input-amount-bps <json>", 'JSON map of wallet→percent in bps (1–10000, e.g. 5000=50%), e.g. \'{"addr1":"5000"}\'')
+    .option("--output-amount <json>", "JSON map of wallet→target output amount")
+    .option("--slippage <n>", "Slippage tolerance (e.g. 0.01 = 1%)", parseFloat)
+    .option("--auto-slippage", "Enable automatic slippage")
+    .option("--anti-mev", "Enable anti-MEV protection")
+    .option("--priority-fee <sol>", "Priority fee in SOL (SOL only, ≥ 0.00001)")
+    .option("--tip-fee <amount>", "Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB)")
+    .option("--auto-tip-fee", "Enable automatic tip fee")
+    .option("--max-auto-fee <amount>", "Max auto fee cap")
+    .option("--gas-price <gwei>", "Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01)")
+    .option("--max-fee-per-gas <amount>", "EIP-1559 max fee per gas (Base only)")
+    .option("--max-priority-fee-per-gas <amount>", "EIP-1559 max priority fee per gas (Base only)")
+    .option("--condition-orders <json>", "JSON array of take-profit/stop-loss conditions attached to each successful wallet's swap")
+    .option("--sell-ratio-type <type>", "Sell ratio base: buy_amount (default) / hold_amount; only used with --condition-orders")
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      if (!opts.inputAmount && !opts.inputAmountBps && !opts.outputAmount) {
+        console.error("[gmgn-cli] At least one of --input-amount, --input-amount-bps, or --output-amount must be provided");
+        process.exit(1);
+      }
+      validateChain(opts.chain);
+      const accounts = (opts.accounts as string).split(",").map((a: string) => a.trim()).filter(Boolean);
+      if (accounts.length === 0 || accounts.length > 100) {
+        console.error("[gmgn-cli] --accounts must be 1–100 comma-separated wallet addresses");
+        process.exit(1);
+      }
+      const params: MultiSwapParams = {
+        chain: opts.chain,
+        accounts,
+        input_token: opts.inputToken,
+        output_token: opts.outputToken,
+      };
+      if (opts.inputAmount) {
+        try { params.input_amount = JSON.parse(opts.inputAmount); }
+        catch { console.error("[gmgn-cli] --input-amount must be valid JSON"); process.exit(1); }
+      }
+      if (opts.inputAmountBps) {
+        try { params.input_amount_bps = JSON.parse(opts.inputAmountBps); }
+        catch { console.error("[gmgn-cli] --input-amount-bps must be valid JSON"); process.exit(1); }
+      }
+      if (opts.outputAmount) {
+        try { params.output_amount = JSON.parse(opts.outputAmount); }
+        catch { console.error("[gmgn-cli] --output-amount must be valid JSON"); process.exit(1); }
+      }
+      if (opts.slippage != null) params.slippage = opts.slippage;
+      if (opts.autoSlippage) params.auto_slippage = true;
+      if (opts.antiMev) params.is_anti_mev = true;
+      if (opts.priorityFee) params.priority_fee = opts.priorityFee;
+      if (opts.tipFee) params.tip_fee = opts.tipFee;
+      if (opts.autoTipFee) params.auto_tip_fee = true;
+      if (opts.maxAutoFee) params.max_auto_fee = opts.maxAutoFee;
+      if (opts.gasPrice) params.gas_price = String(Math.round(parseFloat(opts.gasPrice) * 1e9));
+      if (opts.maxFeePerGas) params.max_fee_per_gas = opts.maxFeePerGas;
+      if (opts.maxPriorityFeePerGas) params.max_priority_fee_per_gas = opts.maxPriorityFeePerGas;
+      if (opts.conditionOrders) {
+        try { params.condition_orders = JSON.parse(opts.conditionOrders); }
+        catch { console.error("[gmgn-cli] --condition-orders must be valid JSON"); process.exit(1); }
+      }
+      if (opts.sellRatioType) params.sell_ratio_type = opts.sellRatioType;
+      const client = new OpenApiClient(getConfig(true));
+      const data = await client.multiSwap(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
 

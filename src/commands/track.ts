@@ -27,7 +27,7 @@ export function registerTrackCommands(program: Command): void {
       if (opts.filter?.length) extra["filters"] = opts.filter;
       if (opts.minAmountUsd != null) extra["min_amount_usd"] = opts.minAmountUsd;
       if (opts.maxAmountUsd != null) extra["max_amount_usd"] = opts.maxAmountUsd;
-      const client = new OpenApiClient(getConfig(true));
+      const client = new OpenApiClient(getConfig());
       const data = await client.getFollowWallet(opts.chain, extra).catch(exitOnError);
       printResult(data, opts.raw);
     });
