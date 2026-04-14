@@ -276,69 +276,61 @@ npx gmgn-cli market trenches --chain <chain> [--type <type...>] [--launchpad-pla
 
 ## portfolio follow-wallet
 
-Query follow-wallet trade records.
+Query follow-wallet trade records. Returns trades from wallets you personally follow on the GMGN platform. The follow list is resolved automatically from the GMGN user account bound to the API Key — `--wallet` is optional. Normal auth (API Key only, no private key needed).
 
 ```bash
-npx gmgn-cli portfolio follow-wallet \
+gmgn-cli track follow-wallet \
   --chain <chain> \
   [--wallet <wallet_address>] \
-  [--base-token <token_address>] \
-  [--page-token <cursor>] \
   [--limit <n>] \
   [--side <side>] \
-  [--cost <cost>] \
   [--filter <tag>] \
-  [--with-balance] \
-  [--with-security] \
   [--min-amount-usd <n>] \
   [--max-amount-usd <n>] \
-  [--is-gray] \
   [--raw]
 ```
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
-| `--wallet` | No | Filter by wallet address |
-| `--base-token` | No | Filter by base token address |
-| `--page-token` | No | Pagination cursor |
-| `--limit` | No | Page size (1–200, default 100) |
-| `--side` | No | Trade direction filter |
-| `--cost` | No | Cost filter |
+| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--wallet` | No | Wallet address (optional; follow list resolved from API Key's bound user account) |
+| `--limit` | No | Page size (1–100, default 10) |
+| `--side` | No | Trade direction: `buy` / `sell` |
 | `--filter` | No | Filter conditions (repeatable) |
-| `--with-balance` | No | Include balance in response |
-| `--with-security` | No | Include security info in response |
 | `--min-amount-usd` | No | Minimum trade amount (USD) |
 | `--max-amount-usd` | No | Maximum trade amount (USD) |
-| `--is-gray` | No | Gray mode filter |
 
 ---
 
 ## portfolio kol
 
-Query KOL trade records (SOL chain).
+Query KOL trade records.
 
 ```bash
-npx gmgn-cli portfolio kol [--limit <n>] [--raw]
+gmgn-cli track kol [--chain <chain>] [--limit <n>] [--side <side>] [--raw]
 ```
 
 | Option | Required | Description |
 |--------|----------|-------------|
+| `--chain` | No | `sol` / `bsc` / `base` (default `sol`) |
 | `--limit` | No | Page size (1–200, default 100) |
+| `--side` | No | Filter by trade direction: `buy` / `sell` (client-side filter) |
 
 ---
 
 ## portfolio smartmoney
 
-Query Smart Money trade records (SOL chain).
+Query Smart Money trade records.
 
 ```bash
-npx gmgn-cli portfolio smartmoney [--limit <n>] [--raw]
+gmgn-cli track smartmoney [--chain <chain>] [--limit <n>] [--side <side>] [--raw]
 ```
 
 | Option | Required | Description |
 |--------|----------|-------------|
+| `--chain` | No | `sol` / `bsc` / `base` (default `sol`) |
 | `--limit` | No | Page size (1–200, default 100) |
+| `--side` | No | Filter by trade direction: `buy` / `sell` (client-side filter) |
 
 ---
 
@@ -452,6 +444,69 @@ npx gmgn-cli swap \
 | `filled_input_amount` | string | Actual input consumed (smallest unit); empty if not filled |
 | `filled_output_amount` | string | Actual output received (smallest unit); empty if not filled |
 | `strategy_order_id` | string | Strategy order ID; only present when `--condition-orders` was passed and strategy creation succeeded |
+
+---
+
+## multi-swap
+
+Submit token swaps across multiple wallets concurrently. Each wallet executes independently. Up to 100 wallets per request, all must be bound to the API Key. **Requires `GMGN_PRIVATE_KEY` configured in `.env`.**
+
+```bash
+gmgn-cli multi-swap \
+  --chain <chain> \
+  --accounts <addr1>,<addr2> \
+  --input-token <input_token_address> \
+  --output-token <output_token_address> \
+  [--input-amount <json>] \
+  [--input-amount-bps <json>] \
+  [--output-amount <json>] \
+  [--slippage <n>] \
+  [--auto-slippage] \
+  [--anti-mev] \
+  [--priority-fee <sol>] \
+  [--tip-fee <amount>] \
+  [--auto-tip-fee] \
+  [--max-auto-fee <amount>] \
+  [--gas-price <gwei>] \
+  [--max-fee-per-gas <amount>] \
+  [--max-priority-fee-per-gas <amount>] \
+  [--condition-orders <json>] \
+  [--sell-ratio-type <buy_amount|hold_amount>] \
+  [--raw]
+```
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--accounts` | Yes | Comma-separated wallet addresses (1–100, all bound to API Key) |
+| `--input-token` | Yes | Input token contract address |
+| `--output-token` | Yes | Output token contract address |
+| `--input-amount` | No* | JSON map `{"addr":"amount"}` in smallest unit; one of the three amount fields is required |
+| `--input-amount-bps` | No* | JSON map `{"addr":"bps"}` where 5000 = 50%; only valid when input token is not a currency |
+| `--output-amount` | No* | JSON map `{"addr":"amount"}` target output in smallest unit |
+| `--slippage` | No | Slippage tolerance, e.g. `0.01` = 1% |
+| `--auto-slippage` | No | Enable automatic slippage |
+| `--anti-mev` | No | Enable anti-MEV protection |
+| `--priority-fee` | No | Priority fee in SOL (≥ 0.00001, SOL only) |
+| `--tip-fee` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB) |
+| `--auto-tip-fee` | No | Enable automatic tip fee |
+| `--max-auto-fee` | No | Max automatic fee cap |
+| `--gas-price` | No | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01) |
+| `--max-fee-per-gas` | No | EIP-1559 max fee per gas (Base only) |
+| `--max-priority-fee-per-gas` | No | EIP-1559 max priority fee per gas (Base only) |
+| `--condition-orders` | No | JSON array of take-profit/stop-loss conditions, attached to each successful wallet's swap (best-effort) |
+| `--sell-ratio-type` | No | Sell ratio base: `buy_amount` (default) / `hold_amount` |
+
+**Response fields (data):** Array of per-wallet results:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `account` | string | Wallet address |
+| `success` | bool | Whether this wallet's swap succeeded |
+| `error` | string | Error message on failure |
+| `error_code` | string | Error code on failure |
+| `result` | object | OrderResponse on success (same fields as `swap` response) |
+| `result.strategy_order_id` | string | Strategy order ID; only present when `--condition-orders` passed and strategy creation succeeded |
 
 ---
 

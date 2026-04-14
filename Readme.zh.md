@@ -526,9 +526,9 @@ gmgn-cli portfolio token-balance --chain sol --wallet <addr> --token <token_addr
 ### Track
 
 ```bash
-# 追踪关注钱包的交易动态（需要 GMGN_PRIVATE_KEY）
+# 追踪关注钱包的交易动态
 gmgn-cli track follow-wallet --chain sol
-gmgn-cli track follow-wallet --chain sol --wallet <wallet_address> --side buy
+gmgn-cli track follow-wallet --chain sol --limit 20 --min-amount-usd 1000
 
 # KOL 交易动态
 gmgn-cli track kol --limit 100 --raw
@@ -589,6 +589,15 @@ gmgn-cli order quote \
 
 # 查询订单状态
 gmgn-cli order get --chain sol --order-id <order-id>
+
+# 多钱包并发 Swap
+gmgn-cli multi-swap \
+  --chain sol \
+  --accounts <addr1>,<addr2> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --input-amount '{"<addr1>":"1000000","<addr2>":"2000000"}' \
+  --slippage 0.01
 ```
 
 > `order quote` 在 `sol` / `bsc` / `base` 上都走关键鉴权，必须配置 `GMGN_PRIVATE_KEY`。

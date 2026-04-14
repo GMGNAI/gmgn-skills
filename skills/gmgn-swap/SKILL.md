@@ -46,6 +46,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. `GMGN
 | Sub-command | Description |
 |-------------|-------------|
 | `swap` | Submit a token swap |
+| `multi-swap` | Submit token swaps across multiple wallets concurrently (up to 100) |
 | `order quote` | Get a swap quote (no transaction submitted; requires critical auth) |
 | `order get` | Query order status |
 | `order strategy create` | Create a limit/strategy order (requires private key) |
@@ -81,6 +82,7 @@ All swap-related routes used by this skill go through GMGN's leaky-bucket limite
 | Command | Route | Weight |
 |---------|-------|--------|
 | `swap` | `POST /v1/trade/swap` | 5 |
+| `multi-swap` | `POST /v1/trade/multi_swap` | 5 |
 | `order quote` | `GET /v1/trade/quote` | 2 |
 | `order get` | `GET /v1/trade/query_order` | 1 |
 
@@ -162,6 +164,79 @@ gmgn-cli swap \
   --output-token <sol_or_usdc_address> \
   --percent 50
 ```
+
+## `multi-swap` Usage
+
+Submit a token swap across multiple wallets concurrently. Each wallet executes independently — one wallet's failure does not affect others. Up to 100 wallets per request. All wallets must be bound to the API Key. Requires `GMGN_PRIVATE_KEY`.
+
+```bash
+# Basic multi-wallet swap
+gmgn-cli multi-swap \
+  --chain sol \
+  --accounts <addr1>,<addr2> \
+  --input-token <input_token_address> \
+  --output-token <output_token_address> \
+  --input-amount '{"<addr1>":"1000000","<addr2>":"2000000"}' \
+  --slippage 0.01
+
+# Sell a percentage of each wallet's balance (use --input-amount-bps)
+gmgn-cli multi-swap \
+  --chain sol \
+  --accounts <addr1>,<addr2> \
+  --input-token <token_address> \
+  --output-token <sol_address> \
+  --input-amount-bps '{"<addr1>":"5000","<addr2>":"10000"}' \
+  --slippage 0.01
+
+# With per-wallet take-profit / stop-loss (condition_orders)
+gmgn-cli multi-swap \
+  --chain sol \
+  --accounts <addr1>,<addr2> \
+  --input-token So11111111111111111111111111111111111111112 \
+  --output-token <token_address> \
+  --input-amount '{"<addr1>":"1000000","<addr2>":"2000000"}' \
+  --slippage 0.3 \
+  --priority-fee 0.00001 \
+  --tip-fee 0.00001 \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
+```
+
+## `multi-swap` Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--accounts` | Yes | Comma-separated wallet addresses (1–100, all must be bound to the API Key) |
+| `--input-token` | Yes | Input token contract address |
+| `--output-token` | Yes | Output token contract address |
+| `--input-amount` | No* | JSON map of `wallet_address → input amount` (smallest unit). One of `--input-amount`, `--input-amount-bps`, or `--output-amount` is required. |
+| `--input-amount-bps` | No* | JSON map of `wallet_address → percent in bps` (1–10000; 5000 = 50%). Only valid when `input_token` is NOT a currency. |
+| `--output-amount` | No* | JSON map of `wallet_address → target output amount` (smallest unit). |
+| `--slippage <n>` | No | Slippage tolerance, e.g. `0.01` = 1%. Mutually exclusive with `--auto-slippage`. |
+| `--auto-slippage` | No | Enable automatic slippage. |
+| `--anti-mev` | No | Enable anti-MEV protection. |
+| `--priority-fee <sol>` | No | Priority fee in SOL (≥ 0.00001, SOL only). Required when using `--condition-orders` on SOL. |
+| `--tip-fee <amount>` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB). Required when using `--condition-orders` on SOL. |
+| `--auto-tip-fee` | No | Enable automatic tip fee. |
+| `--max-auto-fee <amount>` | No | Max automatic fee cap. |
+| `--gas-price <gwei>` | No | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01). Required when using `--condition-orders` on BSC. |
+| `--max-fee-per-gas <amount>` | No | EIP-1559 max fee per gas (Base only). |
+| `--max-priority-fee-per-gas <amount>` | No | EIP-1559 max priority fee per gas (Base only). |
+| `--condition-orders <json>` | No | JSON array of condition sub-orders (take-profit / stop-loss) attached to each successful wallet's swap. Same structure as `swap --condition-orders`. Strategy creation is best-effort per wallet. |
+| `--sell-ratio-type <type>` | No | Sell ratio base for `--condition-orders`: `buy_amount` (default) / `hold_amount`. |
+
+## `multi-swap` Response Fields
+
+The response `data` is an array — one element per wallet:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `account` | string | Wallet address |
+| `success` | bool | Whether this wallet's swap succeeded |
+| `error` | string | Error message on failure; absent on success |
+| `error_code` | string | Error code on failure; absent on success |
+| `result` | object | On success: OrderResponse (same fields as `swap` response). On failure: absent. |
+| `result.strategy_order_id` | string | Strategy order ID; only present when `--condition-orders` was passed and strategy creation succeeded (best-effort) |
 
 ## `order quote` Usage
 

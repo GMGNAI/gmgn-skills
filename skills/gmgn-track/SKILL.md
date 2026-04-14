@@ -16,7 +16,7 @@ Use the `gmgn-cli` tool to query on-chain tracking data based on the user's requ
 
 ## Core Concepts
 
-- **`follow-wallet` vs `kol` vs `smartmoney`** — Three distinct data sources. `follow-wallet` returns trades from wallets the user has personally followed on the GMGN platform (user-specific, requires private key). `kol` and `smartmoney` return trades from platform-tagged public wallet lists (not user-specific, API Key only). Never substitute one for another.
+- **`follow-wallet` vs `kol` vs `smartmoney`** — Three distinct data sources. `follow-wallet` returns trades from wallets the user has personally followed on the GMGN platform (user-specific; the follow list is resolved from the GMGN user account bound to the API Key). `kol` and `smartmoney` return trades from platform-tagged public wallet lists (not user-specific). Never substitute one for another.
 
 - **KOL (Key Opinion Leader)** — Wallets publicly identified as influencers or well-known traders on GMGN. Tagged as `renowned` in the platform's wallet label system. Their trades carry social/marketing signal, not necessarily alpha.
 
@@ -60,8 +60,7 @@ Use the `gmgn-cli` tool to query on-chain tracking data based on the user's requ
 ## Prerequisites
 
 - `gmgn-cli` installed globally — if missing, run: `npm install -g gmgn-cli`
-- `GMGN_API_KEY` configured in `~/.config/gmgn/.env`
-- `GMGN_PRIVATE_KEY` required only for `track follow-wallet`; not needed for `track kol` / `track smartmoney`
+- `GMGN_API_KEY` configured in `~/.config/gmgn/.env` — required for all sub-commands; no private key needed
 
 ## Rate Limit Handling
 
@@ -94,10 +93,6 @@ When a request returns `429`:
    mkdir -p ~/.config/gmgn
    echo 'GMGN_API_KEY=<key_from_user>' > ~/.config/gmgn/.env
    chmod 600 ~/.config/gmgn/.env
-   ```
-   If the user also needs `track follow-wallet`, append the private key:
-   ```bash
-   echo 'GMGN_PRIVATE_KEY="<pem_content_from_step_1>"' >> ~/.config/gmgn/.env
    ```
 
 ## Usage Examples
@@ -308,13 +303,12 @@ To research any token surfaced by smart money activity, follow [`docs/workflow-t
 
 ## Safety Constraints
 
-- **`track follow-wallet` requires `GMGN_PRIVATE_KEY`** — this signing key is linked to your GMGN account. It is used for authentication only (no on-chain access), but must be protected like any credential. Never expose it in logs or command output.
 - **`follow-wallet` reveals your following list** — results expose which wallets you have followed on GMGN. Do not share raw output in public channels.
 - **`track kol` / `track smartmoney` expose no personal data** — these use API Key auth only and return platform-tagged public wallet activity. Safe to share raw output.
 
 ## Notes
 
-- `track kol` / `track smartmoney` use normal auth (API Key only, no signature required)
-- `track follow-wallet` requires `GMGN_PRIVATE_KEY` for signature auth — and wallets must be followed via the GMGN platform first
+- All sub-commands use normal auth (API Key only, no signature required)
+- `track follow-wallet` returns trades from wallets followed on the GMGN platform; the follow list is resolved automatically from the GMGN user account bound to the API Key — `--wallet` is optional
 - Use `--raw` to get single-line JSON for further processing
 - `track kol` / `track smartmoney` `--side` is a **client-side filter** — the CLI fetches all results then filters locally; it is NOT sent to the API

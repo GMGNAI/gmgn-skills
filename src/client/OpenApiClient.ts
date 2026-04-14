@@ -97,6 +97,29 @@ export interface StrategyConditionOrder {
   drawdown_rate?: string;
 }
 
+export interface MultiSwapParams {
+  chain: string;
+  accounts: string[];
+  input_token: string;
+  output_token: string;
+  input_amount?: Record<string, string>;
+  input_amount_bps?: Record<string, string>;
+  output_amount?: Record<string, string>;
+  swap_mode?: string;
+  slippage?: number;
+  auto_slippage?: boolean;
+  is_anti_mev?: boolean;
+  priority_fee?: string;
+  tip_fee?: string;
+  auto_tip_fee?: boolean;
+  max_auto_fee?: string;
+  gas_price?: string;
+  max_fee_per_gas?: string;
+  max_priority_fee_per_gas?: string;
+  condition_orders?: StrategyConditionOrder[];
+  sell_ratio_type?: string;
+}
+
 export interface StrategyCreateParams {
   chain: string;
   from_address: string;
@@ -268,7 +291,7 @@ export class OpenApiClient {
   }
 
   async getFollowWallet(chain: string, extra: Record<string, string | number | string[]> = {}): Promise<unknown> {
-    return this.criticalRequest("GET", "/v1/trade/follow_wallet", { chain, ...extra }, null);
+    return this.normalRequest("GET", "/v1/trade/follow_wallet", { chain, ...extra });
   }
 
   async getKol(chain?: string, limit?: number): Promise<unknown> {
@@ -301,6 +324,10 @@ export class OpenApiClient {
 
   async swap(params: SwapParams): Promise<unknown> {
     return this.criticalRequest("POST", "/v1/trade/swap", {}, params);
+  }
+
+  async multiSwap(params: MultiSwapParams): Promise<unknown> {
+    return this.criticalRequest("POST", "/v1/trade/multi_swap", {}, params);
   }
 
   async queryOrder(orderId: string, chain: string): Promise<unknown> {

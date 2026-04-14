@@ -495,9 +495,9 @@ gmgn-cli portfolio token-balance --chain sol --wallet <addr> --token <token_addr
 ### Track
 
 ```bash
-# Follow-wallet trade records (requires GMGN_PRIVATE_KEY)
+# Follow-wallet trade records
 gmgn-cli track follow-wallet --chain sol
-gmgn-cli track follow-wallet --chain sol --wallet <wallet_address> --side buy
+gmgn-cli track follow-wallet --chain sol --limit 20 --min-amount-usd 1000
 
 # KOL trade records
 gmgn-cli track kol --limit 100 --raw
@@ -558,6 +558,15 @@ gmgn-cli order quote \
 
 # Query order
 gmgn-cli order get --chain sol --order-id <order-id>
+
+# Multi-wallet concurrent swap
+gmgn-cli multi-swap \
+  --chain sol \
+  --accounts <addr1>,<addr2> \
+  --input-token <input-token-addr> \
+  --output-token <output-token-addr> \
+  --input-amount '{"<addr1>":"1000000","<addr2>":"2000000"}' \
+  --slippage 0.01
 ```
 
 > `order quote` uses critical auth on `sol` / `bsc` / `base` and requires `GMGN_PRIVATE_KEY`.
