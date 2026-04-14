@@ -308,6 +308,10 @@ export class OpenApiClient {
     return this.normalRequest("GET", "/v1/user/smartmoney", query);
   }
 
+  async getCreatedTokens(chain: string, walletAddress: string, extra: Record<string, string | number> = {}): Promise<unknown> {
+    return this.normalRequest("GET", "/v1/user/created_tokens", { chain, wallet_address: walletAddress, ...extra });
+  }
+
   async quoteOrder(
     chain: string,
     from_address: string,

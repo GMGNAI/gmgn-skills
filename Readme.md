@@ -490,6 +490,9 @@ gmgn-cli portfolio info
 
 # Single token balance
 gmgn-cli portfolio token-balance --chain sol --wallet <addr> --token <token_addr>
+
+# Tokens created by a developer wallet
+gmgn-cli portfolio created-tokens --chain sol --wallet <addr>
 ```
 
 ### Track

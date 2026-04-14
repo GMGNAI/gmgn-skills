@@ -521,6 +521,9 @@ gmgn-cli portfolio info
 
 # 单个 token 余额
 gmgn-cli portfolio token-balance --chain sol --wallet <addr> --token <token_addr>
+
+# 查询开发者钱包创建的代币列表
+gmgn-cli portfolio created-tokens --chain sol --wallet <addr>
 ```
 
 ### Track

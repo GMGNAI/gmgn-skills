@@ -255,6 +255,30 @@ npx gmgn-cli portfolio token-balance \
 
 ---
 
+## portfolio created-tokens
+
+Query tokens created by a developer wallet.
+
+```bash
+npx gmgn-cli portfolio created-tokens \
+  --chain <chain> \
+  --wallet <wallet_address> \
+  [--order-by <field>] \
+  [--direction asc|desc] \
+  [--migrate-state <state>] \
+  [--raw]
+```
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--wallet` | Yes | Developer wallet address |
+| `--order-by` | No | Sort field: `market_cap` / `token_ath_mc` |
+| `--direction` | No | Sort direction: `asc` / `desc` |
+| `--migrate-state` | No | Filter: `migrated` / `non_migrated` |
+
+---
+
 ## market trenches
 
 Query Trenches token lists (new creation, near completion, completed).
