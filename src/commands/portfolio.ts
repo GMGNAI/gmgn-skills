@@ -109,5 +109,26 @@ export function registerPortfolioCommands(program: Command): void {
       printResult(data, opts.raw);
     });
 
+  portfolio
+    .command("created-tokens")
+    .description("Get tokens created by a developer wallet")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--wallet <address>", "Developer wallet address")
+    .option("--order-by <field>", "Sort field: market_cap / token_ath_mc")
+    .option("--direction <dir>", "Sort direction: asc / desc")
+    .option("--migrate-state <state>", "Filter: migrated / non_migrated")
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      validateChain(opts.chain);
+      validateAddress(opts.wallet, opts.chain, "--wallet");
+      const extra: Record<string, string | number> = {};
+      if (opts.orderBy) extra["order_by"] = opts.orderBy;
+      if (opts.direction) extra["direction"] = opts.direction;
+      if (opts.migrateState) extra["migrate_state"] = opts.migrateState;
+      const client = new OpenApiClient(getConfig());
+      const data = await client.getCreatedTokens(opts.chain, opts.wallet, extra).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
 }
 

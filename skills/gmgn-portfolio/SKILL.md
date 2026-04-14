@@ -1,7 +1,7 @@
 ---
 name: gmgn-portfolio
-description: Query GMGN wallet portfolio — API Key wallet info, holdings, transaction activity, trading stats, and token balance. Supports sol / bsc / base.
-argument-hint: "<info|holdings|activity|stats|token-balance> [--chain <sol|bsc|base>] [--wallet <wallet_address>]"
+description: Query GMGN wallet portfolio — API Key wallet info, holdings, transaction activity, trading stats, token balance, and developer-created tokens. Supports sol / bsc / base.
+argument-hint: "<info|holdings|activity|stats|token-balance|created-tokens> [--chain <sol|bsc|base>] [--wallet <wallet_address>]"
 metadata:
   cliHelp: "gmgn-cli portfolio --help"
 ---
@@ -39,6 +39,7 @@ Use the `gmgn-cli` tool to query wallet portfolio data based on the user's reque
 | `portfolio activity` | Transaction history |
 | `portfolio stats` | Trading statistics (supports batch) |
 | `portfolio token-balance` | Token balance for a specific token |
+| `portfolio created-tokens` | Tokens created by a developer wallet, with market cap and ATH info |
 
 ## Supported Chains
 
@@ -60,6 +61,7 @@ All portfolio routes used by this skill go through GMGN's leaky-bucket limiter w
 | `portfolio activity` | `GET /v1/user/wallet_activity` | 3 |
 | `portfolio stats` | `GET /v1/user/wallet_stats` | 3 |
 | `portfolio token-balance` | `GET /v1/user/wallet_token_balance` | 1 |
+| `portfolio created-tokens` | `GET /v1/user/created_tokens` | 2 |
 
 When a request returns `429`:
 
@@ -125,7 +127,27 @@ gmgn-cli portfolio stats --chain sol \
 # Token balance
 gmgn-cli portfolio token-balance \
   --chain sol --wallet <wallet_address> --token <token_address>
+
+# Tokens created by a developer wallet
+gmgn-cli portfolio created-tokens --chain sol --wallet <wallet_address>
+
+# Created tokens sorted by all-time high market cap
+gmgn-cli portfolio created-tokens \
+  --chain sol --wallet <wallet_address> \
+  --order-by token_ath_mc --direction desc
+
+# Only migrated tokens
+gmgn-cli portfolio created-tokens \
+  --chain sol --wallet <wallet_address> --migrate-state migrated
 ```
+
+## `portfolio created-tokens` Options
+
+| Option | Description |
+|--------|-------------|
+| `--order-by <field>` | Sort field: `market_cap` / `token_ath_mc` |
+| `--direction <asc\|desc>` | Sort direction (default `desc`) |
+| `--migrate-state <state>` | Filter by migration status: `migrated` (graduated to DEX) / `non_migrated` (still on bonding curve) |
 
 ## `portfolio holdings` Options
 
@@ -234,6 +256,51 @@ The response also includes a `common` object when available (absent if the upstr
 | `common.fund_amount` | Funding amount |
 
 Use `common.tags` and `common.twitter_username` when building a wallet profile narrative. If `common` is absent in the response, omit identity fields silently — do not report it as an error.
+
+### `portfolio created-tokens` — Key Fields
+
+The response `data` object has a `tokens` array plus aggregate stats.
+
+Top-level fields:
+
+| Field | Description |
+|-------|-------------|
+| `last_create_timestamp` | Unix timestamp of the most recent token creation |
+| `inner_count` | Number of tokens still on the bonding curve |
+| `open_count` | Number of tokens that have graduated to DEX |
+| `open_ratio` | Graduation rate (string, e.g. `"0.25"`) |
+| `creator_ath_info` | Best-performing token created by this wallet (ATH market cap) |
+| `tokens` | Array of created tokens — see below |
+
+`creator_ath_info` fields:
+
+| Field | Description |
+|-------|-------------|
+| `creator` | Wallet address |
+| `ath_token` | Token address with highest ATH market cap |
+| `ath_mc` | ATH market cap (USD string) |
+| `token_symbol` / `token_name` | Token ticker and name |
+| `token_logo` | Logo URL |
+
+Per-token fields (`tokens[*]`):
+
+| Field | Description |
+|-------|-------------|
+| `token_address` | Token contract address |
+| `symbol` | Token ticker |
+| `chain` | Chain name |
+| `create_timestamp` | Unix timestamp of creation |
+| `is_open` | `true` if graduated to DEX |
+| `market_cap` | Current market cap (USD string) |
+| `token_ath_mc` | All-time high market cap (USD string) |
+| `pool_liquidity` | Current liquidity (USD string) |
+| `holders` | Current holder count |
+| `swap_1h` | Swap count in the last hour |
+| `volume_1h` | Trading volume in the last hour (USD string) |
+| `launchpad_platform` | Launch platform name (e.g. `Pump.fun`) |
+| `is_pump` | `true` if launched on Pump.fun |
+| `bundler_rate` | Bundler participation rate (0–1) |
+| `cto_flag` | `true` if community-takeover token |
 
 **Do NOT guess field names not listed here.** If a field appears in the response but is not in this table, do not interpret it without reading the raw output first.
 
