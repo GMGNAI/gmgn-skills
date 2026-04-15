@@ -1,6 +1,6 @@
 ---
 name: gmgn-token
-description: Research any specific crypto token by address — get real-time price, market cap, liquidity, holder list, trader list, top Smart Money and KOL positions, security audit (honeypot detection, rug pull risk score, dev wallet, renounced mint/freeze/ownership), and social links (Twitter/X, website) via GMGN API. Use when user provides a token address or name and asks about price, market cap, safety, is it a rug, who holds this token, top traders, smart money exposure, token details, or wants to do due diligence before buying on Solana, BSC, or Base.
+description: Research any crypto or meme token by address — real-time price, market cap, liquidity, holder list, trader list, top Smart Money and KOL positions, security audit (honeypot, rug pull risk, dev wallet, renounced status), social links (Twitter/X, website) via GMGN API on Solana, BSC, or Base. Use when user asks about a token's price, safety, holders, traders, smart money exposure, or wants due diligence before buying.
 argument-hint: "<sub-command> --chain <sol|bsc|base> --address <token_address>"
 metadata:
   cliHelp: "gmgn-cli token --help"
