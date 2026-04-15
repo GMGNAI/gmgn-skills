@@ -1,6 +1,6 @@
 ---
 name: gmgn-portfolio
-description: Analyze any crypto wallet by address — holdings, realized/unrealized P&L, win rate, buy/sell transaction history, and trading performance stats via GMGN API on Solana, BSC, or Base. Use when user provides a wallet address and asks about holdings, profit/loss, win rate, or wants a wallet report to decide whether to copy-trade or follow this trader.
+description: Analyze any crypto wallet by address — holdings, realized/unrealized P&L, win rate, trading history, performance stats, specific token balance, and tokens created by a developer wallet (with ATH market cap and DEX graduation status) via GMGN API on Solana, BSC, or Base. Use when user asks about a wallet's holdings, P&L, win rate, what tokens a dev has launched, the highest ATH token a dev ever created, or wants a wallet report to decide whether to copy-trade or follow.
 argument-hint: "<info|holdings|activity|stats|token-balance|created-tokens> [--chain <sol|bsc|base>] [--wallet <wallet_address>]"
 metadata:
   cliHelp: "gmgn-cli portfolio --help"
