@@ -1,6 +1,6 @@
 ---
 name: gmgn-swap
-description: "[FINANCIAL EXECUTION] Submit a real blockchain token swap or query order status. Executes irreversible on-chain transactions. Requires explicit user confirmation before every swap. Supports sol / bsc / base."
+description: "[FINANCIAL EXECUTION] Execute on-chain token swaps and manage limit orders (stop loss, take profit) via GMGN API. Requires explicit user confirmation — executes irreversible blockchain transactions. Use when user asks to swap tokens, buy or sell a token, set a limit order, or check order status on Solana, BSC, or Base."
 argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type limit_order --sub-order-type <buy_low|buy_high|stop_loss|take_profit> ...]"
 metadata:
   cliHelp: "gmgn-cli swap --help"

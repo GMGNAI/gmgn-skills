@@ -1,6 +1,6 @@
 ---
 name: gmgn-track
-description: Query GMGN on-chain tracking data — follow-wallet trade records, KOL trades, and Smart Money trades. Supports sol / bsc / base.
+description: Get real-time trade activity from Smart Money wallets, KOL influencer wallets, and personally followed wallets via GMGN API. Use when user asks what smart money is buying, KOL trades, whale moves, copy-trading signals, or recent trades from followed wallets on Solana, BSC, or Base.
 argument-hint: "<follow-wallet|kol|smartmoney> [--chain <sol|bsc|base>] [--wallet <wallet_address>]"
 metadata:
   cliHelp: "gmgn-cli track --help"
