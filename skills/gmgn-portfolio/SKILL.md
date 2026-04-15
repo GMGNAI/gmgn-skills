@@ -266,9 +266,11 @@ Top-level fields:
 | Field | Description |
 |-------|-------------|
 | `last_create_timestamp` | Unix timestamp of the most recent token creation |
-| `inner_count` | Number of tokens still on the bonding curve |
+| `inner_count` | Number of tokens still on the bonding curve (NOT graduated) |
 | `open_count` | Number of tokens that have graduated to DEX |
 | `open_ratio` | Graduation rate (string, e.g. `"0.25"`) |
+
+> **Total created = `inner_count + open_count`**. Do NOT use `len(tokens)` as the total — the `tokens` array is capped at 100 entries and may be truncated.
 | `creator_ath_info` | Best-performing token created by this wallet (ATH market cap) |
 | `tokens` | Array of created tokens — see below |
 
@@ -364,3 +366,4 @@ For in-depth trading style analysis, copy-trade ROI estimation, and smart money 
 - User asks "is this wallet worth following" → [`docs/workflow-wallet-analysis.md`](../../docs/workflow-wallet-analysis.md)
 - User asks "what's this wallet's trading style", "when does he take profit", "smart money profile", "if I copied this wallet what would my return be" → [`docs/workflow-smart-money-profile.md`](../../docs/workflow-smart-money-profile.md)
 - User wants to compare multiple smart money wallets by winrate/PnL → [`docs/workflow-smart-money-profile.md`](../../docs/workflow-smart-money-profile.md) Step 5 (leaderboard)
+- User asks "what tokens did this dev create", "dev 发过哪些币", "查一下这个 dev 的代币", "dev 创建记录" → use `portfolio created-tokens --chain <chain> --wallet <creator_address>` directly. Get the creator address first via `token info` if only a token address is given.
