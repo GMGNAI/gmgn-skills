@@ -1,6 +1,6 @@
 ---
 name: gmgn-swap
-description: "[FINANCIAL EXECUTION] Execute on-chain token swaps and manage limit orders (stop loss, take profit) via GMGN API. Requires explicit user confirmation — executes irreversible blockchain transactions. Use when user asks to swap tokens, buy or sell a token, set a limit order, or check order status on Solana, BSC, or Base."
+description: "[FINANCIAL EXECUTION] Buy and sell meme coins and any token on Solana, BSC, or Base; supports multi-wallet trading, limit orders, stop loss, take profit, trailing stop loss, and trailing take profit via GMGN API. Requires explicit user confirmation — executes irreversible blockchain transactions. Use when user asks to swap tokens, buy or sell a meme coin, trade with multiple wallets, set a limit order, set stop loss or take profit, enable trailing stop, or check order status."
 argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type limit_order --sub-order-type <buy_low|buy_high|stop_loss|take_profit> ...]"
 metadata:
   cliHelp: "gmgn-cli swap --help"
