@@ -1,6 +1,6 @@
 ---
 name: gmgn-cooking
-description: "[FINANCIAL EXECUTION] Launch new tokens on crypto launchpads (Pump.fun, PancakeSwap, FourMeme, Bonk, BAGS, Flap, etc.) or query token creation stats via GMGN API. Requires explicit user confirmation — executes irreversible on-chain transactions. Use when user asks to create a token, launch a meme coin, deploy on a launchpad, or check launchpad token creation stats on Solana, BSC, Base."
+description: "[FINANCIAL EXECUTION] Create and deploy new tokens on crypto launchpads (Pump.fun, PancakeSwap, FourMeme, Bonk, BAGS, Flap, Raydium, etc.) with bonding curve fair launch, or query token creation stats by launchpad via GMGN API. Requires explicit user confirmation — executes irreversible on-chain transactions. Use when user asks to launch a token, create a meme coin, deploy a coin on a launchpad, cook a token, or check how many tokens were created on a specific launchpad on Solana, BSC, Base, ETH, or TON."
 argument-hint: "stats | [create --chain <chain> --dex <dex> --from <addr> --name <name> --symbol <sym> --buy-amt <n> (--image <base64> | --image-url <url>)]"
 metadata:
   cliHelp: "gmgn-cli cooking --help"
