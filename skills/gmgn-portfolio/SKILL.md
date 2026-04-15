@@ -1,6 +1,6 @@
 ---
 name: gmgn-portfolio
-description: Query GMGN wallet portfolio — API Key wallet info, holdings, transaction activity, trading stats, token balance, and developer-created tokens. Supports sol / bsc / base.
+description: Get wallet holdings, realized/unrealized P&L, win rate, trading history, and performance stats for any crypto wallet via GMGN API. Use when user asks for wallet holdings, wallet P&L, trader win rate, wallet performance analysis, or whether a wallet is worth copy-trading on Solana, BSC, or Base.
 argument-hint: "<info|holdings|activity|stats|token-balance|created-tokens> [--chain <sol|bsc|base>] [--wallet <wallet_address>]"
 metadata:
   cliHelp: "gmgn-cli portfolio --help"

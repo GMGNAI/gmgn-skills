@@ -1,6 +1,6 @@
 ---
 name: gmgn-market
-description: Query GMGN market data — token K-line (candlestick), trending token swap data, and Trenches token lists. Supports sol / bsc / base.
+description: Get token price charts (K-line, candlestick, OHLCV), trending token rankings, and newly launched tokens on launchpads (pump.fun, letsbonk, etc.) via GMGN API. Use when user asks for token price history, candlestick chart, trending tokens, hot tokens by volume, new token launches, or early-stage token opportunities on Solana, BSC, or Base.
 argument-hint: "kline --chain <sol|bsc|base> --address <token_address> --resolution <1m|5m|15m|1h|4h|1d> [--from <unix_ts>] [--to <unix_ts>] | trending --chain <sol|bsc|base> --interval <1m|5m|1h|6h|24h> | trenches --chain <sol|bsc|base>"
 metadata:
   cliHelp: "gmgn-cli market --help"
