@@ -12,10 +12,11 @@ Use the `gmgn-cli` tool to query K-line data for a token or browse trending toke
 |-------------|-------------|
 | `market kline` | Token candlestick data |
 | `market trending` | Trending token swap data |
+| `market signal` | Real-time token signal feed — smart money buys, platform calls, price spikes, and more. `sol` / `bsc` only. |
 
 ## Supported Chains
 
-`sol` / `bsc` / `base`
+`sol` / `bsc` / `base` (signal: `sol` / `bsc` only)
 
 ## Prerequisites
 
@@ -135,10 +136,58 @@ For each token, offer:
 - **Deep dive**: `token info` + `token security` for full due diligence
 - **Swap**: execute directly if the user is satisfied with the trending data alone
 
+## `market signal` — Default Signal Types
+
+When the user asks for signals without specifying types, apply the following defaults based on chain:
+
+| Chain | Default `--signal-type` values |
+|-------|-------------------------------|
+| `sol` | `12` `13` `17` `18` |
+| `bsc` | `12` `13` |
+
+If the user explicitly specifies signal types, use exactly those — do not merge with defaults.
+
+```bash
+# SOL — default (smart money buy + platform call + bags/pump claims)
+gmgn-cli market signal --chain sol \
+  --signal-type 12 --signal-type 13 --signal-type 17 --signal-type 18 --raw
+
+# BSC — default (smart money buy + platform call)
+gmgn-cli market signal --chain bsc \
+  --signal-type 12 --signal-type 13 --raw
+
+# User-specified types — use exactly as requested (no defaults applied)
+gmgn-cli market signal --chain sol --signal-type 6 --signal-type 7 --raw
+```
+
+### Signal Types Reference
+
+| Value | Name | Description |
+|-------|------|-------------|
+| 1 | SignalType1 | General signal (K-line price spike) |
+| 2 | SignalTypeDexAd | Dex ad placement |
+| 3 | SignalTypeDexUpdateLink | Dex social link updated |
+| 4 | SignalTypeDexTrendingBar | Dex trending bar |
+| 5 | SignalTypeDexBoost | Dex Boost |
+| 6 | SignalTypePriceUp | Price spike |
+| 7 | SignalTypePriceATH | All-time high price |
+| 8 | SignalTypeMcpKeyLevel | Market cap key level |
+| 9 | SignalTypeLive | Live stream |
+| 10 | SignalTypeBundlerSell | Bundler sell |
+| 11 | SignalTypeCto | Community takeover (CTO) |
+| 12 | SignalTypeSmartDegenBuy | Smart money buy |
+| 13 | SignalTypePlatformCall | Platform call |
+| 14 | SignalTypeLargeAmountBuy | Large amount buy |
+| 15 | SignalTypeMultiBuy | Multiple buys |
+| 16 | SignalTypeMultiLargeBuy | Multiple large buys |
+| 17 | SignalTypeBagsClaims | Bags Claim |
+| 18 | SignalTypePumpClaims | Pump Claim |
+
 ## Notes
 
 - `market kline`: `--from` and `--to` are Unix timestamps in **seconds** — CLI converts to milliseconds automatically
 - `market trending`: `--filter` and `--platform` are repeatable flags
+- `market signal`: `--signal-type` is repeatable; `sol` / `bsc` only; max 50 results
 - All commands use normal auth (API Key only, no signature)
 - If the user doesn't provide kline timestamps, calculate them from the current time based on their desired time range
 - Use `--raw` to get single-line JSON for further processing
