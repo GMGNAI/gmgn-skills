@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { OpenApiClient } from "../client/OpenApiClient.js";
+import { OpenApiClient, TokenSignalGroup } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
 import { validateAddress, validateChain } from "../validate.js";
@@ -115,6 +115,56 @@ export function registerMarketCommands(program: Command): void {
       : data;
     printResult(result, opts.raw);
   });
+
+  market
+    .command("signal")
+    .description("Query token signals (price spikes, smart money buys, large buys, etc.) — max 50 results per group")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc")
+    .option("--signal-type <n...>", "Signal type(s), repeatable: 1–18 (default: all types)", (v: string, acc: number[]) => { acc.push(parseInt(v, 10)); return acc; }, [] as number[])
+    .option("--mc-min <usd>", "Min market cap at trigger time (USD)", parseFloat)
+    .option("--mc-max <usd>", "Max market cap at trigger time (USD)", parseFloat)
+    .option("--trigger-mc-min <usd>", "Min market cap at signal trigger (USD)", parseFloat)
+    .option("--trigger-mc-max <usd>", "Max market cap at signal trigger (USD)", parseFloat)
+    .option("--total-fee-min <usd>", "Min total fees paid (USD)", parseFloat)
+    .option("--total-fee-max <usd>", "Max total fees paid (USD)", parseFloat)
+    .option("--min-create-or-open-ts <ts>", "Min token creation or open timestamp (Unix seconds string)")
+    .option("--max-create-or-open-ts <ts>", "Max token creation or open timestamp (Unix seconds string)")
+    .option("--groups <json>", "Multi-group override: JSON array of group objects — overrides all individual flags when provided")
+    .option("--raw", "Output raw JSON")
+    .action(async (opts: Record<string, unknown>) => {
+      validateChain(opts["chain"] as string);
+      if (!["sol", "bsc"].includes(opts["chain"] as string)) {
+        console.error(`[gmgn-cli] market signal only supports sol and bsc, got "${opts["chain"]}"`);
+        process.exit(1);
+      }
+
+      let groups: TokenSignalGroup[];
+      if (opts["groups"] != null) {
+        try {
+          groups = JSON.parse(opts["groups"] as string) as TokenSignalGroup[];
+        } catch {
+          console.error(`[gmgn-cli] --groups must be a valid JSON array, e.g. '[{"signal_type":[12,14]},{"signal_type":[6,7],"mc_min":50000}]'`);
+          process.exit(1);
+        }
+      } else {
+        const group: TokenSignalGroup = {};
+        const signalType = opts["signalType"] as number[] | undefined;
+        if (signalType?.length) group.signal_type = signalType;
+        if (opts["mcMin"] != null) group.mc_min = opts["mcMin"] as number;
+        if (opts["mcMax"] != null) group.mc_max = opts["mcMax"] as number;
+        if (opts["triggerMcMin"] != null) group.trigger_mc_min = opts["triggerMcMin"] as number;
+        if (opts["triggerMcMax"] != null) group.trigger_mc_max = opts["triggerMcMax"] as number;
+        if (opts["totalFeeMin"] != null) group.total_fee_min = opts["totalFeeMin"] as number;
+        if (opts["totalFeeMax"] != null) group.total_fee_max = opts["totalFeeMax"] as number;
+        if (opts["minCreateOrOpenTs"] != null) group.min_create_or_open_ts = opts["minCreateOrOpenTs"] as string;
+        if (opts["maxCreateOrOpenTs"] != null) group.max_create_or_open_ts = opts["maxCreateOrOpenTs"] as string;
+        groups = [group];
+      }
+
+      const client = new OpenApiClient(getConfig());
+      const data = await client.getTokenSignalV2(opts["chain"] as string, groups).catch(exitOnError);
+      printResult(data, opts["raw"] as boolean | undefined);
+    });
 }
 
 // ---- Trenches filter field definitions ----

@@ -156,6 +156,18 @@ export interface StrategyCancelParams {
   close_sell_model?: string;
 }
 
+export interface TokenSignalGroup {
+  signal_type?: number[];
+  mc_min?: number;
+  mc_max?: number;
+  trigger_mc_min?: number;
+  trigger_mc_max?: number;
+  total_fee_min?: number;
+  total_fee_max?: number;
+  min_create_or_open_ts?: string;
+  max_create_or_open_ts?: string;
+}
+
 export interface CreateTokenParams {
   chain: string;
   dex: string;
@@ -282,6 +294,10 @@ export class OpenApiClient {
     extra: Record<string, string | number | string[]> = {}
   ): Promise<unknown> {
     return this.normalRequest("GET", "/v1/market/rank", { chain, interval, ...extra });
+  }
+
+  async getTokenSignalV2(chain: string, groups: TokenSignalGroup[]): Promise<unknown> {
+    return this.normalRequest("POST", "/v1/market/token_signal", {}, { chain, groups });
   }
 
   // ---- User endpoints (normal auth) ----

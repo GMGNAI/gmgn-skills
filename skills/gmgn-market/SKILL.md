@@ -1,7 +1,7 @@
 ---
 name: gmgn-market
-description: Get crypto and meme token price charts (K-line, candlestick, OHLCV), trending meme coin rankings by volume, and newly launched tokens on launchpads (pump.fun, fourmeme, letsbonk, Raydium, etc.) via GMGN API on Solana, BSC, or Base. Use when user asks for price chart, trending tokens, what's pumping, hot coins, new launches, or wants to discover early-stage opportunities.
-argument-hint: "kline --chain <sol|bsc|base> --address <token_address> --resolution <1m|5m|15m|1h|4h|1d> [--from <unix_ts>] [--to <unix_ts>] | trending --chain <sol|bsc|base> --interval <1m|5m|1h|6h|24h> | trenches --chain <sol|bsc|base>"
+description: Get crypto and meme token price charts (K-line, candlestick, OHLCV), trending meme coin rankings by volume, and newly launched tokens on launchpads (pump.fun, fourmeme, letsbonk, Raydium, etc.) via GMGN API on Solana, BSC, or Base. Use when user asks for price chart, trending tokens, what's pumping, hot coins, new launches, token signals, or wants to discover early-stage opportunities.
+argument-hint: "kline --chain <sol|bsc|base> --address <token_address> --resolution <1m|5m|15m|1h|4h|1d> [--from <unix_ts>] [--to <unix_ts>] | trending --chain <sol|bsc|base> --interval <1m|5m|1h|6h|24h> | trenches --chain <sol|bsc|base> | signal --chain <sol|bsc>""
 metadata:
   cliHelp: "gmgn-cli market --help"
 ---
@@ -48,10 +48,11 @@ Use the `gmgn-cli` tool to query K-line data for a token, browse trending tokens
 | `market kline` | Token candlestick / OHLCV data and trading volume over a time range |
 | `market trending` | Trending tokens ranked by swap activity — use `--interval` to specify the time window (e.g. `1m` for 1-minute hottest, `1h` for 1-hour trending) |
 | `market trenches` | Newly launched launchpad platform tokens — **use this when the user asks for "new tokens", "just launched tokens", "latest tokens on pump.fun/letsbonk"**. Three categories: `new_creation` (just created), `near_completion` (bonding curve almost full), `completed` (graduated to open market / DEX) |
+| `market signal` | Real-time token signal feed — price spikes, smart money buys, large buys, Dex ads, CTO events, and more. Results sorted by `trigger_at` descending. **sol / bsc only. Max 50 results per group.** |
 
 ## Supported Chains
 
-`sol` / `bsc` / `base`
+`sol` / `bsc` / `base` (signal: `sol` / `bsc` only)
 
 ## Prerequisites
 
@@ -67,6 +68,7 @@ All market routes used by this skill go through GMGN's leaky-bucket limiter with
 | `market kline` | `GET /v1/market/token_kline` | 2 |
 | `market trending` | `GET /v1/market/rank` | 1 |
 | `market trenches` | `POST /v1/trenches` | 3 |
+| `market signal` | `POST /v1/market/token_signal` | 3 |
 
 When a request returns `429`:
 
@@ -808,6 +810,112 @@ Present each category separately with a header:
 ✅ Graduated ({count} tokens)
 # | Symbol | Market Cap | Volume (1h) | Smart Degens | Social
 ```
+
+## `market signal` Parameters
+
+Chains: `sol` / `bsc` only. **Maximum 50 results per group** — use multiple groups via `--groups` to cover different signal types in a single request.
+
+**Single-group (individual flags):**
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` |
+| `--signal-type` | No | Signal type(s), repeatable (1–18, default: all). See Signal Types below. |
+| `--mc-min` | No | Min market cap at trigger time (USD) |
+| `--mc-max` | No | Max market cap at trigger time (USD) |
+| `--trigger-mc-min` | No | Min market cap at signal trigger moment (USD) |
+| `--trigger-mc-max` | No | Max market cap at signal trigger moment (USD) |
+| `--total-fee-min` | No | Min total fees paid (USD) |
+| `--total-fee-max` | No | Max total fees paid (USD) |
+| `--min-create-or-open-ts` | No | Min token creation or open timestamp (Unix seconds string) |
+| `--max-create-or-open-ts` | No | Max token creation or open timestamp (Unix seconds string) |
+
+**Multi-group override:**
+
+Pass `--groups '<json_array>'` to query multiple filter groups in a single request. The upstream executes all groups in parallel and merges results sorted by `trigger_at` descending. When `--groups` is present, all individual flags above are ignored.
+
+```bash
+gmgn-cli market signal --chain sol \
+  --groups '[{"signal_type":[12,14]},{"signal_type":[6,7],"mc_min":50000}]'
+```
+
+### Signal Types
+
+| Value | Name | Description |
+|-------|------|-------------|
+| 1 | SignalType1 | General signal (K-line price spike) |
+| 2 | SignalTypeDexAd | Dex ad placement |
+| 3 | SignalTypeDexUpdateLink | Dex social link updated |
+| 4 | SignalTypeDexTrendingBar | Dex trending bar |
+| 5 | SignalTypeDexBoost | Dex Boost |
+| 6 | SignalTypePriceUp | Price spike |
+| 7 | SignalTypePriceATH | All-time high price |
+| 8 | SignalTypeMcpKeyLevel | Market cap key level |
+| 9 | SignalTypeLive | Live stream |
+| 10 | SignalTypeBundlerSell | Bundler sell |
+| 11 | SignalTypeCto | Community takeover (CTO) |
+| 12 | SignalTypeSmartDegenBuy | Smart money buy |
+| 13 | SignalTypePlatformCall | Platform call |
+| 14 | SignalTypeLargeAmountBuy | Large amount buy |
+| 15 | SignalTypeMultiBuy | Multiple buys |
+| 16 | SignalTypeMultiLargeBuy | Multiple large buys |
+| 17 | SignalTypeBagsClaims | Bags Claim |
+| 18 | SignalTypePumpClaims | Pump Claim |
+
+### `market signal` Response Fields
+
+Each item in the response array is one signal event:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Signal event ID |
+| `token_address` | string | Token contract address |
+| `signal_type` | number | Signal type (1–18, see Signal Types above) |
+| `trigger_at` | number | Unix timestamp (seconds) when the signal was triggered |
+| `trigger_mc` | number | Market cap at signal trigger time (USD) |
+| `first_trigger_mc` | number | Market cap at the very first trigger for this token (USD) |
+| `market_cap` | number | Current market cap (USD) |
+| `ath` | number | All-time high market cap (USD) |
+| `signal_times` | number | Total number of times this signal has triggered for this token |
+| `signal_times_by_type` | object | Signal trigger count broken down by type |
+| `cur_data` | object | Real-time token stats at query time (see below) |
+| `data` | object | Full upstream snapshot at trigger time (chain-specific, raw passthrough) |
+
+**`cur_data` fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `top_10_holder_rate` | number | Top 10 holder concentration ratio (0–1) |
+| `holder_count` | number | Current holder count |
+| `liquidity` | number | Current liquidity (USD) |
+
+### Usage Examples
+
+```bash
+# All signals on SOL (default: all types)
+gmgn-cli market signal --chain sol --raw
+
+# Smart money buys only (type 12)
+gmgn-cli market signal --chain sol --signal-type 12 --raw
+
+# Price spikes + ATH (types 6 and 7) with market cap filter
+gmgn-cli market signal --chain sol \
+  --signal-type 6 --signal-type 7 \
+  --mc-min 50000 --mc-max 5000000 --raw
+
+# Smart money buys on BSC
+gmgn-cli market signal --chain bsc --signal-type 12 --raw
+
+# Multi-group: smart money buys OR large amount buys, in parallel
+gmgn-cli market signal --chain sol \
+  --groups '[{"signal_type":[12]},{"signal_type":[14,16]}]' --raw
+
+# Multi-group: combine signal type filter with market cap range per group
+gmgn-cli market signal --chain sol \
+  --groups '[{"signal_type":[12,14],"mc_min":100000},{"signal_type":[6,7],"mc_min":50000,"mc_max":1000000}]' --raw
+```
+
+---
 
 ## Notes
 

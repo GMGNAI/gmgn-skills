@@ -298,6 +298,57 @@ npx gmgn-cli market trenches --chain <chain> [--type <type...>] [--launchpad-pla
 
 ---
 
+## market signal
+
+Query token signals — price spikes, smart money buys, large buys, Dex ads, CTO events, and more. Returns a list of `TokenSignalItem` sorted by `trigger_at` descending (most recent first). **Maximum 50 results per group.**
+
+```bash
+# Single group (individual flags):
+gmgn-cli market signal --chain sol [--signal-type <n>...] [--mc-min <usd>] [--mc-max <usd>] [--raw]
+
+# Multi-group override (JSON array):
+gmgn-cli market signal --chain sol --groups '<json_array>' [--raw]
+```
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` |
+| `--signal-type` | No | Signal type(s), repeatable (1–18, default: all). See Signal Types below. |
+| `--mc-min` | No | Min market cap at trigger time (USD) |
+| `--mc-max` | No | Max market cap at trigger time (USD) |
+| `--trigger-mc-min` | No | Min market cap at signal trigger moment (USD) |
+| `--trigger-mc-max` | No | Max market cap at signal trigger moment (USD) |
+| `--total-fee-min` | No | Min total fees paid (USD) |
+| `--total-fee-max` | No | Max total fees paid (USD) |
+| `--min-create-or-open-ts` | No | Min token creation or open timestamp (Unix seconds string) |
+| `--max-create-or-open-ts` | No | Max token creation or open timestamp (Unix seconds string) |
+| `--groups` | No | Multi-group JSON array — overrides all individual flags when provided |
+
+**Signal Types:**
+
+| Value | Name | Description |
+|-------|------|-------------|
+| 1 | SignalType1 | General signal (K-line price spike) |
+| 2 | SignalTypeDexAd | Dex ad placement |
+| 3 | SignalTypeDexUpdateLink | Dex social link updated |
+| 4 | SignalTypeDexTrendingBar | Dex trending bar |
+| 5 | SignalTypeDexBoost | Dex Boost |
+| 6 | SignalTypePriceUp | Price spike |
+| 7 | SignalTypePriceATH | All-time high price |
+| 8 | SignalTypeMcpKeyLevel | Market cap key level |
+| 9 | SignalTypeLive | Live stream |
+| 10 | SignalTypeBundlerSell | Bundler sell |
+| 11 | SignalTypeCto | Community takeover (CTO) |
+| 12 | SignalTypeSmartDegenBuy | Smart money buy |
+| 13 | SignalTypePlatformCall | Platform call |
+| 14 | SignalTypeLargeAmountBuy | Large amount buy |
+| 15 | SignalTypeMultiBuy | Multiple buys |
+| 16 | SignalTypeMultiLargeBuy | Multiple large buys |
+| 17 | SignalTypeBagsClaims | Bags Claim |
+| 18 | SignalTypePumpClaims | Pump Claim |
+
+---
+
 ## portfolio follow-wallet
 
 Query follow-wallet trade records. Returns trades from wallets you personally follow on the GMGN platform. The follow list is resolved automatically from the GMGN user account bound to the API Key — `--wallet` is optional. Normal auth (API Key only, no private key needed).
