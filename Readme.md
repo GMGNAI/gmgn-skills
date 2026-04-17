@@ -471,6 +471,13 @@ gmgn-cli market trenches \
 gmgn-cli market trenches \
   --chain sol --type new_creation \
   --filter-preset safe --min-smart-degen-count 1 --sort-by smart_degen_count
+
+# Token signals — smart money buys on SOL (single group)
+gmgn-cli market signal --chain sol --signal-type 12 --raw
+
+# Token signals — multi-group: smart money OR large buys in parallel
+gmgn-cli market signal --chain sol \
+  --groups '[{"signal_type":[12]},{"signal_type":[14,16]}]' --raw
 ```
 
 ### Portfolio
