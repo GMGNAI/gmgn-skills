@@ -32,17 +32,24 @@ export function buildAuthQuery(): { timestamp: number; client_id: string } {
 /**
  * Build the signature message (critical auth)
  * Format: {sub_path}:{sorted_query_string}:{request_body}:{timestamp}
- * sorted_query_string: all query params (including timestamp, client_id) sorted alphabetically by key
+ * sorted_query_string: all query params (including timestamp, client_id) sorted alphabetically by key.
+ * Array values are serialized as repeated k=v pairs (same as buildUrl / URLSearchParams), sorted by value.
  */
 export function buildMessage(
   subPath: string,
-  queryParams: Record<string, string | number>,
+  queryParams: Record<string, string | number | string[]>,
   body: string,
   timestamp: number
 ): string {
   const sortedQs = Object.keys(queryParams)
     .sort()
-    .map((k) => `${k}=${queryParams[k]}`)
+    .flatMap((k) => {
+      const v = queryParams[k];
+      if (Array.isArray(v)) {
+        return [...v].sort().map((item) => `${k}=${item}`);
+      }
+      return [`${k}=${v}`];
+    })
     .join("&");
   return `${subPath}:${sortedQs}:${body}:${timestamp}`;
 }

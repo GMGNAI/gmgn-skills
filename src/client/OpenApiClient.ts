@@ -307,7 +307,7 @@ export class OpenApiClient {
   }
 
   async getFollowWallet(chain: string, extra: Record<string, string | number | string[]> = {}): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/trade/follow_wallet", { chain, ...extra });
+    return this.criticalRequest("GET", "/v1/trade/follow_wallet", { chain, ...extra }, null);
   }
 
   async getKol(chain?: string, limit?: number): Promise<unknown> {
@@ -409,16 +409,16 @@ export class OpenApiClient {
   private async criticalRequest(
     method: string,
     subPath: string,
-    queryExtra: Record<string, string | number>,
+    queryExtra: Record<string, string | number | string[]>,
     body: unknown
   ): Promise<unknown> {
     if (!this.privateKeyPem) {
-      throw new Error("GMGN_PRIVATE_KEY is required for critical-auth commands (swap and all order commands)");
+      throw new Error("GMGN_PRIVATE_KEY is required for critical-auth commands (swap, order, and follow-wallet commands)");
     }
 
     return this.executePreparedRequest(() => {
       const { timestamp, client_id } = buildAuthQuery();
-      const query: Record<string, string | number> = { ...queryExtra, timestamp, client_id };
+      const query: Record<string, string | number | string[]> = { ...queryExtra, timestamp, client_id };
       const bodyStr = body !== null ? JSON.stringify(body) : "";
       const message = buildMessage(subPath, query, bodyStr, timestamp);
       const signature = sign(message, this.privateKeyPem!, detectAlgorithm(this.privateKeyPem!));

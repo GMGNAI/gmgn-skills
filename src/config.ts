@@ -15,7 +15,7 @@ export interface Config {
 
 let _config: Config | null = null;
 const PRIVATE_KEY_REQUIRED_MSG =
-  "GMGN_PRIVATE_KEY is required for critical-auth commands (swap and all order commands)";
+  "GMGN_PRIVATE_KEY is required for critical-auth commands (swap, order, and follow-wallet commands)";
 
 export function getConfig(requirePrivateKey = false): Config {
   if (_config) {
