@@ -817,6 +817,8 @@ Chains: `sol` / `bsc` only. **Maximum 50 results per group** — use multiple gr
 
 **Single-group (individual flags):**
 
+Do **not** pass signal types **14, 15, or 16** in `signal_type` / `--signal-type` / `--groups` JSON — OpenAPI returns **400** if any group includes them. Omitting `--signal-type` (empty filter) still queries all types upstream; responses may still include 14–16 in that case.
+
 | Option | Required | Description |
 |--------|----------|-------------|
 | `--chain` | Yes | `sol` / `bsc` |
@@ -836,7 +838,7 @@ Pass `--groups '<json_array>'` to query multiple filter groups in a single reque
 
 ```bash
 gmgn-cli market signal --chain sol \
-  --groups '[{"signal_type":[12,14]},{"signal_type":[6,7],"mc_min":50000}]'
+  --groups '[{"signal_type":[12,13]},{"signal_type":[6,7],"mc_min":50000}]'
 ```
 
 ### Signal Types
@@ -892,7 +894,7 @@ Each item in the response array is one signal event:
 ### Usage Examples
 
 ```bash
-# All signals on SOL (default: all types)
+# All signals on SOL (no --signal-type: upstream returns all types, including 14–16 if present)
 gmgn-cli market signal --chain sol --raw
 
 # Smart money buys only (type 12)
@@ -906,13 +908,13 @@ gmgn-cli market signal --chain sol \
 # Smart money buys on BSC
 gmgn-cli market signal --chain bsc --signal-type 12 --raw
 
-# Multi-group: smart money buys OR large amount buys, in parallel
+# Multi-group: parallel groups (do not use signal_type 14–16 — API returns 400)
 gmgn-cli market signal --chain sol \
-  --groups '[{"signal_type":[12]},{"signal_type":[14,16]}]' --raw
+  --groups '[{"signal_type":[12]},{"signal_type":[6,7]}]' --raw
 
 # Multi-group: combine signal type filter with market cap range per group
 gmgn-cli market signal --chain sol \
-  --groups '[{"signal_type":[12,14],"mc_min":100000},{"signal_type":[6,7],"mc_min":50000,"mc_max":1000000}]' --raw
+  --groups '[{"signal_type":[12,13],"mc_min":100000},{"signal_type":[6,7],"mc_min":50000,"mc_max":1000000}]' --raw
 ```
 
 ---
