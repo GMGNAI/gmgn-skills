@@ -60,7 +60,8 @@ Use the `gmgn-cli` tool to query on-chain tracking data based on the user's requ
 ## Prerequisites
 
 - `gmgn-cli` installed globally — if missing, run: `npm install -g gmgn-cli`
-- `GMGN_API_KEY` configured in `~/.config/gmgn/.env` — required for all sub-commands; no private key needed
+- `GMGN_API_KEY` configured in `~/.config/gmgn/.env` — required for all sub-commands
+- `GMGN_PRIVATE_KEY` — required for `track follow-wallet` only (critical auth); not needed for `kol` or `smartmoney`
 
 ## Rate Limit Handling
 
@@ -88,11 +89,13 @@ When a request returns `429`:
    ```
    Tell the user: *"This is your Ed25519 public key. Go to **https://gmgn.ai/ai**, paste it into the API key creation form, then send me the API Key value shown on the page."*
 
-2. Wait for the user's API key, then configure:
+2. Wait for the user's API key, then configure (saves both API key and private key — private key is required for `track follow-wallet`):
    ```bash
    mkdir -p ~/.config/gmgn
-   echo 'GMGN_API_KEY=<key_from_user>' > ~/.config/gmgn/.env
+   echo "GMGN_API_KEY=<key_from_user>" > ~/.config/gmgn/.env
+   echo "GMGN_PRIVATE_KEY=$(awk '{printf "%s\\n", $0}' /tmp/gmgn_private.pem)" >> ~/.config/gmgn/.env
    chmod 600 ~/.config/gmgn/.env
+   rm /tmp/gmgn_private.pem
    ```
 
 ## Usage Examples
@@ -308,7 +311,7 @@ To research any token surfaced by smart money activity, follow [`docs/workflow-t
 
 ## Notes
 
-- All sub-commands use normal auth (API Key only, no signature required)
+- `track follow-wallet` uses critical auth (API Key + private key signature); `track kol` and `track smartmoney` use normal auth (API Key only)
 - `track follow-wallet` returns trades from wallets followed on the GMGN platform; the follow list is resolved automatically from the GMGN user account bound to the API Key — `--wallet` is optional
 - Use `--raw` to get single-line JSON for further processing
 - `track kol` / `track smartmoney` `--side` is a **client-side filter** — the CLI fetches all results then filters locally; it is NOT sent to the API
