@@ -57,7 +57,7 @@ export function registerTokenCommands(program: Command): void {
     .option("--limit <n>", "Number of results (default 20, max 100)", parseInt)
     .option("--order-by <field>", "Sort field: amount_percentage / profit / unrealized_profit / buy_volume_cur / sell_volume_cur", "amount_percentage")
     .option("--direction <dir>", "Sort direction: asc / desc", "desc")
-    .option("--tag <tag>", "Wallet tag filter: renowned / smart_degen")
+    .option("--tag <tag>", "Wallet tag filter: smart_degen / renowned / fresh_wallet / dev / sniper / rat_trader / bundler / transfer_in / dex_bot / bluechip_owner")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       validateChain(opts.chain);
@@ -80,7 +80,7 @@ export function registerTokenCommands(program: Command): void {
     .option("--limit <n>", "Number of results (default 20, max 100)", parseInt)
     .option("--order-by <field>", "Sort field: amount_percentage / profit / unrealized_profit / buy_volume_cur / sell_volume_cur", "amount_percentage")
     .option("--direction <dir>", "Sort direction: asc / desc", "desc")
-    .option("--tag <tag>", "Wallet tag filter: renowned / smart_degen")
+    .option("--tag <tag>", "Wallet tag filter: smart_degen / renowned / fresh_wallet / dev / sniper / rat_trader / bundler / transfer_in / dex_bot / bluechip_owner")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       validateChain(opts.chain);
