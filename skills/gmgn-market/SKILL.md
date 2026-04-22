@@ -507,7 +507,7 @@ All filter flags are sent as part of the API request body — the server filters
 | `--min-progress` / `--max-progress` | float | Bonding curve progress (0–1) |
 | `--min-marketcap` / `--max-marketcap` | float | Market cap (USD) |
 | `--min-liquidity` / `--max-liquidity` | float | Liquidity (USD) |
-| `--min-created` / `--max-created` | string | Token age (e.g. `1m` / `5m` / `1h` / `24h`) |
+| `--min-created` / `--max-created` | duration | Token age — unit suffix recommended: seconds (`30s`, `10s`) or minutes (`0.5m`, `1m`, `5m`, `30m`). Bare numbers (e.g. `5`) are treated as minutes with a warning. |
 | `--min-holder-count` / `--max-holder-count` | int | Holder count |
 | `--min-top-holder-rate` / `--max-top-holder-rate` | float | Top-10 holder concentration (0–1) |
 | `--min-rug-ratio` / `--max-rug-ratio` | float | Rug pull risk score (0–1) |

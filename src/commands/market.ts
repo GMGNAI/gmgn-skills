@@ -4,12 +4,18 @@ import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
 import { validateAddress, validateChain } from "../validate.js";
 
-// Parse token age string — must include a unit suffix: s (seconds) or m (minutes).
-// e.g. "30s" → "30s", "0.5m" → "0.5m". Bare numbers without a unit are rejected.
+// Parse token age string. If a unit suffix is present (s/m), use it as-is.
+// Bare numbers (no unit) are treated as minutes with a warning.
 function parseDuration(value: string): string {
   if (/^\d+(\.\d+)?[sm]$/.test(value)) return value;
+  if (/^\d+(\.\d+)?$/.test(value)) {
+    console.warn(
+      `[gmgn-cli] Warning: no unit specified for duration "${value}" — treating as minutes (${value}m). Use a suffix to be explicit: ${value}s for seconds or ${value}m for minutes.`
+    );
+    return `${value}m`;
+  }
   console.error(
-    `[gmgn-cli] Invalid duration "${value}". A unit is required — use seconds (e.g. 30s) or minutes (e.g. 0.5m / 1m / 5m).`
+    `[gmgn-cli] Invalid duration "${value}". Use seconds (e.g. 30s) or minutes (e.g. 0.5m / 1m / 5m).`
   );
   process.exit(1);
 }
