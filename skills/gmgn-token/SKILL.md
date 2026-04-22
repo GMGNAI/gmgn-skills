@@ -101,7 +101,7 @@ When a request returns `429`:
 | `--limit` | No | `20` | Number of results, max `100` |
 | `--order-by` | No | `amount_percentage` | Sort field — see table below |
 | `--direction` | No | `desc` | Sort direction: `asc` / `desc` |
-| `--tag` | No | — | Wallet filter: `renowned` (KOL wallets) / `smart_degen` (smart money). Omit to return all wallets. |
+| `--tag` | No | — | Wallet filter: `smart_degen` / `renowned` / `fresh_wallet` / `dev` / `sniper` / `rat_trader` / `bundler` / `transfer_in` / `dex_bot` / `bluechip_owner`. Omit to return all wallets. |
 | `--raw` | No | — | Output raw single-line JSON |
 
 ### `--order-by` Values
@@ -116,10 +116,18 @@ When a request returns `429`:
 
 ### `--tag` Values
 
-| Value | Description |
-|-------|-------------|
-| `renowned` | KOL / well-known wallets (influencers, funds, public figures) |
-| `smart_degen` | Smart money wallets (historically high-performing traders) |
+| Value          | Description |
+| -------------- | ----------- |
+| `smart_degen`  | Smart money wallets (historically high-performing traders) |
+| `renowned`     | KOL / well-known wallets (influencers, funds, public figures) |
+| `fresh_wallet` | New wallets with no prior trading history |
+| `dev`          | Token developer / creator wallets |
+| `sniper`       | Wallets that sniped the token at launch |
+| `rat_trader`   | Insider / sneak-trading wallets |
+| `bundler`      | Bot-bundled buy wallets |
+| `transfer_in`  | Wallets with a transfer-in record for this token |
+| `dex_bot`      | DEX bot wallets (Axiom, Photon, BullX, Trojan, GMGN, Drops, PepeBoost, Padre) |
+| `bluechip_owner` | Wallets holding established bluechip tokens |
 
 ### `--tag` + `--order-by` Combination Guide
 
