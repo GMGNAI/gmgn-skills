@@ -219,8 +219,8 @@ const TRENCHES_FILTER_FIELDS: TrenchesFilterField[] = [
   { api: "min_liquidity",     type: "float",  desc: "Min liquidity (USD)" },
   { api: "max_liquidity",     type: "float",  desc: "Max liquidity (USD)" },
   // Token age
-  { api: "min_created",       type: "duration", desc: "Min token age — unit required: seconds (e.g. 30s) or minutes (e.g. 0.5m / 1m / 5m / 30m / 1h)" },
-  { api: "max_created",       type: "duration", desc: "Max token age — unit required: seconds (e.g. 30s) or minutes (e.g. 0.5m / 1m / 5m / 30m / 1h)" },
+  { api: "min_created",       type: "duration", desc: "Min token age — unit recommended: seconds (e.g. 30s) or minutes (e.g. 0.5m / 1m / 5m / 30m). Bare numbers treated as minutes." },
+  { api: "max_created",       type: "duration", desc: "Max token age — unit recommended: seconds (e.g. 30s) or minutes (e.g. 0.5m / 1m / 5m / 30m). Bare numbers treated as minutes." },
   // Holders
   { api: "min_holder_count",  type: "int",    desc: "Min holder count" },
   { api: "max_holder_count",  type: "int",    desc: "Max holder count" },
