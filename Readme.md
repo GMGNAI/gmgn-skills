@@ -673,7 +673,7 @@ gmgn-cli cooking \
 | Commands | Chains | Chain Currencies |
 |----------|--------|-----------------|
 | token / market / portfolio / track | `sol` / `bsc` / `base` / `eth` | — |
-| swap / order | `sol` / `bsc` / `base` / `eth` | sol: SOL, USDC · bsc: BNB, USDC · base: ETH, USDC · eth: ETH, USDC |
+| swap / order | `sol` / `bsc` / `base` / `eth` | sol: SOL, USDC · bsc: BNB, USDC · base: ETH, USDC · eth: ETH |
 
 ---
 
