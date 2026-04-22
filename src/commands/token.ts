@@ -10,7 +10,7 @@ export function registerTokenCommands(program: Command): void {
   token
     .command("info")
     .description("Get token basic information and realtime price")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--address <address>", "Token contract address")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
@@ -24,7 +24,7 @@ export function registerTokenCommands(program: Command): void {
   token
     .command("security")
     .description("Get token security metrics")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--address <address>", "Token contract address")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
@@ -38,7 +38,7 @@ export function registerTokenCommands(program: Command): void {
   token
     .command("pool")
     .description("Get token liquidity pool information")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--address <address>", "Token contract address")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
@@ -52,7 +52,7 @@ export function registerTokenCommands(program: Command): void {
   token
     .command("holders")
     .description("Get top token holders")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--address <address>", "Token contract address")
     .option("--limit <n>", "Number of results (default 20, max 100)", parseInt)
     .option("--order-by <field>", "Sort field: amount_percentage / profit / unrealized_profit / buy_volume_cur / sell_volume_cur", "amount_percentage")
@@ -75,7 +75,7 @@ export function registerTokenCommands(program: Command): void {
   token
     .command("traders")
     .description("Get top token traders")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--address <address>", "Token contract address")
     .option("--limit <n>", "Number of results (default 20, max 100)", parseInt)
     .option("--order-by <field>", "Sort field: amount_percentage / profit / unrealized_profit / buy_volume_cur / sell_volume_cur", "amount_percentage")

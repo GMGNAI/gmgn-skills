@@ -1,7 +1,7 @@
 ---
 name: gmgn-market
-description: Get crypto and meme token price charts (K-line, candlestick, OHLCV), trending meme coin rankings by volume, and newly launched tokens on launchpads (pump.fun, fourmeme, letsbonk, Raydium, etc.) via GMGN API on Solana, BSC, or Base. Use when user asks for price chart, trending tokens, what's pumping, hot coins, new launches, token signals, or wants to discover early-stage opportunities.
-argument-hint: "kline --chain <sol|bsc|base> --address <token_address> --resolution <1m|5m|15m|1h|4h|1d> [--from <unix_ts>] [--to <unix_ts>] | trending --chain <sol|bsc|base> --interval <1m|5m|1h|6h|24h> | trenches --chain <sol|bsc|base> | signal --chain <sol|bsc>"
+description: Get crypto and meme token price charts (K-line, candlestick, OHLCV), trending meme coin rankings by volume, and newly launched tokens on launchpads (pump.fun, fourmeme, letsbonk, Raydium, etc.) via GMGN API on Solana, BSC, Base, or Ethereum. Use when user asks for price chart, trending tokens, what's pumping, hot coins, new launches, token signals, or wants to discover early-stage opportunities.
+argument-hint: "kline --chain <sol|bsc|base|eth> --address <token_address> --resolution <1m|5m|15m|1h|4h|1d> [--from <unix_ts>] [--to <unix_ts>] | trending --chain <sol|bsc|base|eth> --interval <1m|5m|1h|6h|24h> | trenches --chain <sol|bsc|base> | signal --chain <sol|bsc>"
 metadata:
   cliHelp: "gmgn-cli market --help"
 ---
@@ -18,7 +18,7 @@ Use the `gmgn-cli` tool to query K-line data for a token, browse trending tokens
 
 - **`--filter` chain defaults** — SOL and EVM chains have different default safety filters that are applied automatically when `--filter` is omitted. Do not assume the same defaults apply across chains:
   - **SOL**: defaults to `renounced frozen` (mint and freeze authority renounced)
-  - **BSC / Base (EVM)**: defaults to `not_honeypot verified renounced`
+  - **BSC / Base / ETH (EVM)**: defaults to `not_honeypot verified renounced`
   - Omitting `--filter` is NOT the same as "no filter" — the chain defaults are always applied. To use a custom filter set, explicitly specify all desired filter tags.
 
 - **`volume` vs `amount` (kline)** — Naming is counterintuitive. `volume` = USD dollar value of trades; `amount` = token units traded. For a token priced at $0.0002, these differ by 5,000×. Always use `volume` for "how much USD was traded" and `amount` for "how many tokens changed hands."
@@ -52,7 +52,7 @@ Use the `gmgn-cli` tool to query K-line data for a token, browse trending tokens
 
 ## Supported Chains
 
-`sol` / `bsc` / `base` (signal: `sol` / `bsc` only)
+`sol` / `bsc` / `base` / `eth` (kline / trending only; trenches: `sol` / `bsc` / `base`; signal: `sol` / `bsc` only)
 
 ## Prerequisites
 
@@ -97,7 +97,7 @@ When a request returns `429`:
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
 | `--address` | Yes | Token contract address |
 | `--resolution` | Yes | Candlestick resolution: `1m` / `5m` / `15m` / `1h` / `4h` / `1d` |
 | `--from` | No | Start time (Unix seconds) |
@@ -140,13 +140,13 @@ The response is an object with a `list` array. Each element in `list` is one can
 
 | Option | Description |
 |--------|-------------|
-| `--chain` | Required. `sol` / `bsc` / `base` |
+| `--chain` | Required. `sol` / `bsc` / `base` / `eth` |
 | `--interval` | Required. `1m` / `5m` / `1h` / `6h` / `24h` (default `1h`) |
 | `--limit <n>` | Number of results (default 100, max 100) |
 | `--order-by <field>` | Sort field: `default` / `swaps` / `marketcap` / `history_highest_market_cap` / `liquidity` / `volume` / `holder_count` / `smart_degen_count` / `renowned_count` / `gas_fee` / `price` / `change1m` / `change5m` / `change1h` / `creation_timestamp` |
 | `--direction <asc\|desc>` | Sort direction (default `desc`) |
-| `--filter <tag...>` | Repeatable filter tags (chain-specific). **⚠️ SOL defaults: `renounced frozen`; BSC/Base defaults: `not_honeypot verified renounced`.** Omitting `--filter` is NOT "no filter" — chain defaults always apply. **sol** tags: `renounced` / `frozen` / `burn` / `token_burnt` / `has_social` / `not_social_dup` / `not_image_dup` / `dexscr_update_link` / `not_wash_trading` / `is_internal_market` / `is_out_market`. **evm** tags: `not_honeypot` / `verified` / `renounced` / `locked` / `token_burnt` / `has_social` / `not_social_dup` / `not_image_dup` / `dexscr_update_link` / `is_internal_market` / `is_out_market` |
-| `--platform <name...>` | Repeatable platform filter (chain-specific). **sol**: `Pump.fun` / `pump_mayhem` / `pump_mayhem_agent` / `pump_agent` / `letsbonk` / `bonkers` / `bags` / `memoo` / `liquid` / `bankr` / `zora` / `surge` / `anoncoin` / `moonshot_app` / `wendotdev` / `heaven` / `sugar` / `token_mill` / `believe` / `trendsfun` / `trends_fun` / `jup_studio` / `Moonshot` / `boop` / `xstocks` / `ray_launchpad` / `meteora_virtual_curve` / `pool_ray` / `pool_meteora` / `pool_pump_amm` / `pool_orca`. **bsc**: `fourmeme` / `fourmeme_agent` / `bn_fourmeme` / `flap` / `clanker` / `lunafun` / `pool_uniswap` / `pool_pancake`. **base**: `clanker` / `bankr` / `flaunch` / `zora` / `zora_creator` / `baseapp` / `basememe` / `virtuals_v2` / `klik` |
+| `--filter <tag...>` | Repeatable filter tags (chain-specific). **⚠️ SOL defaults: `renounced frozen`; BSC/Base/ETH defaults: `not_honeypot verified renounced`.** Omitting `--filter` is NOT "no filter" — chain defaults always apply. **sol** tags: `renounced` / `frozen` / `burn` / `token_burnt` / `has_social` / `not_social_dup` / `not_image_dup` / `dexscr_update_link` / `not_wash_trading` / `is_internal_market` / `is_out_market`. **evm** tags: `not_honeypot` / `verified` / `renounced` / `locked` / `token_burnt` / `has_social` / `not_social_dup` / `not_image_dup` / `dexscr_update_link` / `is_internal_market` / `is_out_market` |
+| `--platform <name...>` | Repeatable platform filter (chain-specific). **sol**: `Pump.fun` / `pump_mayhem` / `pump_mayhem_agent` / `pump_agent` / `letsbonk` / `bonkers` / `bags` / `memoo` / `liquid` / `bankr` / `zora` / `surge` / `anoncoin` / `moonshot_app` / `wendotdev` / `heaven` / `sugar` / `token_mill` / `believe` / `trendsfun` / `trends_fun` / `jup_studio` / `Moonshot` / `boop` / `xstocks` / `ray_launchpad` / `meteora_virtual_curve` / `pool_ray` / `pool_meteora` / `pool_pump_amm` / `pool_orca`. **bsc**: `fourmeme` / `fourmeme_agent` / `bn_fourmeme` / `flap` / `clanker` / `lunafun` / `pool_uniswap` / `pool_pancake`. **base**: `clanker` / `bankr` / `flaunch` / `zora` / `zora_creator` / `baseapp` / `basememe` / `virtuals_v2` / `klik`. **eth**: no platform filter (omit `--platform` for ETH) |
 
 ## Usage Examples
 
@@ -176,6 +176,14 @@ gmgn-cli market kline \
 # Raw output for further processing
 gmgn-cli market kline --chain sol --address <addr> \
   --resolution 5m --from <ts> --to <ts> --raw | jq '.[]'
+
+# ETH token kline — last 24h, 1h candles (macOS)
+gmgn-cli market kline \
+  --chain eth \
+  --address 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 \
+  --resolution 1h \
+  --from $(date -v-24H +%s) \
+  --to $(date +%s)
 ```
 
 ### Trending — General
@@ -246,6 +254,25 @@ gmgn-cli market trending \
   --platform fourmeme --platform fourmeme_agent --platform bn_fourmeme --platform four_xmode_agent \
   --filter not_honeypot --filter verified \
   --order-by volume --limit 20 --raw
+```
+
+### Trending — ETH (No Platform Filter)
+
+```bash
+# ETH 1h trending — all tokens, sorted by volume
+gmgn-cli market trending --chain eth --interval 1h --order-by volume --limit 20
+
+# ETH 1h trending — with safety filters
+gmgn-cli market trending \
+  --chain eth --interval 1h \
+  --filter not_honeypot --filter verified \
+  --order-by volume --limit 20 --raw
+
+# ETH 24h trending — sorted by smart money count
+gmgn-cli market trending \
+  --chain eth --interval 24h \
+  --filter not_honeypot --filter verified \
+  --order-by smart_degen_count --limit 20 --raw
 ```
 
 ### Trending — Base by Launchpad Platform

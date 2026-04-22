@@ -10,7 +10,7 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("holdings")
     .description("Get wallet token holdings")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--wallet <address>", "Wallet address")
     .option("--limit <n>", "Page size (default 20, max 50)", parseInt, 20)
     .option("--cursor <cursor>", "Pagination cursor")
@@ -46,7 +46,7 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("activity")
     .description("Get wallet transaction activity")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--wallet <address>", "Wallet address")
     .option("--token <address>", "Filter by token contract address")
     .option("--limit <n>", "Page size", parseInt)
@@ -71,7 +71,7 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("stats")
     .description("Get wallet trading statistics (supports multiple wallets)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--wallet <address...>", "Wallet address(es), repeatable")
     .option("--period <period>", "Stats period: 7d / 30d", "7d")
     .option("--raw", "Output raw JSON")
@@ -96,7 +96,7 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("token-balance")
     .description("Get wallet token balance for a single token")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--wallet <address>", "Wallet address")
     .requiredOption("--token <address>", "Token contract address")
     .option("--raw", "Output raw JSON")

@@ -1,7 +1,7 @@
 ---
 name: gmgn-track
-description: Get real-time crypto buy/sell activity from Smart Money wallets, KOL influencer wallets, and personally followed wallets via GMGN API — alpha signals, whale tracking, meme token copy-trading ideas on Solana, BSC, or Base. Use when user asks what smart money or KOLs are buying, wants whale alerts, on-chain alpha, or copy-trade signals. (For a specific wallet address, use gmgn-portfolio.)
-argument-hint: "<follow-wallet|kol|smartmoney> [--chain <sol|bsc|base>] [--wallet <wallet_address>]"
+description: Get real-time crypto buy/sell activity from Smart Money wallets, KOL influencer wallets, and personally followed wallets via GMGN API — alpha signals, whale tracking, meme token copy-trading ideas on Solana, BSC, Base, or Ethereum. Use when user asks what smart money or KOLs are buying, wants whale alerts, on-chain alpha, or copy-trade signals. (For a specific wallet address, use gmgn-portfolio.)
+argument-hint: "<follow-wallet|kol|smartmoney> [--chain <sol|bsc|base|eth>] [--wallet <wallet_address>]"
 metadata:
   cliHelp: "gmgn-cli track --help"
 ---
@@ -55,7 +55,7 @@ Use the `gmgn-cli` tool to query on-chain tracking data based on the user's requ
 
 ## Supported Chains
 
-`sol` / `bsc` / `base`
+`sol` / `bsc` / `base` / `eth` (follow-wallet); `sol` / `bsc` / `base` (kol / smartmoney)
 
 ## Prerequisites
 
@@ -130,7 +130,7 @@ gmgn-cli track smartmoney --chain sol --side sell --limit 10 --raw
 
 | Option | Description |
 |--------|-------------|
-| `--chain` | Required. `sol` / `bsc` / `base` |
+| `--chain` | Required. `sol` / `bsc` / `base` / `eth` |
 | `--wallet <address>` | Filter by wallet address |
 | `--limit <n>` | Page size (1–100, default 10) |
 | `--side <side>` | Trade direction: `buy` / `sell` |

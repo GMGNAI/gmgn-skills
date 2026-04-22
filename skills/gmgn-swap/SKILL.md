@@ -1,6 +1,6 @@
 ---
 name: gmgn-swap
-description: "[FINANCIAL EXECUTION] Buy and sell meme coins and crypto tokens on Solana, BSC, or Base — single swap, multi-wallet batch trading, limit orders, stop loss, take profit, trailing stop loss, trailing take profit via GMGN API. Requires explicit user confirmation. Use when user asks to buy, sell, or swap a token, trade from multiple wallets, set a limit order, stop loss, take profit, or check order status."
+description: "[FINANCIAL EXECUTION] Buy and sell meme coins and crypto tokens on Solana, BSC, Base, or Ethereum — single swap, multi-wallet batch trading, limit orders, stop loss, take profit, trailing stop loss, trailing take profit via GMGN API. Requires explicit user confirmation. Use when user asks to buy, sell, or swap a token, trade from multiple wallets, set a limit order, stop loss, take profit, or check order status."
 argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type limit_order --sub-order-type <buy_low|buy_high|stop_loss|take_profit> ...]"
 metadata:
   cliHelp: "gmgn-cli swap --help"
@@ -55,18 +55,18 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. `GMGN
 
 ## Supported Chains
 
-`sol` / `bsc` / `base` 
-
+`sol` / `bsc` / `base` / `eth`
 
 ## Chain Currencies
 
 Currency tokens are the base/native assets of each chain. They are used to buy other tokens or receive proceeds from selling. Knowing which tokens are currencies is critical for `--percent` usage (see Swap Parameters below).
 
-| Chain | Currency tokens |
-|-------|----------------|
-| `sol` | SOL (native, So11111111111111111111111111111111111111112), USDC (`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`) |
-| `bsc` | BNB (native, 0x0000000000000000000000000000000000000000), USDC (`0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d`) |
+| Chain  | Currency tokens |
+| ------ | --------------- |
+| `sol`  | SOL (native, So11111111111111111111111111111111111111112), USDC (`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`) |
+| `bsc`  | BNB (native, 0x0000000000000000000000000000000000000000), USDC (`0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d`) |
 | `base` | ETH (native, 0x0000000000000000000000000000000000000000), USDC (`0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`) |
+| `eth`  | ETH (native, 0x0000000000000000000000000000000000000000), USDC (`0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48`) |
 
 
 ## Prerequisites
@@ -219,9 +219,9 @@ gmgn-cli multi-swap \
 | `--tip-fee <amount>` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB). Required when using `--condition-orders` on SOL. |
 | `--auto-tip-fee` | No | Enable automatic tip fee. |
 | `--max-auto-fee <amount>` | No | Max automatic fee cap. |
-| `--gas-price <gwei>` | No | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01). Required when using `--condition-orders` on BSC. |
-| `--max-fee-per-gas <amount>` | No | EIP-1559 max fee per gas (Base only). |
-| `--max-priority-fee-per-gas <amount>` | No | EIP-1559 max priority fee per gas (Base only). |
+| `--gas-price <gwei>` | No | Gas price in gwei (BSC: 0.05–10 / BASE: 0.01–10 / ETH: 2–20). Required when using `--condition-orders` on BSC. |
+| `--max-fee-per-gas <amount>` | No | EIP-1559 max fee per gas (Base / ETH). Defaults to `--gas-price` if omitted. |
+| `--max-priority-fee-per-gas <amount>` | No | EIP-1559 max priority fee per gas (Base / ETH). Defaults to `--gas-price` if omitted. |
 | `--condition-orders <json>` | No | JSON array of condition sub-orders (take-profit / stop-loss) attached to each successful wallet's swap. Same structure as `swap --condition-orders`. Strategy creation is best-effort per wallet. |
 | `--sell-ratio-type <type>` | No | Sell ratio base for `--condition-orders`: `buy_amount` (default) / `hold_amount`. |
 
@@ -273,7 +273,7 @@ gmgn-cli order get --chain sol --order-id <order_id>
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--input-token` | Yes | Input token contract address |
 | `--output-token` | Yes | Output token contract address |

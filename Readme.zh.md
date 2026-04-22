@@ -603,7 +603,7 @@ gmgn-cli multi-swap \
   --slippage 0.01
 ```
 
-> `order quote` 在 `sol` / `bsc` / `base` 上都走关键鉴权，必须配置 `GMGN_PRIVATE_KEY`。
+> `order quote` 在 `sol` / `bsc` / `base` / `eth` 上都走关键鉴权，必须配置 `GMGN_PRIVATE_KEY`。
 
 ### 带止盈止损的 Swap（需要私钥）
 
@@ -696,8 +696,8 @@ gmgn-cli cooking \
 
 | 接口类型 | 支持的链 | 链原生货币 |
 |----------|----------|-----------|
-| token / market / portfolio / track | `sol` / `bsc` / `base` | — |
-| swap / order | `sol` / `bsc` / `base` | sol: SOL、USDC · bsc: BNB、USDC · base: ETH、USDC |
+| token / market / portfolio / track | `sol` / `bsc` / `base` / `eth` | — |
+| swap / order | `sol` / `bsc` / `base` / `eth` | sol: SOL、USDC · bsc: BNB、USDC · base: ETH、USDC · eth: ETH、USDC |
 
 ---
 

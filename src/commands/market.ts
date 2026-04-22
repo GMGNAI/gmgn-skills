@@ -26,7 +26,7 @@ export function registerMarketCommands(program: Command): void {
   market
     .command("kline")
     .description("Get token K-line (candlestick) data")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--address <address>", "Token contract address")
     .requiredOption("--resolution <resolution>", "Candlestick resolution: 1m / 5m / 15m / 1h / 4h / 1d")
     .option("--from <timestamp>", "Start time (Unix seconds)", parseInt)
@@ -51,7 +51,7 @@ export function registerMarketCommands(program: Command): void {
   market
     .command("trending")
     .description("Get trending token swap data")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--interval <interval>", "Time interval: 1m / 5m / 1h / 6h / 24h")
     .option("--limit <n>", "Number of results (default 100, max 100)", parseInt)
     .option("--order-by <field>", "Sort field: default / volume / swaps / marketcap / holder_count / price / change1h / ... (see docs for full list)")
