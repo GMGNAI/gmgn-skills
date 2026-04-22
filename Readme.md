@@ -579,7 +579,7 @@ gmgn-cli multi-swap \
   --slippage 0.01
 ```
 
-> `order quote` uses critical auth on `sol` / `bsc` / `base` and requires `GMGN_PRIVATE_KEY`.
+> `order quote` uses critical auth on `sol` / `bsc` / `base` / `eth` and requires `GMGN_PRIVATE_KEY`.
 
 ### Swap with Take-Profit / Stop-Loss Orders (requires private key)
 
@@ -672,8 +672,8 @@ gmgn-cli cooking \
 
 | Commands | Chains | Chain Currencies |
 |----------|--------|-----------------|
-| token / market / portfolio / track | `sol` / `bsc` / `base` | — |
-| swap / order | `sol` / `bsc` / `base` | sol: SOL, USDC · bsc: BNB, USDC · base: ETH, USDC |
+| token / market / portfolio / track | `sol` / `bsc` / `base` / `eth` | — |
+| swap / order | `sol` / `bsc` / `base` / `eth` | sol: SOL, USDC · bsc: BNB, USDC · base: ETH, USDC · eth: ETH, USDC |
 
 ---
 

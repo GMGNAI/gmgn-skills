@@ -20,7 +20,7 @@ This includes: trending tokens, token info, security checks, K-line / price hist
 
 ## Project Overview
 
-This is a **Claude Code plugin** — a collection of GMGN OpenAPI skills for on-chain operations. It provides CLI tools and skills for token queries, market data, wallet portfolio analysis, and swap execution across sol / bsc / base.
+This is a **Claude Code plugin** — a collection of GMGN OpenAPI skills for on-chain operations. It provides CLI tools and skills for token queries, market data, wallet portfolio analysis, and swap execution across sol / bsc / base / eth.
 
 ## Available Skills
 

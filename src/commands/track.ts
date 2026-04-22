@@ -10,7 +10,7 @@ export function registerTrackCommands(program: Command): void {
   track
     .command("follow-wallet")
     .description("Get follow-wallet trade records")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .option("--wallet <address>", "Filter by wallet address")
     .option("--limit <n>", "Page size (1–100, default 10)", parseInt)
     .option("--side <side>", "Trade direction filter: buy / sell")

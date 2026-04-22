@@ -8,7 +8,7 @@ export function registerSwapCommands(program: Command): void {
   program
     .command("swap")
     .description("Submit a token swap")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth ")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
     .requiredOption("--input-token <address>", "Input token contract address")
     .requiredOption("--output-token <address>", "Output token contract address")
@@ -76,7 +76,7 @@ export function registerSwapCommands(program: Command): void {
   order
     .command("quote")
     .description("Get a swap quote without submitting a transaction (requires critical auth)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base (requires GMGN_PRIVATE_KEY)")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth (requires GMGN_PRIVATE_KEY)")
     .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
     .requiredOption("--input-token <address>", "Input token contract address")
     .requiredOption("--output-token <address>", "Output token contract address")

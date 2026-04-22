@@ -1,7 +1,7 @@
 ---
 name: gmgn-token
-description: Research any crypto or meme token by address — real-time price, market cap, liquidity, holder list, trader list, top Smart Money and KOL positions, security audit (honeypot, rug pull risk, dev wallet, renounced status), social links (Twitter/X, website) via GMGN API on Solana, BSC, or Base. Use when user asks about a token's price, safety, holders, traders, smart money exposure, or wants due diligence before buying.
-argument-hint: "<sub-command> --chain <sol|bsc|base> --address <token_address>"
+description: Research any crypto or meme token by address — real-time price, market cap, liquidity, holder list, trader list, top Smart Money and KOL positions, security audit (honeypot, rug pull risk, dev wallet, renounced status), social links (Twitter/X, website) via GMGN API on Solana, BSC, Base, or Ethereum. Use when user asks about a token's price, safety, holders, traders, smart money exposure, or wants due diligence before buying.
+argument-hint: "<sub-command> --chain <sol|bsc|base|eth> --address <token_address>"
 metadata:
   cliHelp: "gmgn-cli token --help"
 ---
@@ -17,7 +17,7 @@ Use the `gmgn-cli` tool to query token information based on the user's request.
 ## Core Concepts
 
 - **Token address** — The on-chain contract address that uniquely identifies a token on its chain. Required for all token sub-commands. Format: base58 (SOL) or `0x...` hex (BSC/Base).
-- **Chain** — The blockchain network: `sol` = Solana, `bsc` = BNB Smart Chain, `base` = Base (Coinbase L2).
+- **Chain** — The blockchain network: `sol` = Solana, `bsc` = BNB Smart Chain, `base` = Base (Coinbase L2), `eth` = Ethereum mainnet.
 - **Market cap** — Not returned directly by `token info`. Calculate as `price × circulating_supply` (both are top-level fields in the response, already in human-readable units).
 - **Liquidity** — USD value of token reserves in the main trading pool. Low liquidity (< $10k) means high price impact / slippage when buying or selling.
 - **Holder** — A wallet that currently holds the token. `token holders` returns wallets ranked by current balance.
@@ -42,7 +42,7 @@ Use the `gmgn-cli` tool to query token information based on the user's request.
 
 ## Supported Chains
 
-`sol` / `bsc` / `base`
+`sol` / `bsc` / `base` / `eth`
 
 ## Prerequisites
 
@@ -88,7 +88,7 @@ When a request returns `429`:
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
 | `--address` | Yes | Token contract address |
 | `--raw` | No | Output raw single-line JSON (for piping or further processing) |
 
@@ -96,7 +96,7 @@ When a request returns `429`:
 
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
-| `--chain` | Yes | — | `sol` / `bsc` / `base` |
+| `--chain` | Yes | — | `sol` / `bsc` / `base` / `eth` |
 | `--address` | Yes | — | Token contract address |
 | `--limit` | No | `20` | Number of results, max `100` |
 | `--order-by` | No | `amount_percentage` | Sort field — see table below |
@@ -447,6 +447,9 @@ gmgn-cli token info --chain bsc --address 0x2170Ed0880ac9A755fd29B2688956BD959F9
 # Get basic info for a Base token
 gmgn-cli token info --chain base --address 0x4200000000000000000000000000000000000006
 
+# Get basic info for an ETH token
+gmgn-cli token info --chain eth --address 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
+
 # Raw JSON output for downstream processing
 gmgn-cli token info --chain sol --address EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v --raw
 ```
@@ -463,6 +466,9 @@ gmgn-cli token security --chain bsc --address 0x2170Ed0880ac9A755fd29B2688956BD9
 # Check a Base token for tax, rug ratio, and insider concentration
 gmgn-cli token security --chain base --address 0x4200000000000000000000000000000000000006
 
+# Check an ETH token for honeypot and contract risks
+gmgn-cli token security --chain eth --address 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
+
 # Raw output for parsing key fields (e.g. is_honeypot, buy_tax, rug_ratio)
 gmgn-cli token security --chain bsc --address 0x2170Ed0880ac9A755fd29B2688956BD959F933F8 --raw
 ```
@@ -475,6 +481,9 @@ gmgn-cli token pool --chain sol --address EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZw
 
 # Get pool info for a BSC token
 gmgn-cli token pool --chain bsc --address 0x2170Ed0880ac9A755fd29B2688956BD959F933F8
+
+# Get pool info for an ETH token
+gmgn-cli token pool --chain eth --address 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
 ```
 
 ### `token holders` — Analyze Holder Distribution
@@ -510,6 +519,10 @@ gmgn-cli token holders --chain sol --address EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGG
 # BSC token holders — KOL wallets by profit
 gmgn-cli token holders --chain bsc --address 0x2170Ed0880ac9A755fd29B2688956BD959F933F8 \
   --tag renowned --order-by profit --direction desc --limit 50
+
+# ETH token holders — smart money by supply percentage
+gmgn-cli token holders --chain eth --address 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 \
+  --tag smart_degen --order-by amount_percentage --direction desc --limit 20
 
 # Raw output for downstream analysis
 gmgn-cli token holders --chain sol --address EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v \
@@ -558,6 +571,10 @@ gmgn-cli token traders --chain sol --address EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGG
 
 # BSC token traders by profit
 gmgn-cli token traders --chain bsc --address 0x2170Ed0880ac9A755fd29B2688956BD959F933F8 \
+  --tag smart_degen --order-by profit --direction desc --limit 50
+
+# ETH token traders by profit
+gmgn-cli token traders --chain eth --address 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2 \
   --tag smart_degen --order-by profit --direction desc --limit 50
 ```
 
