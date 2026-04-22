@@ -4,6 +4,16 @@ import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
 import { validateAddress, validateChain } from "../validate.js";
 
+// Parse token age string — must include a unit suffix: s (seconds) or m (minutes).
+// e.g. "30s" → "30s", "0.5m" → "0.5m". Bare numbers without a unit are rejected.
+function parseDuration(value: string): string {
+  if (/^\d+(\.\d+)?[sm]$/.test(value)) return value;
+  console.error(
+    `[gmgn-cli] Invalid duration "${value}". A unit is required — use seconds (e.g. 30s) or minutes (e.g. 0.5m / 1m / 5m).`
+  );
+  process.exit(1);
+}
+
 export function registerMarketCommands(program: Command): void {
   const market = program.command("market").description("Market data commands");
 
@@ -76,6 +86,8 @@ export function registerMarketCommands(program: Command): void {
       trenchesCmd.option(`--${flag} <${def.type}>`, def.desc, parseInt);
     } else if (def.type === "float") {
       trenchesCmd.option(`--${flag} <${def.type}>`, def.desc, parseFloat);
+    } else if (def.type === "duration") {
+      trenchesCmd.option(`--${flag} <duration>`, def.desc, parseDuration);
     } else {
       trenchesCmd.option(`--${flag} <value>`, def.desc);
     }
@@ -169,7 +181,7 @@ export function registerMarketCommands(program: Command): void {
 
 // ---- Trenches filter field definitions ----
 
-type TrenchesFieldType = "int" | "float" | "string";
+type TrenchesFieldType = "int" | "float" | "string" | "duration";
 
 interface TrenchesFilterField {
   api: string;
@@ -201,8 +213,8 @@ const TRENCHES_FILTER_FIELDS: TrenchesFilterField[] = [
   { api: "min_liquidity",     type: "float",  desc: "Min liquidity (USD)" },
   { api: "max_liquidity",     type: "float",  desc: "Max liquidity (USD)" },
   // Token age
-  { api: "min_created",       type: "string", desc: "Min token age (e.g. 1m / 5m / 30m / 1h / 6h / 24h)" },
-  { api: "max_created",       type: "string", desc: "Max token age (e.g. 1m / 5m / 30m / 1h / 6h / 24h)" },
+  { api: "min_created",       type: "duration", desc: "Min token age — unit required: seconds (e.g. 30s) or minutes (e.g. 0.5m / 1m / 5m / 30m / 1h)" },
+  { api: "max_created",       type: "duration", desc: "Max token age — unit required: seconds (e.g. 30s) or minutes (e.g. 0.5m / 1m / 5m / 30m / 1h)" },
   // Holders
   { api: "min_holder_count",  type: "int",    desc: "Min holder count" },
   { api: "max_holder_count",  type: "int",    desc: "Max holder count" },
