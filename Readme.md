@@ -22,7 +22,7 @@ With GMGN Agent Skills, you can use AI agents to query real-time trending token 
 
 ### 1. Real-time on-chain data — faster
 
-Data across SOL / BSC / Base is live on every query. Supports multi-parameter customization, no snapshot cache — built for AI agent real-time decision-making (including but not limited to):
+Data across SOL / BSC / Base / ETH is live on every query. Supports multi-parameter customization, no snapshot cache — built for AI agent real-time decision-making (including but not limited to):
 
 | Data | Granularity |
 |------|-------------|
