@@ -112,7 +112,7 @@ export function registerSwapCommands(program: Command): void {
   program
     .command("multi-swap")
     .description("Submit token swaps across multiple wallets concurrently (up to 100 wallets)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--accounts <addresses>", "Comma-separated wallet addresses (all must be bound to the API Key)")
     .requiredOption("--input-token <address>", "Input token contract address")
     .requiredOption("--output-token <address>", "Output token contract address")
@@ -186,7 +186,7 @@ export function registerSwapCommands(program: Command): void {
   strategy
     .command("create")
     .description("Create a limit/strategy order (requires private key)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
     .requiredOption("--base-token <address>", "Base token contract address")
     .requiredOption("--quote-token <address>", "Quote token contract address")
@@ -243,7 +243,7 @@ export function registerSwapCommands(program: Command): void {
   strategy
     .command("list")
     .description("List strategy orders (requires private key)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .option("--type <type>", "open (default) / history")
     .option("--from <address>", "Filter by wallet address")
     .option("--group-tag <tag>", "Filter by group: LimitOrder / STMix")
@@ -268,7 +268,7 @@ export function registerSwapCommands(program: Command): void {
   strategy
     .command("cancel")
     .description("Cancel a strategy order (requires private key)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
     .requiredOption("--order-id <id>", "Order ID to cancel")
     .option("--order-type <type>", "Order type: limit_order / smart_trade")

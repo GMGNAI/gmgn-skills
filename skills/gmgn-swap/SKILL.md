@@ -199,13 +199,23 @@ gmgn-cli multi-swap \
   --priority-fee 0.00001 \
   --tip-fee 0.00001 \
   --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"100","sell_ratio":"100"},{"order_type":"loss_stop","side":"sell","price_scale":"50","sell_ratio":"100"}]'
+
+# ETH multi-wallet swap (EIP-1559 gas)
+gmgn-cli multi-swap \
+  --chain eth \
+  --accounts <0xaddr1>,<0xaddr2> \
+  --input-token 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 \
+  --output-token <token_address> \
+  --input-amount '{"<0xaddr1>":"1000000","<0xaddr2>":"2000000"}' \
+  --slippage 0.01 \
+  --gas-price 5
 ```
 
 ## `multi-swap` Parameters
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
 | `--accounts` | Yes | Comma-separated wallet addresses (1–100, all must be bound to the API Key) |
 | `--input-token` | Yes | Input token contract address |
 | `--output-token` | Yes | Output token contract address |
@@ -442,7 +452,7 @@ Convert `report.input_amount` and `report.output_amount` from smallest unit usin
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--base-token` | Yes | Base token contract address |
 | `--quote-token` | Yes | Quote token contract address |
@@ -473,7 +483,7 @@ Convert `report.input_amount` and `report.output_amount` from smallest unit usin
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
 | `--type` | No | `open` (default) / `history` |
 | `--from` | No | Filter by wallet address |
 | `--group-tag` | Yes | Filter by order group: `LimitOrder` (limit orders only) / `STMix` (mixed strategy orders: take-profit, stop-loss, trailing take-profit, trailing stop-loss) |
@@ -493,7 +503,7 @@ Convert `report.input_amount` and `report.output_amount` from smallest unit usin
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--order-id` | Yes | Order ID to cancel |
 | `--order-type` | No | Order type: `limit_order` (limit order) / `smart_trade` (mixed strategy order: take-profit, stop-loss, trailing take-profit, trailing stop-loss) |
