@@ -43,7 +43,7 @@ Use the `gmgn-cli` tool to query wallet portfolio data based on the user's reque
 
 ## Supported Chains
 
-`sol` / `bsc` / `base` / `eth` (info / holdings / activity / stats / token-balance); `sol` / `bsc` / `base` (created-tokens)
+`sol` / `bsc` / `base` / `eth`
 
 ## Prerequisites
 

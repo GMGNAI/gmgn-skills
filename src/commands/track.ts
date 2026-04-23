@@ -35,7 +35,7 @@ export function registerTrackCommands(program: Command): void {
   track
     .command("kol")
     .description("Get KOL trade records")
-    .option("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .option("--limit <n>", "Page size (1–200, default 100)", parseInt)
     .option("--side <side>", "Filter by trade direction: buy / sell (client-side filter)")
     .option("--raw", "Output raw JSON")
@@ -52,7 +52,7 @@ export function registerTrackCommands(program: Command): void {
   track
     .command("smartmoney")
     .description("Get Smart Money trade records")
-    .option("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .option("--limit <n>", "Page size (1–200, default 100)", parseInt)
     .option("--side <side>", "Filter by trade direction: buy / sell (client-side filter)")
     .option("--raw", "Output raw JSON")

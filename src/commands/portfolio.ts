@@ -112,7 +112,7 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("created-tokens")
     .description("Get tokens created by a developer wallet")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
     .requiredOption("--wallet <address>", "Developer wallet address")
     .option("--order-by <field>", "Sort field: market_cap / token_ath_mc")
     .option("--direction <dir>", "Sort direction: asc / desc")
