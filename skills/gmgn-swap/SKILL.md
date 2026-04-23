@@ -61,12 +61,14 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. `GMGN
 
 Currency tokens are the base/native assets of each chain. They are used to buy other tokens or receive proceeds from selling. Knowing which tokens are currencies is critical for `--percent` usage (see Swap Parameters below).
 
+> ⚠️ **CRITICAL: Always copy currency addresses from this table — NEVER rely on memory or training data.** A wrong address (e.g. `So11111111111111111111111111111111111111111` instead of `So11111111111111111111111111111111111111112`) will cause silent failures or `jupiter has no route` errors with no clear indication of what went wrong.
+
 | Chain  | Currency tokens |
 | ------ | --------------- |
-| `sol`  | SOL (native, So11111111111111111111111111111111111111112), USDC (`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`) |
-| `bsc`  | BNB (native, 0x0000000000000000000000000000000000000000), USDC (`0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d`) |
-| `base` | ETH (native, 0x0000000000000000000000000000000000000000), USDC (`0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`) |
-| `eth`  | ETH (native, 0x0000000000000000000000000000000000000000) |
+| `sol`  | SOL (native, `So11111111111111111111111111111111111111112`), USDC (`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`) |
+| `bsc`  | BNB (native, `0x0000000000000000000000000000000000000000`), USDC (`0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d`) |
+| `base` | ETH (native, `0x0000000000000000000000000000000000000000`), USDC (`0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`) |
+| `eth`  | ETH (native, `0x0000000000000000000000000000000000000000`) |
 
 
 ## Prerequisites
