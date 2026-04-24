@@ -249,8 +249,6 @@ The response has five nested objects: `pool`, `dev`, `link`, `stat`, `wallet_tag
 | Field | Description |
 |-------|-------------|
 | `stat.holder_count` | Number of holders (same as top-level `holder_count`) |
-| `stat.bluechip_owner_count` | Number of bluechip wallet holders |
-| `stat.bluechip_owner_percentage` | Ratio of holders that are bluechip wallets (0–1) |
 | `stat.top_10_holder_rate` | Ratio of supply held by top 10 wallets (0–1) |
 | `stat.dev_team_hold_rate` | Ratio held by dev team wallets |
 | `stat.creator_hold_rate` | Ratio held by creator wallet |
