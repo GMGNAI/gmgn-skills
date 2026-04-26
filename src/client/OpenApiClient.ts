@@ -302,8 +302,27 @@ export class OpenApiClient {
 
   // ---- User endpoints (normal auth) ----
 
-  async getUserInfo(): Promise<unknown> {
-    return this.normalRequest("GET", "/v1/user/info", {});
+  async getUserInfo(): Promise<any> {
+    const data = await this.normalRequest("GET", "/v1/user/info", {});
+    // [NÂNG CẤP V102.8] Khắc phục Issue #7: Hoán đổi token_address cho Solana
+    if (data && typeof data === "object" && "wallets" in data) {
+      const wallets = (data as any).wallets;
+      if (Array.isArray(wallets)) {
+        wallets.forEach((w: any) => {
+          if (w.chain === "sol" && w.balances && Array.isArray(w.balances)) {
+            w.balances.forEach((b: any) => {
+              if (b.token_address && b.address) {
+                // Hoán đổi lại các trường bị sai lệch theo báo cáo Issue #7
+                const temp = b.token_address;
+                b.token_address = b.address;
+                b.address = temp;
+              }
+            });
+          }
+        });
+      }
+    }
+    return data;
   }
 
   async getFollowWallet(chain: string, extra: Record<string, string | number | string[]> = {}): Promise<unknown> {
