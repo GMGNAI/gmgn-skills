@@ -950,6 +950,7 @@ gmgn-cli market signal --chain sol \
 
 - `market kline`: `--from` and `--to` are Unix timestamps in **seconds** — CLI converts to milliseconds automatically
 - `market trending`: `--filter` and `--platform` are repeatable flags
+- `market trending` **default sort**: when the user does not specify any sort field, always use `--order-by default --direction desc` (GMGN composite score, descending). Only override `--order-by` when the user explicitly requests a different sort field.
 - All commands use normal auth (API Key only, no signature)
 - If the user doesn't provide kline timestamps, calculate them from the current time based on their desired time range
 - Use `--raw` to get single-line JSON for further processing
