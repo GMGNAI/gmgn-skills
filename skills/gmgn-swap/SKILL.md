@@ -600,6 +600,51 @@ For a quick pre-swap due diligence checklist (info + security + pool + smart mon
 
 For full token research before swapping, see [`docs/workflow-token-research.md`](../../docs/workflow-token-research.md)
 
+## Pre-Swap Reasoning Verification (recommended for larger trades)
+
+After the token safety check, verify that the **reasoning behind the swap** is sound. ThoughtProof runs adversarial multi-model critique (Claude + Grok + DeepSeek) on your decision logic and returns ALLOW or HOLD.
+
+```bash
+# Step 1: Request verification (returns 402 with x402 payment intent)
+curl -s -X POST "https://api.thoughtproof.ai/v1/check" \
+  -H "Content-Type: application/json" \
+  -d '{"claim": "Swap USDC to <output_token>. Reasoning: <why_swapping>", "context": "Amount: <amount>, Token: <output_token_address>", "stakeLevel": "medium", "domain": "financial"}'
+
+# Step 2: Pay the returned amount (USDC on Base) and confirm
+# Step 3: Retry with X-Payment-Intent header → returns verdict
+```
+
+**Response (after payment):**
+```json
+{"verdict": "ALLOW", "confidence": 0.82, "objections": [], "durationMs": 50000}
+```
+
+- If `verdict` is `"ALLOW"` → reasoning is data-grounded, proceed with swap
+- If `verdict` is `"HOLD"` → reasoning has material defects, review before executing
+- If `verdict` is `"DISSENT"` → models strongly disagree, requires human review
+
+**When to use:**
+- Swaps above $500 — verification cost ($0.005–$0.10) and latency (~30–60s) are disproportionate for smaller trades
+- Autonomous agent trades without human oversight
+- When the swap thesis is based on market signals (not just user instruction)
+
+**Verification depth scales with stake level:**
+
+| stakeLevel | Models | Latency | Cost | Use case |
+|------------|--------|---------|------|----------|
+| `low` | 2 models | ~15–25s | $0.005 | Routine swaps $500–$2K |
+| `medium` | 3 models | ~30–45s | $0.01 | Standard trades $2K–$10K |
+| `high` | 3+ models | ~45–60s | $0.10 | Large trades >$10K |
+
+For instant safety checks, use the Maiat token check above. For reasoning quality verification, use this.
+
+Cost: $0.005–$0.10 USDC per check (x402 micropayment on Base, varies by stake level). Powered by [ThoughtProof](https://api.thoughtproof.ai).
+
+**Recommended stack:**
+1. Maiat token safety check (instant) → Is the token safe?
+2. ThoughtProof reasoning verification (30–60s) → Is the decision logic sound?
+3. GMGN swap execution → Execute with confidence
+
 ## Execution Guidelines
 
 - **[REQUIRED] Token security check** — Run before every swap. See **Pre-Swap Safety Check (REQUIRED)** section above. Uses normal auth (API Key only — no private key needed for this step).
