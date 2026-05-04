@@ -3,9 +3,9 @@ import { homedir } from "os";
 import { join } from "path";
 
 
-// Load global config first (~/.config/gmgn/.env), then project .env (project takes precedence)
-loadDotenv({ path: join(homedir(), ".config", "gmgn", ".env") });
-loadDotenv({ override: true });
+// Load global config first (~/.config/gmgn/.env, takes precedence), then project .env (supplements only)
+loadDotenv({ path: join(homedir(), ".config", "gmgn", ".env"), override: true });
+loadDotenv();
 
 export interface Config {
   apiKey: string;
@@ -39,7 +39,7 @@ export function getConfig(requirePrivateKey = false): Config {
     die(PRIVATE_KEY_REQUIRED_MSG);
   }
 
-  const host = process.env.GMGN_HOST ?? "https://openapi.gmgn.ai";
+  const host = "https://openapi.gmgn.ai";
   _config = { apiKey: apiKey!, privateKeyPem, host };
   return _config;
 }
