@@ -48,17 +48,19 @@ Use the `gmgn-cli` tool to create a token on a launchpad platform or query token
 
 ## Supported Chains
 
-`sol` / `bsc` / `base` / `eth` / `ton`
+`sol` / `bsc` / `base`
 
 ## Supported Launchpads by Chain
 
-| Chain | `--dex` values |
-|-------|----------------|
-| `sol` | `pump` / `raydium` / `bonk` / `bags` / `memoo` / `letsbonk` / `bonkers` |
-| `bsc` | `pancakeswap` / `flap` / `fourmeme` |
-| `base` | `clanker` / `flaunch` / `baseapp` / `basememe` / `zora` / `virtuals_v2` |
+| Chain  | `--dex` values       | Raise token (`raised_token`, API-only field) |
+| ------ | -------------------- | -------------------------------------------- |
+| `sol`  | `pump`, `bonk`, `bags` | `pump`: `""` (SOL) or `"USDC"`; `bonk`: `""` (SOL) or `"USD1"`; `bags`: `""` (SOL only) |
+| `bsc`  | `fourmeme`, `flap`   | `fourmeme`: `""` (BNB), `"USD1"`, `"USDT"`; `flap`: `""` (BNB only) |
+| `base` | `klik`, `clanker`    | `""` only (quote token fixed to WETH) |
 
-When the user names a platform colloquially (e.g. "pump.fun", "four.meme", "PancakeSwap"), map it to the correct `--dex` identifier from this table before running the command.
+When the user names a platform colloquially (e.g. "pump.fun", "four.meme"), map it to the correct `--dex` identifier from this table before running the command.
+
+**Anti-MEV** (`--anti-mev`) is only supported on `sol`. Passing it on `bsc` or `base` will return a 400 error.
 
 ## Prerequisites
 
@@ -128,7 +130,7 @@ gmgn-cli cooking stats [--raw]
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `--chain` | Yes | Chain: `sol` / `bsc` / `base` / `eth` / `ton` |
+| `--chain` | Yes | Chain: `sol` / `bsc` / `base` |
 | `--dex` | Yes | Launchpad platform identifier — see Supported Launchpads table. Never guess this value. |
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--name` | Yes | Token full name (e.g. `Doge Killer`) |
@@ -142,10 +144,10 @@ gmgn-cli cooking stats [--raw]
 | `--website` | No | Project website URL |
 | `--twitter` | No | Twitter / X URL |
 | `--telegram` | No | Telegram group URL |
-| `--priority-fee` | No | Priority fee in SOL (SOL only, ≥ 0.0001 SOL) |
-| `--tip-fee` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB; ignored on ETH/BASE) |
-| `--gas-price` | No | Gas price in wei (EVM chains) |
-| `--anti-mev` | No | Enable anti-MEV protection |
+| `--priority-fee` | No | Priority fee in SOL (**SOL only**, ≥ 0.0001 SOL) |
+| `--tip-fee` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB; ignored on BASE) |
+| `--gas-price` | No | Gas price in wei (EVM chains: BSC / BASE) |
+| `--anti-mev` | No | Enable anti-MEV protection (**SOL only**; rejected on BSC / BASE) |
 
 \* `--image` or `--image-url`: provide exactly one. `--slippage` or `--auto-slippage`: provide exactly one.
 
@@ -287,21 +289,15 @@ Ask: *"Which chain and platform?"*
 
 Show the options concisely:
 
-| Chain | Platform | `--dex` |
-|-------|----------|---------|
-| Solana | Pump.fun | `pump` |
-| Solana | letsbonk | `letsbonk` |
-| Solana | Raydium | `raydium` |
-| Solana | BAGS | `bags` |
-| Solana | Memoo | `memoo` |
-| Solana | Bonkers | `bonkers` |
-| BSC | FourMeme | `fourmeme` |
-| BSC | PancakeSwap | `pancakeswap` |
-| BSC | Flap | `flap` |
-| Base | Clanker | `clanker` |
-| Base | Zora | `zora` |
-| Base | Flaunch | `flaunch` |
-| Base | Virtuals | `virtuals_v2` |
+| Chain  | Platform   | `--dex`    |
+| ------ | ---------- | ---------- |
+| Solana | Pump.fun   | `pump`     |
+| Solana | Bonk       | `bonk`     |
+| Solana | BAGS       | `bags`     |
+| BSC    | FourMeme   | `fourmeme` |
+| BSC    | Flap       | `flap`     |
+| Base   | Klik       | `klik`     |
+| Base   | Clanker    | `clanker`  |
 
 If the user is unsure, recommend: **Pump.fun (SOL)** or **FourMeme (BSC)**.
 

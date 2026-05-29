@@ -738,8 +738,8 @@ gmgn-cli cooking create \
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `ton` |
-| `--dex` | Yes | Launchpad: `pump` / `raydium` / `pancakeswap` / `flap` / `fourmeme` / `bonk` / `bags` / ... |
+| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--dex` | Yes | Launchpad per chain — see table below |
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--name` | Yes | Token name |
 | `--symbol` | Yes | Token symbol |
@@ -751,10 +751,18 @@ gmgn-cli cooking create \
 | `--telegram` | No | Telegram link |
 | `--slippage` | No | Slippage tolerance, e.g. `0.01` = 1% |
 | `--auto-slippage` | No | Enable automatic slippage |
-| `--priority-fee` | No | Priority fee in SOL (SOL only) |
-| `--tip-fee` | No | Tip fee |
-| `--gas-price` | No | Gas price in wei (EVM chains) |
-| `--anti-mev` | No | Enable anti-MEV protection |
+| `--priority-fee` | No | Priority fee in SOL (**SOL only**, ≥ 0.0001 SOL) |
+| `--tip-fee` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB; ignored on BASE) |
+| `--gas-price` | No | Gas price in wei (BSC / BASE) |
+| `--anti-mev` | No | Enable anti-MEV protection (**SOL only**) |
+
+**Supported chains and DEX values:**
+
+| Chain  | `--dex`              | Raise token (API `raised_token` field) |
+| ------ | -------------------- | -------------------------------------- |
+| `sol`  | `pump`, `bonk`, `bags` | `pump`: `""` (SOL) or `"USDC"`; `bonk`: `""` (SOL) or `"USD1"`; `bags`: `""` only |
+| `bsc`  | `fourmeme`, `flap`   | `fourmeme`: `""` (BNB), `"USD1"`, `"USDT"`; `flap`: `""` only |
+| `base` | `klik`, `clanker`    | `""` only |
 
 **Response fields (data):**
 
