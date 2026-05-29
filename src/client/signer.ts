@@ -32,8 +32,10 @@ export function buildAuthQuery(): { timestamp: number; client_id: string } {
 /**
  * Build the signature message (signed auth)
  * Format: {sub_path}:{sorted_query_string}:{request_body}:{timestamp}
- * sorted_query_string: all query params (including timestamp, client_id) sorted alphabetically by key.
- * Array values are serialized as repeated k=v pairs (same as buildUrl / URLSearchParams), sorted by value.
+ * sorted_query_string: all query params (including timestamp, client_id) sorted alphabetically by key,
+ *   URL-encoded via application/x-www-form-urlencoded (same as buildUrl / URLSearchParams) so the
+ *   signature matches the literal query string the server receives.
+ *   Array values are serialized as repeated k=v pairs, sorted by value.
  */
 export function buildMessage(
   subPath: string,
@@ -46,12 +48,18 @@ export function buildMessage(
     .flatMap((k) => {
       const v = queryParams[k];
       if (Array.isArray(v)) {
-        return [...v].sort().map((item) => `${k}=${item}`);
+        return [...v].sort().map((item) => encodeQueryPair(k, item));
       }
-      return [`${k}=${v}`];
+      return [encodeQueryPair(k, String(v))];
     })
     .join("&");
   return `${subPath}:${sortedQs}:${body}:${timestamp}`;
+}
+
+function encodeQueryPair(k: string, v: string): string {
+  const p = new URLSearchParams();
+  p.set(k, v);
+  return p.toString();
 }
 
 /**
