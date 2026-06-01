@@ -170,27 +170,113 @@ export interface TokenSignalGroup {
   max_create_or_open_ts?: string;
 }
 
+export interface PumpFeeShareInfo {
+  provider: string;
+  username: string;
+  basic_points: number;
+}
+
+export interface BAGSFeeShareInfo {
+  provider: string;
+  username: string;
+  basic_points: number;
+}
+
+export interface FlapRateConf {
+  tax_rate?: number;
+  mkt_bps?: number;
+  deflation_bps?: number;
+  dividend_bps?: number;
+  lp_bps?: number;
+  minimum_share_balance?: number;
+  recipient_type?: string;
+  beneficiary?: string;
+  twitter_account?: string;
+  split_conf?: Array<{ recipient: string; split_bps: number }>;
+}
+
+export interface FourmemeRateConf {
+  fee_plan?: boolean;
+  fee_rate?: number;
+  burn_rate?: number;
+  divide_rate?: number;
+  liquidity_rate?: number;
+  recipient_rate?: number;
+  recipient_address?: string;
+  min_sharing?: number;
+}
+
+export interface BuyWalletInfo {
+  from_address: string;
+  buy_amt: string;
+}
+
 export interface CreateTokenParams {
+  // Required
   chain: string;
   dex: string;
   from_address: string;
   name: string;
   symbol: string;
   buy_amt: string;
+
+  // Image (one required)
   image?: string;
   image_url?: string;
+
+  // Social
   website?: string;
   twitter?: string;
   telegram?: string;
+
+  // Transaction
   slippage?: number;
   auto_slippage?: boolean;
+
+  // Fees
   priority_fee?: string;
   tip_fee?: string;
   gas_price?: string;
   max_priority_fee_per_gas?: string;
   max_fee_per_gas?: string;
+
+  // Anti-MEV (SOL only)
   is_anti_mev?: boolean;
   anti_mev_mode?: string;
+
+  // Advanced
+  raised_token?: string;
+  dev_gas?: string;
+  dev_priority?: string;
+  dev_tip?: string;
+  approve_vision?: string;
+  source?: string;
+  dev_wallet_bps?: number;
+
+  // Pump.fun specific
+  is_mayhem?: boolean;
+  is_cashback?: boolean;
+  is_revoke_fee_auth?: boolean;
+  is_agent?: boolean;
+  agent_bps?: number;
+  pump_fee_share_list?: PumpFeeShareInfo[];
+
+  // Flap specific
+  flap_rate_conf?: FlapRateConf;
+
+  // FourMeme specific
+  fourmeme_rate_conf?: FourmemeRateConf;
+
+  // BAGS specific
+  bags_fee_share_list?: BAGSFeeShareInfo[];
+
+  // Bonk specific
+  bonk_model?: string;
+
+  // Multi-wallet buy
+  buy_wallets?: BuyWalletInfo[];
+  snip_buy_wallets?: BuyWalletInfo[];
+  interval_seconds?: number;
 }
 
 export class OpenApiClient {

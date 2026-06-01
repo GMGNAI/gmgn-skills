@@ -48,17 +48,19 @@ Use the `gmgn-cli` tool to create a token on a launchpad platform or query token
 
 ## Supported Chains
 
-`sol` / `bsc` / `base` / `eth` / `ton`
+`sol` / `bsc` / `base`
 
 ## Supported Launchpads by Chain
 
-| Chain | `--dex` values |
-|-------|----------------|
-| `sol` | `pump` / `raydium` / `bonk` / `bags` / `memoo` / `letsbonk` / `bonkers` |
-| `bsc` | `pancakeswap` / `flap` / `fourmeme` |
-| `base` | `clanker` / `flaunch` / `baseapp` / `basememe` / `zora` / `virtuals_v2` |
+| Chain  | `--dex` values       | Raise token (`raised_token`, API-only field) |
+| ------ | -------------------- | -------------------------------------------- |
+| `sol`  | `pump`, `bonk`, `bags` | `pump`: `""` (SOL) or `"USDC"`; `bonk`: `""` (SOL) or `"USD1"`; `bags`: `""` (SOL only) |
+| `bsc`  | `fourmeme`, `flap`   | `fourmeme`: `""` (BNB), `"USD1"`, `"USDT"`; `flap`: `""` (BNB only) |
+| `base` | `klik`, `clanker`    | `""` only (quote token fixed to WETH) |
 
-When the user names a platform colloquially (e.g. "pump.fun", "four.meme", "PancakeSwap"), map it to the correct `--dex` identifier from this table before running the command.
+When the user names a platform colloquially (e.g. "pump.fun", "four.meme"), map it to the correct `--dex` identifier from this table before running the command.
+
+**Anti-MEV** (`--anti-mev`) is only supported on `sol`. Passing it on `bsc` or `base` will return a 400 error.
 
 ## Prerequisites
 
@@ -128,26 +130,167 @@ gmgn-cli cooking stats [--raw]
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `--chain` | Yes | Chain: `sol` / `bsc` / `base` / `eth` / `ton` |
+| `--chain` | Yes | Chain: `sol` / `bsc` / `base` |
 | `--dex` | Yes | Launchpad platform identifier — see Supported Launchpads table. Never guess this value. |
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--name` | Yes | Token full name (e.g. `Doge Killer`) |
 | `--symbol` | Yes | Token ticker symbol (e.g. `DOGEK`) |
-| `--description` | No | Token description / project pitch |
 | `--buy-amt` | Yes | Initial buy amount in **human-readable native token units** (e.g. `0.01` = 0.01 SOL). This is NOT in smallest unit. |
 | `--image` | No* | Token logo as **base64-encoded** data (max 2MB decoded). Mutually exclusive with `--image-url`. One of the two is required. |
 | `--image-url` | No* | Token logo as a publicly accessible URL. Mutually exclusive with `--image`. One of the two is required. |
 | `--slippage` | No* | Slippage tolerance, e.g. `0.01` = 1%. **Mutually exclusive with `--auto-slippage`** — provide one or the other. |
 | `--auto-slippage` | No* | Enable automatic slippage. **Mutually exclusive with `--slippage`.** |
+| `--description` | No | Token description / project pitch |
 | `--website` | No | Project website URL |
 | `--twitter` | No | Twitter / X URL |
 | `--telegram` | No | Telegram group URL |
-| `--priority-fee` | No | Priority fee in SOL (SOL only, ≥ 0.0001 SOL) |
-| `--tip-fee` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB; ignored on ETH/BASE) |
-| `--gas-price` | No | Gas price in wei (EVM chains) |
-| `--anti-mev` | No | Enable anti-MEV protection |
+| `--priority-fee` | No | Priority fee in SOL (**SOL only**, ≥ 0.0001 SOL) |
+| `--tip-fee` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB; ignored on BASE) |
+| `--gas-price` | No | Gas price in wei (EVM chains: BSC / BASE) |
+| `--anti-mev` | No | Enable anti-MEV protection (**SOL only**; rejected on BSC / BASE) |
+| `--anti-mev-mode` | No | Anti-MEV mode: `normal` / `secure` (**SOL only**) |
+| `--raised-token` | No | Raise token symbol. `pump`: `USDC`; `bonk`: `USD1`; `fourmeme`: `USDT` / `USD1`; omit or `""` for native |
+| `--dev-wallet-bps` | No | Dev wallet fee share in basis points (100 = 1%) |
+| `--max-fee-per-gas` | No | Max fee per gas in wei (**EVM only**) |
+| `--max-priority-fee-per-gas` | No | Max priority fee per gas in wei (**EVM only**) |
+| `--dev-gas` | No | Dev gas amount |
+| `--dev-priority` | No | Dev priority fee |
+| `--dev-tip` | No | Dev tip fee |
+| `--approve-vision` | No | Approve vision version: `v1` / `v2` (default: `v2`) |
+| `--source` | No | Traffic source identifier |
+| `--is-mayhem` | No | Enable Mayhem mode (**Pump.fun only**) |
+| `--is-cashback` | No | Enable Cashback (**Pump.fun only**) |
+| `--is-revoke-fee-auth` | No | Revoke fee authority (**Pump.fun only**) |
+| `--is-agent` | No | Enable Agent mode (**Pump.fun only**) |
+| `--agent-bps` | No | Agent fee in basis points (**Pump.fun only**) |
+| `--pump-fee-share-list` | No | Pump.fun fee share list as JSON array: `[{"provider":"twitter","username":"<handle>","basic_points":<n>}]` (**Pump.fun only**) |
+| `--flap-rate-conf` | No | Flap rate config as JSON object (**Flap only**) |
+| `--fourmeme-rate-conf` | No | FourMeme rate config as JSON object (**FourMeme only**) |
+| `--bags-fee-share-list` | No | BAGS fee share list as JSON array: `[{"provider":"twitter","username":"<handle>","basic_points":<n>}]` (**BAGS only**) |
+| `--bonk-model` | No | Bonk model identifier (**bonk DEX only**) |
+| `--buy-wallets` | No | Multi-wallet buy config as JSON array: `[{"from_address":"<addr>","buy_amt":"<n>"}]` |
+| `--snip-buy-wallets` | No | Snipe-buy wallet config as JSON array: `[{"from_address":"<addr>","buy_amt":"<n>"}]` |
+| `--interval-seconds` | No | Interval between multi-wallet buys in seconds |
 
 \* `--image` or `--image-url`: provide exactly one. `--slippage` or `--auto-slippage`: provide exactly one.
+
+## Advanced API Fields
+
+The structured flags (`--pump-fee-share-list`, `--bags-fee-share-list`, `--flap-rate-conf`, `--fourmeme-rate-conf`, `--buy-wallets`, `--snip-buy-wallets`) each accept a **JSON string**. This section documents the exact JSON schema for each. It also lists fields that have **no CLI flag** and require the raw `create_token` payload — use those only when the CLI flag cannot cover the need.
+
+**Basis-points rule:** any field named `*_bps` / `basic_points` is in basis points (`100` = 1%). Where a section says the shares must sum, all entries must add up to exactly **10000** (FourMeme uses **100** instead — see below).
+
+**Always talk to the user in percentages, never basis points.** Convert to bps yourself when building the JSON:
+
+| User says | `*_bps` field (×100) | FourMeme `*_rate` field (×1) |
+|---|---|---|
+| `5%` | `500` | `5` |
+| `50%` | `5000` | `50` |
+| `100%` | `10000` | `100` |
+
+Never set a fee-share split without the user's explicit instruction — it permanently routes token revenue to the listed accounts.
+
+### Pump.fun (`--dex pump`)
+
+> `is_mayhem`, `is_cashback`, `is_revoke_fee_auth`, `is_agent`, `agent_bps` use their matching CLI flags. `pump_fee_share_list` is passed via `--pump-fee-share-list`.
+
+| Field | CLI flag | Description |
+|---|---|---|
+| `pump_fee_share_list` | `--pump-fee-share-list <json>` | Fee-share list — see JSON schema below |
+| `is_buy_back` | *(no flag — raw payload only)* | Enable Agent Auto Buyback |
+
+**JSON schema for `--pump-fee-share-list`** — array of objects:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `provider` | string | Yes | `twitter` / `github` / `wallet` |
+| `username` | string | Yes | Username for `twitter`/`github`; a SOL address when `wallet` |
+| `basic_points` | int | Yes | Share in bps — all entries must sum to **10000** |
+
+Example: `--pump-fee-share-list '[{"provider":"twitter","username":"handle","basic_points":10000}]'`
+
+### Bonk (`--dex bonk`)
+
+`dev_wallet_bps` → `--dev-wallet-bps`, `bonk_model` → `--bonk-model`. No additional structured fields.
+
+### BAGS (`--dex bags`)
+
+`dev_wallet_bps` → `--dev-wallet-bps`. `bags_fee_share_list` is passed via `--bags-fee-share-list`.
+
+**JSON schema for `--bags-fee-share-list`** — array of objects:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `provider` | string | Yes | `twitter` / `solana` / `kick` / `github` |
+| `username` | string | Yes | Platform username |
+| `basic_points` | int | Yes | Share in bps — combined with `dev_wallet_bps`, all must sum to **10000** |
+
+### Flap (`--dex flap`)
+
+`flap_rate_conf` is passed via `--flap-rate-conf`.
+
+**JSON schema for `--flap-rate-conf`** — single object:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `beneficiary` | string | Yes | Fee recipient address |
+| `tax_rate` | int | Yes | Tax rate in bps, e.g. 5% → `500` |
+| `mkt_bps` | int | Yes | Marketing / donation fund share |
+| `deflation_bps` | int | Yes | Burn (supply-reduction) share |
+| `dividend_bps` | int | Yes | Dividend (holder-reward) share |
+| `lp_bps` | int | Yes | Liquidity share |
+| `minimum_share_balance` | int | Yes | Min holding to qualify for dividends — minimum **10000** tokens |
+| `recipient_type` | string | Yes | `split` (proportional) / `gift` |
+| `twitter_account` | string | Yes | Twitter username |
+| `split_conf` | array | Yes | Split list — see below |
+
+`split_conf` entries: `{ "recipient": "<address>", "split_bps": <n> }` — all `split_bps` must sum to **10000**.
+
+> When `tax_rate > 0`: `mkt_bps + deflation_bps + dividend_bps + lp_bps` must sum to **10000**. When `lp_bps > 0`: `minimum_share_balance` must be > 0.
+
+### FourMeme (`--dex fourmeme`)
+
+`fourmeme_rate_conf` is passed via `--fourmeme-rate-conf`. The remaining fields below have **no CLI flag** and require the raw payload.
+
+| Field | CLI flag | Description |
+|---|---|---|
+| `fourmeme_rate_conf` | `--fourmeme-rate-conf <json>` | Fee-share config — see JSON schema below |
+| `fourmeme_user_login_sign` | *(no flag)* | FourMeme user login signature |
+| `is_approve_allowance` | *(no flag)* | Pass `true` on retry to skip the allowance step |
+| `is_raised_swap` | *(no flag)* | Pass `true` on a multi-quote retry when raise-token swap already completed |
+
+**JSON schema for `--fourmeme-rate-conf`** — single object:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `fee_plan` | bool | No | Enable the fee plan |
+| `recipient_address` | string | Yes | Fee recipient address |
+| `fee_rate` | int | Yes | Fee rate, e.g. 5% → `5` (whole percent, not bps) |
+| `burn_rate` | int | Yes | Burn share |
+| `divide_rate` | int | Yes | Dividend share |
+| `liquidity_rate` | int | Yes | Liquidity share |
+| `recipient_rate` | int | Yes | Recipient share |
+| `min_sharing` | int | Yes | Minimum sharing threshold |
+
+> When `fee_rate > 0`: `burn_rate + divide_rate + liquidity_rate + recipient_rate` must sum to **100**. When `recipient_rate > 0`: `min_sharing` must be > 0.
+
+## Auto-Sell Configuration
+
+`sell_configs` has **no CLI flag** and requires the raw `create_token` payload. It schedules conditional sell orders to execute automatically once the token launch succeeds. Omit entirely for a standard launch with no auto-sell.
+
+`sell_configs` is an array of `CookingSellConfig` objects:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `sell_type` | string | Yes | `delay_sell` / `limit_order` |
+| `delay_sec` | int64 | Conditional | Seconds after buy to trigger; required when `sell_type = delay_sell` |
+| `sell_ratio` | string | Yes | Fraction to sell — `"1"` = 100%, `"0.5"` = 50% |
+| `check_price` | string | Conditional | Market cap in USD to trigger sell; required when `sell_type = limit_order` |
+| `wallet_addresses` | []string | Yes | Wallets this strategy applies to |
+
+> - **`check_price` is total market cap in USD** — e.g. `"50000"` triggers at a $50,000 market cap.
+> - `wallet_addresses` may mix `from_address` and `buy_wallets` entries. The server creates `signal_cooking` for snipe wallets and `pending_sell` for main/bundle wallets automatically.
+> - A wallet can carry multiple strategies (e.g. delay-sell 50%, then limit-sell the rest); each applies independently.
 
 ## `cooking create` Response Fields
 
@@ -247,9 +390,14 @@ Initial Buy:  {--buy-amt} {native currency} (e.g. 0.01 SOL)
 Slippage:     {--slippage}% (or "auto")
 Image:        {--image-url or "base64 provided"}
 Social:       {twitter / telegram / website if provided}
+Modes:        {Mayhem / Cashback / Agent Auto Buyback if set, else "none"}
+Fee Share:    {recipient → % list if set, else "none"}
+Auto-Sell:    {sell_configs summary if set, else "none"}
 
 Reply "confirm" to deploy this token. This action is IRREVERSIBLE.
 ```
+
+Omit the Modes / Fee Share / Auto-Sell lines if none were configured — or show them as `none` — but if any **are** set, they MUST appear here so the user re-confirms them explicitly.
 
 ### Post-create Receipt
 
@@ -287,23 +435,19 @@ Ask: *"Which chain and platform?"*
 
 Show the options concisely:
 
-| Chain | Platform | `--dex` |
-|-------|----------|---------|
-| Solana | Pump.fun | `pump` |
-| Solana | letsbonk | `letsbonk` |
-| Solana | Raydium | `raydium` |
-| Solana | BAGS | `bags` |
-| Solana | Memoo | `memoo` |
-| Solana | Bonkers | `bonkers` |
-| BSC | FourMeme | `fourmeme` |
-| BSC | PancakeSwap | `pancakeswap` |
-| BSC | Flap | `flap` |
-| Base | Clanker | `clanker` |
-| Base | Zora | `zora` |
-| Base | Flaunch | `flaunch` |
-| Base | Virtuals | `virtuals_v2` |
+| Chain  | Platform   | `--dex`    |
+| ------ | ---------- | ---------- |
+| Solana | Pump.fun   | `pump`     |
+| Solana | Bonk       | `bonk`     |
+| Solana | BAGS       | `bags`     |
+| BSC    | FourMeme   | `fourmeme` |
+| BSC    | Flap       | `flap`     |
+| Base   | Klik       | `klik`     |
+| Base   | Clanker    | `clanker`  |
 
 If the user is unsure, recommend: **Pump.fun (SOL)** or **FourMeme (BSC)**.
+
+The chosen platform determines which advanced options are available later in Step 7 (e.g. Mayhem/Agent on Pump.fun, fee-share splits on BAGS/Flap/FourMeme). Note the platform now; do not ask about advanced options yet.
 
 ### Step 2 — Token Name
 
@@ -343,9 +487,21 @@ Ask all optional fields together in one message:
 
 The user can reply with just the ones they have, or say "skip" / "none" to proceed.
 
-### Step 7 — Confirmation & Execute
+### Step 7 — Platform Modes, Fees & Auto-Sell (platform-dependent)
 
-Once all information is collected, present the pre-create confirmation summary (see Output Format section) and wait for the user to reply "confirm" before executing.
+After the basics are collected, ask **once** whether the user wants any advanced options for the platform they chose. Default everyone to a plain fair launch — only configure these when the user explicitly asks. Tailor the question to the selected platform; do not list options that don't apply to it.
+
+Ask: *"Want any advanced options, or launch with defaults? (reply 'defaults' to skip)"* — then offer the relevant subset:
+
+- **Pump.fun modes** — Mayhem (`--is-mayhem`), Cashback (`--is-cashback`), Agent (`--is-agent` + `--agent-bps`), Agent Auto Buyback (`is_buy_back` — raw payload only).
+- **Fee-share split** — Pump.fun (`--pump-fee-share-list`), BAGS (`--dev-wallet-bps` + `--bags-fee-share-list`), Bonk (`--dev-wallet-bps`), Flap (`--flap-rate-conf`), FourMeme (`--fourmeme-rate-conf`). See [Advanced API Fields](#advanced-api-fields) for JSON schemas. **Warn the user this permanently routes token revenue to the listed accounts.** Always ask the user for shares as percentages — convert to bps yourself. Shares must add up to 100%.
+- **Auto-sell** — `sell_configs` (raw payload only): delay-sell (sell a fraction N seconds after the buy) and/or limit-sell (sell once market cap hits a USD target). See [Auto-Sell Configuration](#auto-sell-configuration). Confirm the sell ratio and trigger before setting it.
+
+If the user says "defaults" / "skip" / "none", proceed with none of these set.
+
+### Step 8 — Confirmation & Execute
+
+Once all information is collected, present the pre-create confirmation summary (see Output Format section) and wait for the user to reply "confirm" before executing. If any advanced options from Step 7 were set, they MUST appear in the summary so the user re-confirms them explicitly.
 
 ---
 

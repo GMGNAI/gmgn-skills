@@ -730,31 +730,76 @@ gmgn-cli cooking create \
   --buy-amt <amount> \
   [--image <base64> | --image-url <url>] \
   [--slippage <n> | --auto-slippage] \
+  [--description <text>] \
   [--website <url>] [--twitter <url>] [--telegram <url>] \
   [--priority-fee <sol>] [--tip-fee <amount>] [--gas-price <amount>] \
-  [--anti-mev] \
+  [--max-fee-per-gas <amount>] [--max-priority-fee-per-gas <amount>] \
+  [--anti-mev] [--anti-mev-mode <normal|secure>] \
+  [--raised-token <symbol>] \
+  [--dev-wallet-bps <n>] [--dev-gas <amount>] [--dev-priority <amount>] [--dev-tip <amount>] \
+  [--approve-vision <v1|v2>] [--source <source>] \
+  [--is-mayhem] [--is-cashback] [--is-revoke-fee-auth] \
+  [--is-agent] [--agent-bps <n>] \
+  [--pump-fee-share-list <json>] \
+  [--flap-rate-conf <json>] \
+  [--fourmeme-rate-conf <json>] \
+  [--bags-fee-share-list <json>] \
+  [--bonk-model <model>] \
+  [--buy-wallets <json>] [--snip-buy-wallets <json>] [--interval-seconds <n>] \
   [--raw]
 ```
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `ton` |
-| `--dex` | Yes | Launchpad: `pump` / `raydium` / `pancakeswap` / `flap` / `fourmeme` / `bonk` / `bags` / ... |
+| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--dex` | Yes | Launchpad per chain — see table below |
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--name` | Yes | Token name |
 | `--symbol` | Yes | Token symbol |
 | `--buy-amt` | Yes | Initial buy amount in native token (e.g. `0.01` SOL) |
 | `--image` | No* | Token logo as base64-encoded data (max 2MB decoded); required unless `--image-url` is used |
 | `--image-url` | No* | Token logo URL; required unless `--image` is used |
+| `--slippage` | No* | Slippage tolerance, e.g. `0.01` = 1%; required unless `--auto-slippage` is used |
+| `--auto-slippage` | No* | Enable automatic slippage; required unless `--slippage` is used |
+| `--description` | No | Token description / project pitch |
 | `--website` | No | Website URL |
 | `--twitter` | No | Twitter link |
 | `--telegram` | No | Telegram link |
-| `--slippage` | No | Slippage tolerance, e.g. `0.01` = 1% |
-| `--auto-slippage` | No | Enable automatic slippage |
-| `--priority-fee` | No | Priority fee in SOL (SOL only) |
-| `--tip-fee` | No | Tip fee |
-| `--gas-price` | No | Gas price in wei (EVM chains) |
-| `--anti-mev` | No | Enable anti-MEV protection |
+| `--priority-fee` | No | Priority fee in SOL (**SOL only**, ≥ 0.0001 SOL) |
+| `--tip-fee` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB; ignored on BASE) |
+| `--gas-price` | No | Gas price in wei (**EVM only**) |
+| `--max-fee-per-gas` | No | Max fee per gas in wei (**EVM only**) |
+| `--max-priority-fee-per-gas` | No | Max priority fee per gas in wei (**EVM only**) |
+| `--anti-mev` | No | Enable anti-MEV protection (**SOL only**) |
+| `--anti-mev-mode` | No | Anti-MEV mode: `normal` / `secure` (**SOL only**) |
+| `--raised-token` | No | Raise token symbol: `pump`→`USDC`; `bonk`→`USD1`; `fourmeme`→`USDT`/`USD1`; omit for native |
+| `--dev-wallet-bps` | No | Dev wallet fee share in basis points (100 = 1%) |
+| `--dev-gas` | No | Dev gas amount |
+| `--dev-priority` | No | Dev priority fee |
+| `--dev-tip` | No | Dev tip fee |
+| `--approve-vision` | No | Approve vision version: `v1` / `v2` (default: `v2`) |
+| `--source` | No | Traffic source identifier |
+| `--is-mayhem` | No | Enable Mayhem mode (**Pump.fun only**) |
+| `--is-cashback` | No | Enable Cashback (**Pump.fun only**) |
+| `--is-revoke-fee-auth` | No | Revoke fee authority (**Pump.fun only**) |
+| `--is-agent` | No | Enable Agent mode (**Pump.fun only**) |
+| `--agent-bps` | No | Agent fee in basis points (**Pump.fun only**) |
+| `--pump-fee-share-list` | No | Fee share list as JSON array: `[{"provider":"twitter","username":"<handle>","basic_points":<n>}]` (**Pump.fun only**) |
+| `--flap-rate-conf` | No | Rate config as JSON object (**Flap only**) |
+| `--fourmeme-rate-conf` | No | Rate config as JSON object (**FourMeme only**) |
+| `--bags-fee-share-list` | No | Fee share list as JSON array: `[{"provider":"twitter","username":"<handle>","basic_points":<n>}]` (**BAGS only**) |
+| `--bonk-model` | No | Bonk model identifier (**bonk DEX only**) |
+| `--buy-wallets` | No | Multi-wallet buy config as JSON array: `[{"from_address":"<addr>","buy_amt":"<n>"}]` |
+| `--snip-buy-wallets` | No | Snipe-buy wallet config as JSON array: `[{"from_address":"<addr>","buy_amt":"<n>"}]` |
+| `--interval-seconds` | No | Interval between multi-wallet buys in seconds |
+
+**Supported chains and DEX values:**
+
+| Chain  | `--dex`              | Raise token (API `raised_token` field) |
+| ------ | -------------------- | -------------------------------------- |
+| `sol`  | `pump`, `bonk`, `bags` | `pump`: `""` (SOL) or `"USDC"`; `bonk`: `""` (SOL) or `"USD1"`; `bags`: `""` only |
+| `bsc`  | `fourmeme`, `flap`   | `fourmeme`: `""` (BNB), `"USD1"`, `"USDT"`; `flap`: `""` only |
+| `base` | `klik`, `clanker`    | `""` only |
 
 **Response fields (data):**
 
