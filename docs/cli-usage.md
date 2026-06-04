@@ -349,6 +349,36 @@ gmgn-cli market signal --chain sol --groups '<json_array>' [--raw]
 
 ---
 
+## track follow-tokens
+
+Query the followed token list for a wallet. Returns a paginated list of tokens the wallet has bookmarked on GMGN, with full market data. API Key auth only.
+
+```bash
+gmgn-cli track follow-tokens \
+  --chain <chain> \
+  --wallet <wallet_address> \
+  [--group-id <id>] \
+  [--order-by <field>] \
+  [--direction <asc|desc>] \
+  [--limit <n>] \
+  [--cursor <cursor>] \
+  [--raw]
+```
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
+| `--wallet` | Yes | Wallet address |
+| `--group-id` | No | `all_group` (all tokens), `default`, or a user-defined group ID |
+| `--interval` | No | Time interval for price change stats: `1m` / `5m` / `1h` / `6h` / `24h` |
+| `--order-by` | No | `created_at` / `swaps` / `volume` / `market_cap` / `liquidity` / `price` / `open_timestamp` |
+| `--direction` | No | Sort direction: `asc` / `desc` |
+| `--limit` | No | Page size |
+| `--cursor` | No | Pagination cursor from previous response |
+| `--search` | No | Search by token name or address |
+
+---
+
 ## portfolio follow-wallet
 
 Query follow-wallet trade records. Returns trades from wallets you personally follow on the GMGN platform. The follow list is resolved automatically from the GMGN user account bound to the API Key — `--wallet` is optional. Signed auth (API Key + private key signature).

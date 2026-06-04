@@ -505,6 +505,9 @@ gmgn-cli portfolio created-tokens --chain sol --wallet <addr>
 ### Track
 
 ```bash
+# Followed token map for a wallet
+gmgn-cli track follow-tokens --chain sol --wallet <wallet_address>
+
 # Follow-wallet trade records
 gmgn-cli track follow-wallet --chain sol
 gmgn-cli track follow-wallet --chain sol --limit 20 --min-amount-usd 1000

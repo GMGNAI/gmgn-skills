@@ -8,6 +8,34 @@ export function registerTrackCommands(program: Command): void {
   const track = program.command("track").description("On-chain tracking commands: follow-wallet trades, KOL trades, Smart Money trades");
 
   track
+    .command("follow-tokens")
+    .description("Get the followed token list for a wallet on a given chain")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
+    .requiredOption("--wallet <address>", "Wallet address")
+    .option("--group-id <id>", "Filter by group: all_group (all), default, or a user-defined group ID")
+    .option("--interval <interval>", "Time interval for price change stats (e.g. 1m, 5m, 1h, 6h, 24h)")
+    .option("--order-by <field>", "Sort field: created_at / swaps / volume / market_cap / liquidity / price / open_timestamp")
+    .option("--direction <dir>", "Sort direction: asc / desc")
+    .option("--limit <n>", "Page size", parseInt)
+    .option("--cursor <cursor>", "Pagination cursor")
+    .option("--search <text>", "Search by token name or address")
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      validateChain(opts.chain);
+      const extra: Record<string, string | number> = {};
+      if (opts.groupId) extra["group_id"] = opts.groupId;
+      if (opts.interval) extra["interval"] = opts.interval;
+      if (opts.orderBy) extra["order_by"] = opts.orderBy;
+      if (opts.direction) extra["direction"] = opts.direction;
+      if (opts.limit != null) extra["limit"] = opts.limit;
+      if (opts.cursor) extra["cursor"] = opts.cursor;
+      if (opts.search) extra["search_text"] = opts.search;
+      const client = new OpenApiClient(getConfig());
+      const data = await client.getFollowTokens(opts.chain, opts.wallet, extra).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
+  track
     .command("follow-wallet")
     .description("Get follow-wallet trade records")
     .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")

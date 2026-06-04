@@ -529,6 +529,9 @@ gmgn-cli portfolio created-tokens --chain sol --wallet <addr>
 ### Track
 
 ```bash
+# 查询钱包收藏的代币列表
+gmgn-cli track follow-tokens --chain sol --wallet <wallet_address>
+
 # 追踪关注钱包的交易动态
 gmgn-cli track follow-wallet --chain sol
 gmgn-cli track follow-wallet --chain sol --limit 20 --min-amount-usd 1000

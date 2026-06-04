@@ -1,7 +1,7 @@
 ---
 name: gmgn-track
-description: Get real-time crypto buy/sell activity from Smart Money wallets, KOL influencer wallets, and personally followed wallets via GMGN API — alpha signals, whale tracking, meme token copy-trading ideas on Solana, BSC, Base, or Ethereum. Use when user asks what smart money or KOLs are buying, wants whale alerts, on-chain alpha, or copy-trade signals. (For a specific wallet address, use gmgn-portfolio.)
-argument-hint: "<follow-wallet|kol|smartmoney> --chain <sol|bsc|base|eth> [--wallet <wallet_address>]"
+description: Get real-time crypto buy/sell activity from Smart Money wallets, KOL influencer wallets, and personally followed wallets via GMGN API — alpha signals, whale tracking, meme token copy-trading ideas on Solana, BSC, Base, or Ethereum. Also query which tokens a wallet has followed (bookmarked) on GMGN. Use when user asks what smart money or KOLs are buying, wants whale alerts, on-chain alpha, copy-trade signals, or wants to check a wallet's followed tokens. (For a specific wallet address's portfolio, use gmgn-portfolio.)
+argument-hint: "<follow-tokens|follow-wallet|kol|smartmoney> --chain <sol|bsc|base|eth> [--wallet <wallet_address>]"
 metadata:
   cliHelp: "gmgn-cli track --help"
 ---
@@ -49,6 +49,7 @@ Use the `gmgn-cli` tool to query on-chain tracking data based on the user's requ
 
 | Sub-command | Description |
 |-------------|-------------|
+| `track follow-tokens` | Followed token map for a wallet — which tokens a wallet has bookmarked on GMGN |
 | `track follow-wallet` | Trade records from wallets the user personally follows on GMGN |
 | `track kol` | Real-time trades from KOL / influencer wallets tagged by GMGN |
 | `track smartmoney` | Real-time trades from smart money / whale wallets tagged by GMGN |
@@ -61,7 +62,7 @@ Use the `gmgn-cli` tool to query on-chain tracking data based on the user's requ
 
 - `gmgn-cli` installed globally — if missing, run: `npm install -g gmgn-cli`
 - `GMGN_API_KEY` configured in `~/.config/gmgn/.env` — required for all sub-commands
-- `GMGN_PRIVATE_KEY` — required for `track follow-wallet` only (signed auth); not needed for `kol` or `smartmoney`
+- `GMGN_PRIVATE_KEY` — required for `track follow-wallet` only (signed auth); not needed for `follow-tokens`, `kol`, or `smartmoney`
 
 ## Rate Limit Handling
 
@@ -69,6 +70,7 @@ All tracking routes used by this skill go through GMGN's leaky-bucket limiter wi
 
 | Command | Route | Weight |
 |---------|-------|--------|
+| `track follow-tokens` | `GET /v1/user/follow_tokens` | 3 |
 | `track follow-wallet` | `GET /v1/trade/follow_wallet` | 3 |
 | `track kol` | `GET /v1/user/kol` | 1 |
 | `track smartmoney` | `GET /v1/user/smartmoney` | 1 |
@@ -101,6 +103,12 @@ When a request returns `429`:
 ## Usage Examples
 
 ```bash
+# Followed token map for a wallet on SOL
+gmgn-cli track follow-tokens --chain sol --wallet <wallet_address>
+
+# Followed token map on BSC, raw JSON output
+gmgn-cli track follow-tokens --chain bsc --wallet <wallet_address> --raw
+
 # Follow-wallet trades (all wallets you follow)
 gmgn-cli track follow-wallet --chain sol
 
@@ -125,6 +133,48 @@ gmgn-cli track smartmoney --limit 10 --raw
 # Smart Money trade records, sell only
 gmgn-cli track smartmoney --chain sol --side sell --limit 10 --raw
 ```
+
+## `track follow-tokens` Options
+
+| Option | Description |
+|--------|-------------|
+| `--chain` | Required. `sol` / `bsc` / `base` / `eth` |
+| `--wallet <address>` | Required. Wallet address to query |
+| `--group-id <id>` | Filter by group: `all_group` (all tokens across groups), `default` (default group), or a user-defined group ID |
+| `--interval <interval>` | Time interval for price change stats (e.g. `1m`, `5m`, `1h`, `6h`, `24h`) |
+| `--order-by <field>` | Sort field: `created_at` / `swaps` / `volume` / `market_cap` / `liquidity` / `price` / `open_timestamp` |
+| `--direction <dir>` | Required when `--order-by` is set. `asc` / `desc` |
+| `--limit <n>` | Page size |
+| `--cursor <cursor>` | Pagination cursor from previous response |
+| `--search <text>` | Search by token name or address |
+
+## `track follow-tokens` Response Fields
+
+Top-level fields:
+
+| Field | Description |
+|-------|-------------|
+| `cursor` | Opaque cursor for fetching the next page |
+| `all_following` | Total number of followed tokens |
+| `is_recommend` | Whether results include recommended tokens |
+| `followings` | Array of followed token objects |
+
+Each item in `followings` contains:
+
+| Field | Description |
+|-------|-------------|
+| `address` | Token contract address |
+| `symbol` | Token ticker symbol |
+| `name` | Token name |
+| `chain` | Chain the token is on |
+| `price` | Current token price |
+| `price_change_percent` | Price change percentage |
+| `volume` | Trading volume |
+| `liquidity` | Pool liquidity |
+| `market_cap` | Market cap |
+| `swaps` | Total swaps |
+| `group_ids` | Follow groups this token belongs to |
+| `open_timestamp` | Unix timestamp when trading opened |
 
 ## `track follow-wallet` Options
 
@@ -311,6 +361,7 @@ To research any token surfaced by smart money activity, follow [`docs/workflow-t
 
 ## Notes
 
+- `track follow-tokens` uses exist auth (API Key only); `--wallet` is required
 - `track follow-wallet` uses signed auth (API Key + private key signature); `track kol` and `track smartmoney` use exist auth (API Key only)
 - `track follow-wallet` returns trades from wallets followed on the GMGN platform; the follow list is resolved automatically from the GMGN user account bound to the API Key — `--wallet` is optional
 - Use `--raw` to get single-line JSON for further processing
