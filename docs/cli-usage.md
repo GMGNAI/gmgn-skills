@@ -379,6 +379,24 @@ gmgn-cli track follow-tokens \
 
 ---
 
+## track follow-token-groups
+
+Query the follow token group names for a wallet. Returns the groups a wallet uses to organise its followed tokens on GMGN. API Key auth only.
+
+```bash
+gmgn-cli track follow-token-groups \
+  --chain <chain> \
+  --wallet <wallet_address> \
+  [--raw]
+```
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
+| `--wallet` | Yes | Wallet address |
+
+---
+
 ## portfolio follow-wallet
 
 Query follow-wallet trade records. Returns trades from wallets you personally follow on the GMGN platform. The follow list is resolved automatically from the GMGN user account bound to the API Key — `--wallet` is optional. Signed auth (API Key + private key signature).

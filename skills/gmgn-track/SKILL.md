@@ -49,7 +49,8 @@ Use the `gmgn-cli` tool to query on-chain tracking data based on the user's requ
 
 | Sub-command | Description |
 |-------------|-------------|
-| `track follow-tokens` | Followed token map for a wallet — which tokens a wallet has bookmarked on GMGN |
+| `track follow-tokens` | Followed token list for a wallet — which tokens a wallet has bookmarked on GMGN, with full market data |
+| `track follow-token-groups` | Follow token group names for a wallet — the group names and IDs the wallet uses to organise followed tokens |
 | `track follow-wallet` | Trade records from wallets the user personally follows on GMGN |
 | `track kol` | Real-time trades from KOL / influencer wallets tagged by GMGN |
 | `track smartmoney` | Real-time trades from smart money / whale wallets tagged by GMGN |
@@ -71,6 +72,7 @@ All tracking routes used by this skill go through GMGN's leaky-bucket limiter wi
 | Command | Route | Weight |
 |---------|-------|--------|
 | `track follow-tokens` | `GET /v1/user/follow_tokens` | 3 |
+| `track follow-token-groups` | `GET /v1/user/follow_token_groups` | 1 |
 | `track follow-wallet` | `GET /v1/trade/follow_wallet` | 3 |
 | `track kol` | `GET /v1/user/kol` | 1 |
 | `track smartmoney` | `GET /v1/user/smartmoney` | 1 |
@@ -103,11 +105,17 @@ When a request returns `429`:
 ## Usage Examples
 
 ```bash
-# Followed token map for a wallet on SOL
+# Followed token list for a wallet on SOL
 gmgn-cli track follow-tokens --chain sol --wallet <wallet_address>
 
-# Followed token map on BSC, raw JSON output
+# Followed token list on BSC, raw JSON output
 gmgn-cli track follow-tokens --chain bsc --wallet <wallet_address> --raw
+
+# Follow token group names for a wallet on SOL
+gmgn-cli track follow-token-groups --chain sol --wallet <wallet_address>
+
+# Follow token group names, raw JSON output
+gmgn-cli track follow-token-groups --chain sol --wallet <wallet_address> --raw
 
 # Follow-wallet trades (all wallets you follow)
 gmgn-cli track follow-wallet --chain sol
@@ -175,6 +183,24 @@ Each item in `followings` contains:
 | `swaps` | Total swaps |
 | `group_ids` | Follow groups this token belongs to |
 | `open_timestamp` | Unix timestamp when trading opened |
+
+## `track follow-token-groups` Options
+
+| Option | Description |
+|--------|-------------|
+| `--chain` | Required. `sol` / `bsc` / `base` / `eth` |
+| `--wallet <address>` | Required. Wallet address to query |
+
+## `track follow-token-groups` Response Fields
+
+`data` is an array. Each item contains:
+
+| Field | Description |
+|-------|-------------|
+| `chain` | Chain the group is on |
+| `group_id` | Group identifier (e.g. `default`, or a user-defined ID) |
+| `group_name` | Human-readable group name |
+| `rank` | Display order / sort rank |
 
 ## `track follow-wallet` Options
 

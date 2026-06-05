@@ -36,6 +36,19 @@ export function registerTrackCommands(program: Command): void {
     });
 
   track
+    .command("follow-token-groups")
+    .description("Get the follow token group names for a wallet on a given chain")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
+    .requiredOption("--wallet <address>", "Wallet address")
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      validateChain(opts.chain);
+      const client = new OpenApiClient(getConfig());
+      const data = await client.getFollowGroupNames(opts.chain, opts.wallet).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+
+  track
     .command("follow-wallet")
     .description("Get follow-wallet trade records")
     .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
