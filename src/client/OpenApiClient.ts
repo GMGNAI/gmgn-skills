@@ -807,6 +807,7 @@ const TRENCHES_PLATFORMS: Record<string, string[]> = {
   bsc: [
     "fourmeme", "fourmeme_agent", "bn_fourmeme", "four_xmode_agent",
     "flap", "clanker", "lunafun",
+    "cubepeg", "likwid", "goplus_creator", "goplus_skills", "openfour",
   ],
   base: [
     "clanker", "bankr", "flaunch", "zora", "zora_creator",
