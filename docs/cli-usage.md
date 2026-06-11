@@ -351,12 +351,11 @@ gmgn-cli market signal --chain sol --groups '<json_array>' [--raw]
 
 ## track follow-tokens
 
-Query the followed token list for a wallet. Returns a paginated list of tokens the wallet has bookmarked on GMGN, with full market data. API Key auth only.
+Query the followed token list for the authenticated user. Returns a paginated list of tokens the API Key's bound user has bookmarked on GMGN, with full market data. User identity is resolved server-side from the API Key. API Key auth only.
 
 ```bash
 gmgn-cli track follow-tokens \
   --chain <chain> \
-  --wallet <wallet_address> \
   [--group-id <id>] \
   [--order-by <field>] \
   [--direction <asc|desc>] \
@@ -368,7 +367,6 @@ gmgn-cli track follow-tokens \
 | Option | Required | Description |
 |--------|----------|-------------|
 | `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
-| `--wallet` | Yes | Wallet address |
 | `--group-id` | No | `all_group` (all tokens), `default`, or a user-defined group ID |
 | `--interval` | No | Time interval for price change stats: `1m` / `5m` / `1h` / `6h` / `24h` |
 | `--order-by` | No | `created_at` / `swaps` / `volume` / `market_cap` / `liquidity` / `price` / `open_timestamp` |
@@ -381,19 +379,17 @@ gmgn-cli track follow-tokens \
 
 ## track follow-token-groups
 
-Query the follow token group names for a wallet. Returns the groups a wallet uses to organise its followed tokens on GMGN. API Key auth only.
+Query the follow token group names for the authenticated user. Returns the groups the API Key's bound user uses to organise their followed tokens on GMGN. User identity is resolved server-side from the API Key. API Key auth only.
 
 ```bash
 gmgn-cli track follow-token-groups \
   --chain <chain> \
-  --wallet <wallet_address> \
   [--raw]
 ```
 
 | Option | Required | Description |
 |--------|----------|-------------|
 | `--chain` | Yes | `sol` / `bsc` / `base` / `eth` |
-| `--wallet` | Yes | Wallet address |
 
 ---
 

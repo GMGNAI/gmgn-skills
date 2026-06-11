@@ -529,8 +529,8 @@ gmgn-cli portfolio created-tokens --chain sol --wallet <addr>
 ### Track
 
 ```bash
-# 查询钱包收藏的代币列表
-gmgn-cli track follow-tokens --chain sol --wallet <wallet_address>
+# 查询当前 API Key 绑定用户收藏的代币列表
+gmgn-cli track follow-tokens --chain sol
 
 # 追踪关注钱包的交易动态
 gmgn-cli track follow-wallet --chain sol

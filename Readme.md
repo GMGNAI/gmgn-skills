@@ -505,8 +505,8 @@ gmgn-cli portfolio created-tokens --chain sol --wallet <addr>
 ### Track
 
 ```bash
-# Followed token map for a wallet
-gmgn-cli track follow-tokens --chain sol --wallet <wallet_address>
+# Followed token list for the authenticated user
+gmgn-cli track follow-tokens --chain sol
 
 # Follow-wallet trade records
 gmgn-cli track follow-wallet --chain sol

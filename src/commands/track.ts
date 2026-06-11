@@ -9,9 +9,8 @@ export function registerTrackCommands(program: Command): void {
 
   track
     .command("follow-tokens")
-    .description("Get the followed token list for a wallet on a given chain")
+    .description("Get the followed token list for the authenticated user on a given chain")
     .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
-    .requiredOption("--wallet <address>", "Wallet address")
     .option("--group-id <id>", "Filter by group: all_group (all), default, or a user-defined group ID")
     .option("--interval <interval>", "Time interval for price change stats (e.g. 1m, 5m, 1h, 6h, 24h)")
     .option("--order-by <field>", "Sort field: created_at / swaps / volume / market_cap / liquidity / price / open_timestamp")
@@ -31,20 +30,19 @@ export function registerTrackCommands(program: Command): void {
       if (opts.cursor) extra["cursor"] = opts.cursor;
       if (opts.search) extra["search_text"] = opts.search;
       const client = new OpenApiClient(getConfig());
-      const data = await client.getFollowTokens(opts.chain, opts.wallet, extra).catch(exitOnError);
+      const data = await client.getFollowTokens(opts.chain, extra).catch(exitOnError);
       printResult(data, opts.raw);
     });
 
   track
     .command("follow-token-groups")
-    .description("Get the follow token group names for a wallet on a given chain")
+    .description("Get the follow token group names for the authenticated user on a given chain")
     .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth")
-    .requiredOption("--wallet <address>", "Wallet address")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       validateChain(opts.chain);
       const client = new OpenApiClient(getConfig());
-      const data = await client.getFollowGroupNames(opts.chain, opts.wallet).catch(exitOnError);
+      const data = await client.getFollowGroupNames(opts.chain).catch(exitOnError);
       printResult(data, opts.raw);
     });
 
