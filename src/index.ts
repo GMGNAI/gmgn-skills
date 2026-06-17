@@ -11,7 +11,7 @@ import { registerPortfolioCommands } from "./commands/portfolio.js";
 import { registerTrackCommands } from "./commands/track.js";
 import { registerSwapCommands } from "./commands/swap.js";
 import { registerCookingCommands } from "./commands/cooking.js";
-import { registerSetupCommands } from "./commands/setup.js";
+import { registerSetupCommands } from "./commands/config.js";
 
 const proxy = process.env.HTTPS_PROXY ?? process.env.https_proxy
            ?? process.env.HTTP_PROXY  ?? process.env.http_proxy;

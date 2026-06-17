@@ -67,22 +67,21 @@ function extractRawPublicKey(publicPem: string): string {
 
 export function registerSetupCommands(program: Command): void {
   program
-    .command("setup")
-    .description("Check GMGN API Key configuration and generate keys if needed")
+    .command("config")
+    .description("Check GMGN API Key configuration and generate an Ed25519 key pair if needed")
     .action(async () => {
-      // Step 1: check if already configured
+      // Skip if already configured
       if (hasApiKey()) {
         console.log("✓ GMGN_API_KEY is already configured. No action needed.");
         return;
       }
 
-      // Step 2: reuse existing private key or generate new one
+      // Reuse existing private key or generate a new Ed25519 key pair
       let privatePem: string;
       let publicPem: string;
 
       const existing = hasPrivateKey();
       if (existing.found && existing.pem) {
-        // Derive public key from existing private key
         const privKey = crypto.createPrivateKey(existing.pem);
         const pubKey = crypto.createPublicKey(privKey);
         publicPem = pubKey.export({ type: "spki", format: "pem" }) as string;
@@ -92,14 +91,14 @@ export function registerSetupCommands(program: Command): void {
         privatePem = kp.privatePem;
         publicPem = kp.publicPem;
 
-        // Save private key to global config
+        // Write private key inline into ~/.config/gmgn/.env as GMGN_PRIVATE_KEY
         writeEnvFile(GLOBAL_ENV_PATH, {
           GMGN_PRIVATE_KEY: privatePem.replace(/\n/g, "\\n"),
         });
-        console.log(`✓ Private key generated and saved to ${GLOBAL_ENV_PATH}`);
+        console.log(`✓ Ed25519 private key generated and saved to ${GLOBAL_ENV_PATH}`);
       }
 
-      // Step 3: build link and prompt user
+      // Build pre-filled link and prompt user
       const rawPubKey = extractRawPublicKey(publicPem);
       const encodedPubKey = encodeURIComponent(rawPubKey);
       const link = `${GMGN_API_URL}?pbk=${encodedPubKey}`;
@@ -110,20 +109,5 @@ export function registerSetupCommands(program: Command): void {
       console.log("");
       console.log(`  ${link}`);
       console.log("");
-    });
-
-  program
-    .command("save-key")
-    .description("Save GMGN API Key to global config after obtaining it from the website")
-    .requiredOption("--api-key <key>", "Your GMGN API Key from gmgn.ai/ai")
-    .action(async (opts) => {
-      const apiKey: string = opts.apiKey;
-      if (!apiKey || apiKey.length < 8) {
-        console.error("[gmgn-cli] Error: invalid API Key format.");
-        process.exit(1);
-      }
-      writeEnvFile(GLOBAL_ENV_PATH, { GMGN_API_KEY: apiKey });
-      console.log(`✓ GMGN_API_KEY saved to ${GLOBAL_ENV_PATH}`);
-      console.log("  Configuration complete. You can now use all GMGN Skill commands.");
     });
 }
