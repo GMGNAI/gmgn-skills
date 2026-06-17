@@ -4,7 +4,9 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 
-const GLOBAL_ENV_PATH = path.join(os.homedir(), ".config", "gmgn", ".env");
+const GMGN_CONFIG_DIR = path.join(os.homedir(), ".config", "gmgn");
+const GLOBAL_ENV_PATH = path.join(GMGN_CONFIG_DIR, ".env");
+const KEYS_FILE = path.join(GMGN_CONFIG_DIR, "keys.pem");
 const GMGN_API_URL = "https://gmgn.ai/ai/generateapi";
 
 function readEnvFile(filePath: string): Record<string, string> {
@@ -91,11 +93,16 @@ export function registerSetupCommands(program: Command): void {
         privatePem = kp.privatePem;
         publicPem = kp.publicPem;
 
-        // Write private key inline into ~/.config/gmgn/.env as GMGN_PRIVATE_KEY
+        // Save both keys into a single keys.pem file for user backup
+        fs.mkdirSync(GMGN_CONFIG_DIR, { recursive: true });
+        const keyFileContent = `# Private Key\n${privatePem}\n# Public Key\n${publicPem}`;
+        fs.writeFileSync(KEYS_FILE, keyFileContent, { mode: 0o600 });
+
+        // Also write private key inline into ~/.config/gmgn/.env as GMGN_PRIVATE_KEY
         writeEnvFile(GLOBAL_ENV_PATH, {
           GMGN_PRIVATE_KEY: privatePem.replace(/\n/g, "\\n"),
         });
-        console.log(`✓ Ed25519 private key generated and saved to ${GLOBAL_ENV_PATH}`);
+        console.log(`✓ Ed25519 key pair generated and saved to ${KEYS_FILE}`);
       }
 
       // Build pre-filled link and prompt user
