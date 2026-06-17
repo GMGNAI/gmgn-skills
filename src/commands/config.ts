@@ -58,14 +58,6 @@ function generateKeyPair(): { privatePem: string; publicPem: string } {
   return { privatePem, publicPem };
 }
 
-function extractRawPublicKey(publicPem: string): string {
-  // Strip PEM headers and decode to get raw 32-byte Ed25519 public key, then base64
-  const b64 = publicPem
-    .replace(/-----BEGIN PUBLIC KEY-----|-----END PUBLIC KEY-----|\n/g, "");
-  const der = Buffer.from(b64, "base64");
-  // Ed25519 SPKI DER: 12-byte header + 32-byte key
-  return der.slice(12).toString("base64");
-}
 
 export function registerSetupCommands(program: Command): void {
   program
@@ -105,10 +97,8 @@ export function registerSetupCommands(program: Command): void {
         console.log(`✓ Ed25519 key pair generated and saved to ${KEYS_FILE}`);
       }
 
-      // Build pre-filled link and prompt user
-      const rawPubKey = extractRawPublicKey(publicPem);
-      const encodedPubKey = encodeURIComponent(rawPubKey);
-      const link = `${GMGN_API_URL}?pbk=${encodedPubKey}`;
+      // Build pre-filled link with full PEM public key as pbk parameter
+      const link = `${GMGN_API_URL}?pbk=${encodeURIComponent(publicPem)}`;
 
       console.log("");
       console.log("One more step — please click the link below to create your GMGN API Key.");
