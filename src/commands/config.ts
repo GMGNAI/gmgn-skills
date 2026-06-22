@@ -35,67 +35,27 @@ function writeEnvFile(filePath: string, vars: Record<string, string>): void {
   fs.writeFileSync(filePath, content, { mode: 0o600 });
 }
 
-function hasApiKey(): boolean {
-  // Check project .env first, then global config
-  const projectEnv = readEnvFile(path.join(process.cwd(), ".env"));
-  if (projectEnv["GMGN_API_KEY"]) return true;
-  const globalEnv = readEnvFile(GLOBAL_ENV_PATH);
-  return !!globalEnv["GMGN_API_KEY"];
-}
-
-function hasPrivateKey(): { found: boolean; pem?: string } {
-  const globalEnv = readEnvFile(GLOBAL_ENV_PATH);
-  if (globalEnv["GMGN_PRIVATE_KEY"]) {
-    return { found: true, pem: globalEnv["GMGN_PRIVATE_KEY"].replace(/\\n/g, "\n") };
-  }
-  return { found: false };
-}
-
-function generateKeyPair(): { privatePem: string; publicPem: string } {
-  const { privateKey, publicKey } = crypto.generateKeyPairSync("ed25519");
-  const privatePem = privateKey.export({ type: "pkcs8", format: "pem" }) as string;
-  const publicPem = publicKey.export({ type: "spki", format: "pem" }) as string;
-  return { privatePem, publicPem };
-}
-
-
 export function registerSetupCommands(program: Command): void {
   program
     .command("config")
-    .description("Check GMGN API Key configuration and generate an Ed25519 key pair if needed")
+    .description("Generate an Ed25519 key pair and output a pre-filled GMGN API Key creation link")
     .action(async () => {
-      // Skip if already configured
-      if (hasApiKey()) {
-        console.log("✓ GMGN_API_KEY is already configured. No action needed.");
-        return;
-      }
+      // Generate a new Ed25519 key pair unconditionally
+      const { privateKey, publicKey } = crypto.generateKeyPairSync("ed25519");
+      const privatePem = privateKey.export({ type: "pkcs8", format: "pem" }) as string;
+      const publicPem = publicKey.export({ type: "spki", format: "pem" }) as string;
 
-      // Reuse existing private key or generate a new Ed25519 key pair
-      let privatePem: string;
-      let publicPem: string;
+      // Append both keys to keys.pem to preserve history
+      fs.mkdirSync(GMGN_CONFIG_DIR, { recursive: true });
+      const entry = `# Private Key\n${privatePem}\n# Public Key\n${publicPem}\n`;
+      fs.appendFileSync(KEYS_FILE, entry, { mode: 0o600 });
 
-      const existing = hasPrivateKey();
-      if (existing.found && existing.pem) {
-        const privKey = crypto.createPrivateKey(existing.pem);
-        const pubKey = crypto.createPublicKey(privKey);
-        publicPem = pubKey.export({ type: "spki", format: "pem" }) as string;
-        privatePem = existing.pem;
-      } else {
-        const kp = generateKeyPair();
-        privatePem = kp.privatePem;
-        publicPem = kp.publicPem;
+      // Overwrite GMGN_PRIVATE_KEY in ~/.config/gmgn/.env with the new private key
+      writeEnvFile(GLOBAL_ENV_PATH, {
+        GMGN_PRIVATE_KEY: privatePem.replace(/\n/g, "\\n"),
+      });
 
-        // Save both keys into a single keys.pem file for user backup
-        fs.mkdirSync(GMGN_CONFIG_DIR, { recursive: true });
-        const keyFileContent = `# Private Key\n${privatePem}\n# Public Key\n${publicPem}`;
-        fs.writeFileSync(KEYS_FILE, keyFileContent, { mode: 0o600 });
-
-        // Also write private key inline into ~/.config/gmgn/.env as GMGN_PRIVATE_KEY
-        writeEnvFile(GLOBAL_ENV_PATH, {
-          GMGN_PRIVATE_KEY: privatePem.replace(/\n/g, "\\n"),
-        });
-        console.log(`✓ Ed25519 key pair generated and saved to ${KEYS_FILE}`);
-      }
+      console.log(`✓ Ed25519 key pair generated and saved to ${KEYS_FILE}`);
 
       // Build pre-filled link with full PEM public key as pbk parameter
       const link = `${GMGN_API_URL}?pbk=${encodeURIComponent(publicPem)}`;

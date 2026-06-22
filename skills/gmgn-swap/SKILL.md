@@ -104,19 +104,14 @@ When a request returns `429`:
 
 **First-time setup** (if credentials are not configured):
 
-1. Generate key pair and show the public key to the user:
+1. Run the following command — it generates an Ed25519 key pair, saves the private key to `~/.config/gmgn/.env`, and outputs a pre-filled link:
    ```bash
-   openssl genpkey -algorithm ed25519 -out /tmp/gmgn_private.pem 2>/dev/null && \
-     openssl pkey -in /tmp/gmgn_private.pem -pubout 2>/dev/null
+   gmgn-cli config
    ```
-   Tell the user: *"This is your Ed25519 public key. Go to **https://gmgn.ai/ai**, paste it into the API key creation form (enable swap capability), then send me the API Key value shown on the page."*
-
-2. Wait for the user's API key, then configure both credentials:
+2. Click the link output by the command to open the GMGN API Key creation page (Public Key is pre-filled). Create the key and copy the API Key value shown on the page.
+3. Write the API Key to `~/.config/gmgn/.env`:
    ```bash
-   mkdir -p ~/.config/gmgn
-   echo 'GMGN_API_KEY=<key_from_user>' > ~/.config/gmgn/.env
-   echo 'GMGN_PRIVATE_KEY="<pem_content_from_step_1>"' >> ~/.config/gmgn/.env
-   chmod 600 ~/.config/gmgn/.env
+   echo 'GMGN_API_KEY=<key_from_user>' >> ~/.config/gmgn/.env
    ```
 
 ### Credential Model
