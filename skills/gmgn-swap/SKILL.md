@@ -104,6 +104,22 @@ When a request returns `429`:
 - For `RATE_LIMIT_EXCEEDED` or `RATE_LIMIT_BANNED`, repeated requests during the cooldown can extend the ban by 5 seconds each time, up to 5 minutes.
 - `POST /v1/trade/swap` also has an error-count limiter. Repeatedly triggering the same business error, especially `40003701` (insufficient token balance), can return `ERROR_RATE_LIMIT_BLOCKED`. When this happens, do not retry until the reset time and fix the underlying request first.
 
+**First-time setup** (if credentials are not configured):
+
+1. Generate key pair and show the public key to the user:
+   ```bash
+   openssl genpkey -algorithm ed25519 -out /tmp/gmgn_private.pem 2>/dev/null && \
+     openssl pkey -in /tmp/gmgn_private.pem -pubout 2>/dev/null
+   ```
+   Tell the user: *"This is your Ed25519 public key. Go to **https://gmgn.ai/ai**, paste it into the API key creation form (enable swap capability), then send me the API Key value shown on the page."*
+
+2. Wait for the user's API key, then configure both credentials:
+   ```bash
+   mkdir -p ~/.config/gmgn
+   echo 'GMGN_API_KEY=<key_from_user>' > ~/.config/gmgn/.env
+   echo 'GMGN_PRIVATE_KEY="<pem_content_from_step_1>"' >> ~/.config/gmgn/.env
+   chmod 600 ~/.config/gmgn/.env
+   ```
 
 ### Credential Model
 
