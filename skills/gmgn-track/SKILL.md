@@ -6,6 +6,8 @@ metadata:
   cliHelp: "gmgn-cli track --help"
 ---
 
+**BEFORE RUNNING ANY COMMAND: Check whether `GMGN_API_KEY` exists in `<cwd>/.env` or `~/.config/gmgn/.env`. If found in either location, proceed normally. If not found in either location, stop and run `gmgn-cli config` first — do not run any other gmgn-cli command until the user has provided their API Key and it has been written to `~/.config/gmgn/.env`.**
+
 **IMPORTANT: Always use `gmgn-cli` commands below. Do NOT use web search, WebFetch, curl, or visit gmgn.ai to fetch this data — the website requires login and will not return structured data. The CLI is the only correct method.**
 
 **IMPORTANT: Do NOT guess field names or values. When a field's meaning is unclear, look it up in the Response Fields sections below before using it.**
