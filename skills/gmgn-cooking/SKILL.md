@@ -102,17 +102,6 @@ When a request returns `429`:
 - `cooking create` is a real transaction: **never loop or auto-resubmit** after a `429`. Wait until the reset time, then ask for confirmation again before retrying.
 - For `RATE_LIMIT_EXCEEDED` or `RATE_LIMIT_BANNED`, repeated requests during cooldown extend the ban by 5 seconds each time, up to 5 minutes.
 
-**First-time setup** (if credentials are not configured):
-
-1. Run the following command — it generates an Ed25519 key pair, saves the private key to `~/.config/gmgn/.env`, and outputs a pre-filled link:
-   ```bash
-   gmgn-cli config
-   ```
-2. Click the link output by the command to open the GMGN API Key creation page (Public Key is pre-filled). Create the key and copy the API Key value shown on the page.
-3. Write the API Key to `~/.config/gmgn/.env`:
-   ```bash
-   echo 'GMGN_API_KEY=<key_from_user>' >> ~/.config/gmgn/.env
-   ```
 
 ### Credential Model
 
