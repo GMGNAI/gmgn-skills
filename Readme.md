@@ -438,6 +438,7 @@ Step-by-step guides for common analysis tasks:
 | [workflow-smart-money-profile.md](docs/workflow-smart-money-profile.md) | Trading style analysis, copy-trade ROI estimate, smart money leaderboard |
 | [workflow-risk-warning.md](docs/workflow-risk-warning.md) | Active risk monitoring for held positions (whale exit, liquidity, dev dump) |
 | [workflow-early-project-screening.md](docs/workflow-early-project-screening.md) | Screen newly launched launchpad tokens for smart money entry |
+| [read-only-launch-screen.md](docs/read-only-launch-screen.md) | PowerShell new-launch screen with transparent filters, second-stage checks, and latency benchmarks |
 | [workflow-daily-brief.md](docs/workflow-daily-brief.md) | Daily market overview: trending + smart money moves + early watch + risk scan |
 | [workflow-market-opportunities.md](docs/workflow-market-opportunities.md) | Discover trading opportunities from trending data |
 | [workflow-token-due-diligence.md](docs/workflow-token-due-diligence.md) | 4-step token due diligence checklist |

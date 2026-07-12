@@ -442,6 +442,7 @@ solana 上的 <token_address> 安全吗，值得买入吗？
 | [workflow-smart-money-profile.md](docs/workflow-smart-money-profile.md) | 聪明钱行为画像、跟单收益估算、排行榜对比 |
 | [workflow-risk-warning.md](docs/workflow-risk-warning.md) | 持仓风险预警（巨鲸出货、流动性、开发者跑路） |
 | [workflow-early-project-screening.md](docs/workflow-early-project-screening.md) | 筛选新发 Launchpad Token，识别聪明钱早入信号 |
+| [read-only-launch-screen.md](docs/read-only-launch-screen.md) | PowerShell 新币只读筛选器：透明过滤、二阶段检查与延迟基准 |
 | [workflow-daily-brief.md](docs/workflow-daily-brief.md) | 每日市场简报：热门趋势 + 聪明钱动向 + 早期机会 + 风险扫描 |
 | [workflow-market-opportunities.md](docs/workflow-market-opportunities.md) | 从趋势数据中发现交易机会 |
 | [workflow-token-due-diligence.md](docs/workflow-token-due-diligence.md) | 4 步 Token 尽调清单 |
