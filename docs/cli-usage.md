@@ -441,7 +441,7 @@ gmgn-cli track follow-token-groups \
 
 ---
 
-## portfolio follow-wallet
+## track follow-wallet
 
 Query follow-wallet trade records. Returns trades from wallets you personally follow on the GMGN platform. The follow list is resolved automatically from the GMGN user account bound to the API Key — `--wallet` is optional. Signed auth (API Key + private key signature).
 
@@ -469,7 +469,7 @@ gmgn-cli track follow-wallet \
 
 ---
 
-## portfolio kol
+## track kol
 
 Query KOL trade records.
 
@@ -485,7 +485,7 @@ gmgn-cli track kol [--chain <chain>] [--limit <n>] [--side <side>] [--raw]
 
 ---
 
-## portfolio smartmoney
+## track smartmoney
 
 Query Smart Money trade records.
 
