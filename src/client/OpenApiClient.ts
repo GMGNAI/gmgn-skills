@@ -159,6 +159,26 @@ export interface StrategyCreateParams {
   buy_param?: TradeParam;
 }
 
+export interface StrategyCreateV2Params {
+  chain: string;
+  from_address: string;
+  base_token: string;
+  quote_token: string;
+  sub_order_type: "mix_trade";
+  buy_type: "market" | "limit" | "position";
+  condition_orders: Record<string, unknown>[];
+  sell_param: Record<string, unknown>;
+  quote_investment?: string;
+  buy_order?: Record<string, unknown>;
+  buy_param?: Record<string, unknown>;
+  open_amount?: string;
+  open_price?: string;
+  cost_price?: string;
+  sell_ratio_type?: string;
+  limit_price_mode?: string;
+  expire_in?: number;
+}
+
 export interface StrategyCancelParams {
   chain: string;
   from_address: string;
@@ -518,6 +538,10 @@ export class OpenApiClient {
 
   async createStrategyOrder(params: StrategyCreateParams): Promise<unknown> {
     return this.authSignedRequest("POST", "/v1/trade/strategy/create", {}, params);
+  }
+
+  async createStrategyOrderV2(params: StrategyCreateV2Params): Promise<unknown> {
+    return this.authSignedRequest("POST", "/v2/trade/strategy/create", {}, params);
   }
 
   async getStrategyOrders(chain: string, extra: Record<string, string | number> = {}): Promise<unknown> {

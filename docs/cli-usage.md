@@ -126,7 +126,7 @@ npx gmgn-cli market trending \
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `robinhood` / `arc` / `stable` |
+| `--chain` | Yes | V1 supports `sol` / `bsc` / `base` / `eth` / `robinhood`; use `create-v2` for `arc` / `stable` |
 | `--interval` | Yes | `1m` / `5m` / `1h` / `6h` / `24h` |
 | `--limit` | No | Number of results (default 100, max 100) |
 | `--order-by` | No | Sort field: `volume` / `swaps` / `liquidity` / `marketcap` / `holders` / `price` / `change` / `change1m` / `change5m` / `change1h` / `renowned_count` / `smart_degen_count` / `bluechip_owner_percentage` / `rank` / `creation_timestamp` / `square_mentions` / `history_highest_market_cap` / `gas_fee` |
@@ -724,7 +724,7 @@ gmgn-cli order strategy create \
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--base-token` | Yes | Base token contract address |
 | `--quote-token` | Yes | Quote token contract address |
-| `--order-type` | Yes | Order type: `limit_order` / `smart_trade`. **`arc` / `stable` support `limit_order` only** — `smart_trade` returns a 400. |
+| `--order-type` | Yes | Order type: `limit_order` / `smart_trade` |
 | `--sub-order-type` | Yes | `limit_order`: `buy_low` / `buy_high` / `stop_loss` / `take_profit`; `smart_trade` with condition_orders: `mix_trade` |
 | `--check-price` | No* | Trigger check price — required for `limit_order`; omit for `smart_trade` (trigger is in the `buy_low` condition order) |
 | `--open-price` | No | Open price of the position |
@@ -755,6 +755,25 @@ gmgn-cli order strategy create \
 | `is_update` | bool | `true` if an existing order was updated |
 
 ---
+
+## order strategy create-v2
+
+Create a V2 smart-trade strategy through `POST /v2/trade/strategy/create`. It is independent from the V1 command.
+
+```bash
+gmgn-cli order strategy create-v2 \
+  --chain <chain> --from <wallet> \
+  --base-token <token> --quote-token <token> \
+  --buy-type <market|limit|position> \
+  --condition-orders <json-array> --sell-param <json-object> \
+  [--quote-investment <amount>] [--buy-order <json-object>] \
+  [--buy-param <json-object>] [--open-amount <amount>] \
+  [--open-price <price>] [--cost-price <price>] \
+  [--sell-ratio-type <buy_amount|hold_amount>] \
+  [--limit-price-mode <exact|slippage>] [--expire-in <seconds>] [--raw]
+```
+
+Market and limit entries require `--quote-investment`; limit also requires `--buy-order`. Position entries require `--open-amount` and `--open-price`. All JSON options are parsed before submission.
 
 ## order strategy list
 
