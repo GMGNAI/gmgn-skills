@@ -31,8 +31,21 @@ After the script finishes, paste the complete stdout verbatim into your reply �
 
 All holding percentages the script prints are **share of tradeable float** (`1 - burn - DEX`), not
 share of total supply. `amount_percentage` from the API is share of total supply; the script
-re-bases it. Because only the top 100 holders are fetched, every float percentage is a floor —
-the footer reports what fraction of the float those 100 wallets cover.
+re-bases it. Because only the top 100 holders are fetched, a float percentage is a floor **when
+those 100 wallets do not cover the whole float**; the footer reports the actual coverage and states
+which case applies — floors when coverage <99.5%, complete values when the top 100 cover all of it.
+
+When burn + DEX leave less than 2% of supply tradeable (typically a launchpad token before
+migration), the float denominator degenerates: every `/ float_share` inflates dust wallets to
+double digits or 100%. The script detects this, prints a banner with absolute token/USD figures
+instead, forces every percentage flag to ⚪, and sets the rating to ⚪ Cannot Assess. Do not read
+those percentages as concentration findings.
+
+The same suppression applies when `token holders` returns an empty list (token has no active
+holders left, or upstream stopped indexing it). Every percentage would render 0.00% and every
+threshold would pass, so the report would otherwise read "✅ Normal — no obvious dump risk". The
+script prints a no-data banner instead, replaces each "none found 🟢" line with ⚪, and rates
+⚪ Cannot Assess. "No data" is never reported as "no risk".
 
 ### Holder object key fields
 
@@ -88,6 +101,7 @@ Entry timing pressure (批次浮盈/出货) does **NOT** affect the overall rati
 
 | Rating (ZH) | Rating (EN) | Emoji | Condition |
 |-------------|-------------|-------|-----------|
+| 无法评估 | Cannot Assess | ⚪ | Tradeable float <2% of supply, **or** upstream returned zero holders (all percentage rules suppressed; dev sock puppet still escalates to 🔴) |
 | 不建议买 | Not Recommended | 🔴 | Any: rat traders >5% / largest wallet >10% / dev sock puppet |
 | 谨慎参与 | Caution | ⚠️ | ≥2 of: Dev still holding >1% / airdrop >20% / risk wallets >35% / linked >15% |
 | 可轻仓   | Light Position | 🟡 | Exactly 1 of above warns |
@@ -105,9 +119,28 @@ Entry timing pressure (批次浮盈/出货) does **NOT** affect the overall rati
 | Zero-balance wallets | — | >10% | ≤10% |
 
 Diamond hands invert (more is better) and use their own emoji set: ✅ >60% / 🟡 >35% / ⚠️ ≤35%.
+Diamond hands require `buy_tx_count_cur > 0` — a wallet that never bought has no cost to hold
+through, so zero-cost airdrop recipients are reported separately as "空降未动 / Idle airdrop"
+rather than being credited as diamond hands.
 
 Linked funding is escalated to at least 🟡 whenever any group was funded within 60s, regardless of
 size — scripted batch funding is a structural signal, not a magnitude one.
+
+### Chip quality (footer)
+
+Three mutually exclusive buckets over the chips held by observed wallets (denominator is
+`normal_pct`, i.e. total-supply basis, not float): **bought in with no risk tag** / **zero-cost
+airdrop** / **risk-tagged**. They are reported separately rather than collapsed into one
+"healthy chips" number, because a risk tag means a proven-bad address while zero-cost airdrop only
+means unknown provenance.
+
+Headline flag, first match wins: 🔴 risk-tagged >30% · 🟢 clean ≥50% · 🟡 clean ≥30% · 🟡 when
+zero-cost airdrop accounts for ≥80% of the non-clean remainder · 🔴 otherwise. So an
+airdrop-distributed token reads 🟡 with its composition spelled out, not "healthy chips 0.0% 🔴".
+
+The composition is total-supply based, so it survives a degenerate float — but the headline flag is
+neutralized to ⚪ (and the chips' share of supply appended) whenever the rating is ⚪ Cannot Assess,
+since a 🔴/🟢 verdict over dust-level chips would contradict the rating above it.
 
 ## Supported Chains
 
@@ -128,3 +161,7 @@ size — scripted batch funding is a structural signal, not a magnitude one.
 - Top5 displays Twitter name when available; else `first4...last4` format
 - Risk-wallet subtotals are per-category and can exceed the deduped total; the script prints how
   many wallets carry more than one risk tag when that happens.
+- `creator_ath_info.ath_mc` can lag behind the token's current MC after a fast pump (upstream
+  `ath_price` has been seen equal to `price_24h`). The script cannot recompute it, so when the
+  reported ATH sits more than 5% below the current MC it prints a staleness warning next to the
+  figure instead of presenting it as the dev's peak.
