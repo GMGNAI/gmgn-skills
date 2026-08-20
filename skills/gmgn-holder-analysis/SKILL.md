@@ -38,14 +38,21 @@ which case applies — floors when coverage <99.5%, complete values when the top
 When burn + DEX leave less than 2% of supply tradeable (typically a launchpad token before
 migration), the float denominator degenerates: every `/ float_share` inflates dust wallets to
 double digits or 100%. The script detects this, prints a banner with absolute token/USD figures
-instead, forces every percentage flag to ⚪, and sets the rating to ⚪ Cannot Assess. Do not read
-those percentages as concentration findings.
+instead, and sets the rating to ⚪ Cannot Assess.
 
 The same suppression applies when `token holders` returns an empty list (token has no active
 holders left, or upstream stopped indexing it). Every percentage would render 0.00% and every
 threshold would pass, so the report would otherwise read "✅ Normal — no obvious dump risk". The
 script prints a no-data banner instead, replaces each "none found 🟢" line with ⚪, and rates
 ⚪ Cannot Assess. "No data" is never reported as "no risk".
+
+In both cases **no float percentage is printed at all** — every one renders as `n/a` (`无法评估`)
+and every percentage flag renders ⚪. Printing the number with a caveat was not enough: a
+divide-by-zero float puts `hold 100.00%` and `hold 0.00%` in the same report, and a reader
+skimming past the banner reads `Rat Trader 1 hold 100.00%` as a finding. Wallet counts, token
+amounts, USD values, and market caps still print — they do not pass through `float_share`.
+Percentages on a **total-supply** basis also still print (`burn`, `DEX`, float share itself, and
+the chip-quality buckets), because those denominators are unaffected.
 
 ### Holder object key fields
 
@@ -138,9 +145,10 @@ Headline flag, first match wins: 🔴 risk-tagged >30% · 🟢 clean ≥50% · �
 zero-cost airdrop accounts for ≥80% of the non-clean remainder · 🔴 otherwise. So an
 airdrop-distributed token reads 🟡 with its composition spelled out, not "healthy chips 0.0% 🔴".
 
-The composition is total-supply based, so it survives a degenerate float — but the headline flag is
-neutralized to ⚪ (and the chips' share of supply appended) whenever the rating is ⚪ Cannot Assess,
-since a 🔴/🟢 verdict over dust-level chips would contradict the rating above it.
+The composition is total-supply based, so it survives a degenerate float and its three percentages
+still print — but the headline flag is neutralized to ⚪ (and the chips' share of supply appended)
+whenever the rating is ⚪ Cannot Assess, since a 🔴/🟢 verdict over dust-level chips would
+contradict the rating above it.
 
 ## Supported Chains
 

@@ -146,6 +146,11 @@ unassessable = float_degenerate or no_holders
 # 无法评估时百分比一律不上色 —— "0.00% 🔴" 或 "0.0% 🟢" 读起来像结论，其实只是除零/空集
 def pf(f): return "⚪" if unassessable else f
 
+# 无法评估时干脆不打印这个占比数字。分母趋零时同一份报告里会同时出现 "hold 100.00%"
+# 和 "hold 0.00%"，两个都是除零产物而不是持仓事实。顶部横幅只解释了一次，读者扫到
+# "KOL 1 hold 0.00%" 仍然会读成"KOL 没拿货"。钱包个数不经过 float_share，照常打印。
+def fpct(v, dec=2): return _("无法评估", "n/a") if unassessable else f"{pct(v):.{dec}f}%"
+
 # ── 流通盘换算只走这两个函数 ─────────────────────────────────────────────
 # 不要再手写 `/ float_share`。漏掉一次除法就退回总供应基准，数字看上去仍然合理、
 # 也不会报错 —— 正是本次迁移要修掉的那类 bug。集中成两个函数后，漏除法就是漏调用，
@@ -615,20 +620,20 @@ print()
 c10f = pf("🔴" if top10>0.6 else ("🟡" if top10>0.4 else "🟢"))
 c20f = pf("🔴" if top20>0.75 else ("🟡" if top20>0.55 else "🟢"))
 print(f"  {_('集中度（占流通盘，已剔除 LP 与销毁）', 'Concentration (of tradeable float, LP + burn excluded)')}")
-print(f"    Top10 {pct(top10):.1f}% {c10f}   Top20 {pct(top20):.1f}% {c20f}")
+print(f"    Top10 {fpct(top10, 1)} {c10f}   Top20 {fpct(top20, 1)} {c20f}")
 print()
 if burn:
     print(f"  🔥 {_('销毁地址', 'Burn addr')}   {pct(burn_pct):.2f}%  ✅ {_('永久锁仓，无法流通', 'Permanently locked, non-circulating')}")
     print()
 airf = pf("🔴" if airdrop_pct>0.25 else ("🟡" if airdrop_pct>0.1 else "🟢"))
-print(f"  {_('空降筹码（从未买入、靠转账获得）', 'Airdrop (never bought, received via transfer)')}   {len(airdrop)} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {pct(airdrop_pct):.2f}%  {airf}")
+print(f"  {_('空降筹码（从未买入、靠转账获得）', 'Airdrop (never bought, received via transfer)')}   {len(airdrop)} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(airdrop_pct)}  {airf}")
 print()
 riskf = pf("🔴" if risk_pct>0.35 else ("🟡" if risk_pct>0.15 else "🟢"))
-print(f"  {_('风险钱包', 'Risk wallets')}   {_('合计', 'total')} {len(risk_all)} {_('个', '')}   {_('持仓', 'hold')} {pct(risk_pct):.2f}%  {riskf}")
+print(f"  {_('风险钱包', 'Risk wallets')}   {_('合计', 'total')} {len(risk_all)} {_('个', '')}   {_('持仓', 'hold')} {fpct(risk_pct)}  {riskf}")
 for label, group, flag in RISK_GROUPS:
     if group:
-        gp = pct(fs(group))
-        print(f"    · {label:10s}  {len(group):2d} {_('个', '')}   {_('持仓', 'hold')} {gp:.2f}%  {flag}")
+        gp = fpct(fs(group))
+        print(f"    · {label:10s}  {len(group):2d} {_('个', '')}   {_('持仓', 'hold')} {gp}  {flag}")
 if not any(g for _lb, g, _fl in RISK_GROUPS):
     # 空持仓表时"未发现"只是没数据可查，不能打成 🟢
     if no_holders:
@@ -681,9 +686,9 @@ print(f"  {_('浮盈越高 / 建仓MC越低 → 获利了结压力越强', 'High
 print()
 for i, h in enumerate(top5_holders, 1):
     role_str, display_id, cost_str, pnl_str, lv, note, beh_str, st = top5_pressure(h)
-    hp = pct(f1(h['amount_percentage']))
+    hp = fpct(f1(h['amount_percentage']))
     print(f"    {i}. {role_str}{display_id}")
-    print(f"       {_('持仓', 'hold')} {hp:.2f}%  {cost_str}  {_('盈亏', 'pnl')} {pnl_str}")
+    print(f"       {_('持仓', 'hold')} {hp}  {cost_str}  {_('盈亏', 'pnl')} {pnl_str}")
     print(f"       {_('抛压', 'pressure')} {lv} — {note}")
     print(f"       {_('状态', 'status')} {st}{beh_str}")
     print()
@@ -711,7 +716,7 @@ if creator:
     sell_amt   = creator.get('sell_amount_cur') or 0
     hold_pct_c = f1(creator.get('amount_percentage') or 0)
     c_status   = (_("余额归零", "Balance zero") if (creator.get('balance') or 0)<1
-                  else _(f"⚠️ 持仓 {pct(hold_pct_c):.2f}%", f"⚠️ Holding {pct(hold_pct_c):.2f}%"))
+                  else _(f"⚠️ 持仓 {fpct(hold_pct_c)}", f"⚠️ Holding {fpct(hold_pct_c)}"))
     print(f"  {_('主号 (Creator)', 'Main (Creator)')}   {addr_short(creator['address'])}")
     parts = [c_status]
     if sell_amt>0:
@@ -733,7 +738,7 @@ if creator:
         target  = top100_map[to_addr]
         t_mtags = [t for t in (target.get('maker_token_tags') or []) if t not in ('top_holder','transfer_in')]
         print(f"\n  ⚠️ {_('转出筹码仍在 Top100（换马甲继续持有）：', 'Transferred chips still in Top100 (sock puppet):')}")
-        print(f"     {addr_short(to_addr)}  {_('持仓', 'hold')} {pct(f1(target.get('amount_percentage') or 0)):.2f}%  {_('标签', 'tags')}: {' '.join(t_mtags) or _('无','none')}")
+        print(f"     {addr_short(to_addr)}  {_('持仓', 'hold')} {fpct(f1(target.get('amount_percentage') or 0))}  {_('标签', 'tags')}: {' '.join(t_mtags) or _('无','none')}")
     elif (creator.get('balance') or 0)<1 and tf_out==0:
         print(f"  ✅ {_('已完全卖出，无异常转账记录', 'Fully sold, no abnormal transfers')}")
     print()
@@ -790,30 +795,30 @@ if related:
     # 秒级批量注资本身就是异常信号，不该因为占比小而在标题上显示为绿。判据是钱包数与
     # 时间跨度，不含流通盘占比，所以流通盘退化时（relf 为 ⚪）这条升级依然有效。
     if tight_groups and relf in ("🟢", "⚪"): relf = "🟡"
-    print(f"  {_('涉及', 'Involves')} {len(related)} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {pct(related_pct):.2f}%   {usd(related_usd)}  {relf}")
+    print(f"  {_('涉及', 'Involves')} {len(related)} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(related_pct)}   {usd(related_usd)}  {relf}")
     print()
-    print(f"  ├─ {_('强关联（同一来源 + 时间集中或金额一致）', 'Strong (same source + tight timing or uniform amounts)')}   {len(same_src_groups)} {_('组', 'groups')} / {same_src_wallets} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {pct(same_src_pct):.2f}%")
+    print(f"  ├─ {_('强关联（同一来源 + 时间集中或金额一致）', 'Strong (same source + tight timing or uniform amounts)')}   {len(same_src_groups)} {_('组', 'groups')} / {same_src_wallets} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(same_src_pct)}")
     if same_src_groups:
         fa, ws = same_src_groups[0]
         native_in = sum(float(_tr(w, 'amount', 0) or 0) for w in ws)
         print(f"  │   {_('最大组', 'Largest group')}: {len(ws)} {_('个钱包', 'wallets')}   {_('来源', 'from')} {addr_short(fa)}   {_('合计注资', 'total funded')} {native_in:.4f} {NSYM}")
     if weak_src_groups:
         # 只共用转入地址、时间金额都不一致 —— 交易所热钱包和团伙长得一样，不能混进合计
-        print(f"  ├─ {_('弱关联（仅共用转入地址，可能是交易所热钱包）', 'Weak (shared source only, may be a CEX hot wallet)')}   {len(weak_src_groups)} {_('组', 'groups')} / {weak_src_wallets} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {pct(weak_src_pct):.2f}%   {_('不计入上方合计', 'excluded from total above')}")
+        print(f"  ├─ {_('弱关联（仅共用转入地址，可能是交易所热钱包）', 'Weak (shared source only, may be a CEX hot wallet)')}   {len(weak_src_groups)} {_('组', 'groups')} / {weak_src_wallets} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(weak_src_pct)}   {_('不计入上方合计', 'excluded from total above')}")
     print(f"  │")
     if win_groups:
         win_total = sum(len(v) for v in win_groups)
         if tight_groups:
-            print(f"  └─ {_(f'同步注资（{WINDOW//60}min 内集中入场）', f'Coordinated funding (within {WINDOW//60}min)')}   {win_total} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {pct(win_pct):.2f}%  🔴")
+            print(f"  └─ {_(f'同步注资（{WINDOW//60}min 内集中入场）', f'Coordinated funding (within {WINDOW//60}min)')}   {win_total} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(win_pct)}  🔴")
             print(f"      🔴 {_(f'其中 {tight_wallets} 个钱包在 {TIGHT} 秒内被同步注资，基本可判定脚本批量打款', f'{tight_wallets} wallet(s) funded within {TIGHT}s — almost certainly scripted batch funding')}")
         elif win_total>=3:
-            print(f"  └─ {_(f'同步注资（{WINDOW//60}min 内集中入场）', f'Coordinated funding (within {WINDOW//60}min)')}   {win_total} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {pct(win_pct):.2f}%  ⚠️")
+            print(f"  └─ {_(f'同步注资（{WINDOW//60}min 内集中入场）', f'Coordinated funding (within {WINDOW//60}min)')}   {win_total} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(win_pct)}  ⚠️")
         else:
-            print(f"  └─ {_(f'同步注资（{WINDOW//60}min 内集中入场）', f'Coordinated funding (within {WINDOW//60}min)')}   {win_total} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {pct(win_pct):.2f}%")
+            print(f"  └─ {_(f'同步注资（{WINDOW//60}min 内集中入场）', f'Coordinated funding (within {WINDOW//60}min)')}   {win_total} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(win_pct)}")
         # 只有一个批次时，明细就是上面那行，不重复打印
         if len(win_groups) > 1:
             v = win_groups[0]
-            print(f"      {_('最大批次', 'Largest batch')}: {len(v)} {_('个钱包', 'wallets')}   {_('合计持仓', 'total hold')} {pct(fs(v)):.3f}%   {_('时间跨度', 'span')} {_span(v)}s")
+            print(f"      {_('最大批次', 'Largest batch')}: {len(v)} {_('个钱包', 'wallets')}   {_('合计持仓', 'total hold')} {fpct(fs(v), 3)}   {_('时间跨度', 'span')} {_span(v)}s")
         else:
             print(f"      {_('时间跨度', 'Span')} {_span(win_groups[0])}s")
     else:
@@ -830,21 +835,23 @@ print()
 sec4 = _("🧠 优质信号", "🧠 Quality Signals")
 print(f"━━  {sec4}  {'━'*(54-len(sec4))}")
 print()
-print(f"  {_('聪明钱', 'Smart Money')}   {len(smart):2d}   {_('持仓', 'hold')} {pct(smart_pct):.2f}%  {'✅' if smart else '—'}")
+# ✅/— 只表示"这类钱包在不在场"，是个数派生的、不经过 float_share，退化时依然成立，
+# 所以不走 pf()；被中和掉的只是占比数字本身。
+print(f"  {_('聪明钱', 'Smart Money')}   {len(smart):2d}   {_('持仓', 'hold')} {fpct(smart_pct)}  {'✅' if smart else '—'}")
 if smart: print(f"  {_('近期动向', 'Recent')}:  {trend_str(smart)}")
-print(f"  KOL          {len(kol):2d}   {_('持仓', 'hold')} {pct(kol_pct):.2f}%  {'✅' if kol else '—'}")
+print(f"  KOL          {len(kol):2d}   {_('持仓', 'hold')} {fpct(kol_pct)}  {'✅' if kol else '—'}")
 if kol:
     for h in kol:
         name = h.get('twitter_name') or h.get('name') or addr_short(h['address'])
-        print(f"    · {name}  {_('持仓', 'hold')} {pct(f1(h['amount_percentage'])):.2f}%  {holding_status(h)}  {_('买/卖', 'buy/sell')}: {h.get('buy_tx_count_cur',0)}/{h.get('sell_tx_count_cur',0)}")
-print(f"  {_('鲸鱼', 'Whale')}        {len(whales):2d}   {_('持仓', 'hold')} {pct(whale_pct):.2f}%  {'✅' if whales else '—'}")
+        print(f"    · {name}  {_('持仓', 'hold')} {fpct(f1(h['amount_percentage']))}  {holding_status(h)}  {_('买/卖', 'buy/sell')}: {h.get('buy_tx_count_cur',0)}/{h.get('sell_tx_count_cur',0)}")
+print(f"  {_('鲸鱼', 'Whale')}        {len(whales):2d}   {_('持仓', 'hold')} {fpct(whale_pct)}  {'✅' if whales else '—'}")
 if whales: print(f"  {_('近期动向', 'Recent')}:  {trend_str(whales)}")
 print()
 df = pf("✅" if diamond_pct>0.6 else ("🟡" if diamond_pct>0.35 else "⚠️"))
-print(f"  {_('钻石手（买入过且从未卖出）', 'Diamond hands (bought & never sold)')}   {len(diamond):2d}   {_('持仓', 'hold')} {pct(diamond_pct):.1f}%  {df}")
+print(f"  {_('钻石手（买入过且从未卖出）', 'Diamond hands (bought & never sold)')}   {len(diamond):2d}   {_('持仓', 'hold')} {fpct(diamond_pct, 1)}  {df}")
 if idle_airdrop:
     # 单独一行，避免读者把这批零成本筹码当成"扛住了没卖"的钻石手
-    print(f"  {_('空降未动（从未买入也未卖出）', 'Idle airdrop (never bought, never sold)')}   {len(idle_airdrop):2d}   {_('持仓', 'hold')} {pct(idle_airdrop_pct):.1f}%   {_('零成本，不计入钻石手', 'zero cost — not counted as diamond hands')}")
+    print(f"  {_('空降未动（从未买入也未卖出）', 'Idle airdrop (never bought, never sold)')}   {len(idle_airdrop):2d}   {_('持仓', 'hold')} {fpct(idle_airdrop_pct, 1)}   {_('零成本，不计入钻石手', 'zero cost — not counted as diamond hands')}")
 print(f"  {_('部分卖出(<50%)', 'Partial sell (<50%)')}  {len(partial):2d}   {_('大量卖出(≥50%)', 'Heavy sell (≥50%)')}  {len(heavy_sell):2d}")
 if sig_count == 0:
     sig_summary = _("🟡 没有聪明钱和KOL，这个币没什么外部背书",
@@ -917,7 +924,9 @@ for rank, (age, ws) in enumerate(sig_clusters, 1):
     holding_cnt  = len([h for h in ws if is_buying_only(h)])
     sell_str     = f"  🚨 {_('出货中','selling')} {selling_cnt}" if selling_cnt else ""
     hold_str     = f"  📈 {_('加仓中','accumulating')} {holding_cnt}" if holding_cnt else ""
-    print(f"  {batch_label}{rank}{_('（', '(')}{label}{_('）', ')')}  {len(ws)} {_('个钱包', 'wallets')}  {_('持仓', 'hold')} {pct(total_hp):.2f}%  {risk_flag}{sell_str}{hold_str}")
+    # 批次占比同样以流通盘为分母 —— 退化时会把一个尘埃批次打成 "hold 100.00% 🟢"，
+    # 一行之内同时给出"全部筹码"和"没风险"两个错误结论。数字和旗标都要中和。
+    print(f"  {batch_label}{rank}{_('（', '(')}{label}{_('）', ')')}  {len(ws)} {_('个钱包', 'wallets')}  {_('持仓', 'hold')} {fpct(total_hp)}  {pf(risk_flag)}{sell_str}{hold_str}")
     print(f"       {mc_str}")
     print(f"       ➤ {conclusion}")
     print()
@@ -939,25 +948,25 @@ else:
     print(f"  {_('衡量现有持仓者还有多少子弹可以加仓', 'How much ammo holders have left to add')}   {_('合计可用余额', 'Total balance')} {bp_str}")
     print()
 if zero_wallets:
-    print(f"  ⚫ {_('零余额', 'Zero balance')}     {len(zero_wallets):3d} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {pct(zero_pct_val):.2f}%   —    → {_('无加仓能力，可能是分仓小号', 'No buying power, likely sub-wallets')}")
+    print(f"  ⚫ {_('零余额', 'Zero balance')}     {len(zero_wallets):3d} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(zero_pct_val)}   —    → {_('无加仓能力，可能是分仓小号', 'No buying power, likely sub-wallets')}")
 if HAS_PRICE:
     if low_wallets:
         low_total = sum(native_usd(h) for h in low_wallets)
-        print(f"  🟡 {_('低（<$200）', 'Low (<$200)')}   {len(low_wallets):3d} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {pct(low_pct_val):.2f}%   {usd(low_total)}")
+        print(f"  🟡 {_('低（<$200）', 'Low (<$200)')}   {len(low_wallets):3d} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(low_pct_val)}   {usd(low_total)}")
     if mid_wallets:
         mid_total = sum(native_usd(h) for h in mid_wallets)
-        print(f"  🟠 {_('中（$200~$1200）', 'Mid ($200~$1200)')}  {len(mid_wallets):3d} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {pct(mid_pct_val):.2f}%   {usd(mid_total)}")
+        print(f"  🟠 {_('中（$200~$1200）', 'Mid ($200~$1200)')}  {len(mid_wallets):3d} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(mid_pct_val)}   {usd(mid_total)}")
     if high_wallets:
-        print(f"  🔴 {_('高（$1200+）', 'High ($1200+)')}  {len(high_wallets):3d} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {pct(high_pct_val):.2f}%   {usd(high_total)}   → {_('可随时加仓', 'can add anytime')}")
+        print(f"  🔴 {_('高（$1200+）', 'High ($1200+)')}  {len(high_wallets):3d} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(high_pct_val)}   {usd(high_total)}   → {_('可随时加仓', 'can add anytime')}")
 elif high_wallets:
     # 拿不到原生代币价格，只按原生数量分档，不编造美元金额
-    print(f"  🟢 {_('有余额', 'Has balance')}     {len(high_wallets):3d} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {pct(high_pct_val):.2f}%   {fmt_native(high_native)}")
+    print(f"  🟢 {_('有余额', 'Has balance')}     {len(high_wallets):3d} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(high_pct_val)}   {fmt_native(high_native)}")
     print(f"     ({_(f'{CHAIN} 链拿不到 {NSYM} 价格，仅显示原生数量', f'No {NSYM} price for {CHAIN}, native amount only')})")
 print()
 if high_wallets and HAS_PRICE:
-    print(f"  ➤ {_('高余额钱包', 'High-balance wallets')} {len(high_wallets)} {_('个持仓', 'holding')} {pct(high_pct_val):.1f}%{_('，', ', ')}{_('合计', 'total')} {usd(high_total)} {_('可随时加仓', 'ready to add')}")
+    print(f"  ➤ {_('高余额钱包', 'High-balance wallets')} {len(high_wallets)} {_('个持仓', 'holding')} {fpct(high_pct_val, 1)}{_('，', ', ')}{_('合计', 'total')} {usd(high_total)} {_('可随时加仓', 'ready to add')}")
 if zero_wallets and zero_pct_val > 0.1:
-    print(f"  ➤ {len(zero_wallets)} {_('个钱包零余额（持仓 ', 'wallets with zero balance (hold ')}{pct(zero_pct_val):.1f}%{_('）', ')')}, {_('无加仓能力，可能是分仓小号', 'no buying power, likely sub-wallets')}")
+    print(f"  ➤ {len(zero_wallets)} {_('个钱包零余额（持仓 ', 'wallets with zero balance (hold ')}{fpct(zero_pct_val, 1)}{_('）', ')')}, {_('无加仓能力，可能是分仓小号', 'no buying power, likely sub-wallets')}")
 print()
 
 sec7 = _("📊 筹码结构", "📊 Chip Structure")
@@ -966,10 +975,10 @@ print()
 total_n = len(normal)
 if total_n > 0:
     # 钱包个数答"多数人赚没赚"，流通盘占比答"赚钱的筹码有多重" —— 抛压看后者
-    print(f"  {_('盈利', 'Profit')} {len(profit_w)}   ({len(profit_w)/total_n*100:.0f}% {_('钱包', 'wallets')} / {pct(profit_pct):.1f}% {_('流通盘', 'float')})")
-    print(f"  {_('亏损', 'Loss')} {len(loss_w)}   ({len(loss_w)/total_n*100:.0f}% {_('钱包', 'wallets')} / {pct(loss_pct):.1f}% {_('流通盘', 'float')})   {_('持平', 'Break-even')} {total_n-len(profit_w)-len(loss_w)}")
+    print(f"  {_('盈利', 'Profit')} {len(profit_w)}   ({len(profit_w)/total_n*100:.0f}% {_('钱包', 'wallets')} / {fpct(profit_pct, 1)} {_('流通盘', 'float')})")
+    print(f"  {_('亏损', 'Loss')} {len(loss_w)}   ({len(loss_w)/total_n*100:.0f}% {_('钱包', 'wallets')} / {fpct(loss_pct, 1)} {_('流通盘', 'float')})   {_('持平', 'Break-even')} {total_n-len(profit_w)-len(loss_w)}")
 tf_flag = "⚠️" if len(trapped)>30 else ""
-print(f"  {_('套牢盘（浮亏>20%）', 'Underwater (>20% loss)')}   {len(trapped)}   {_('持仓', 'hold')} {pct(trapped_pct):.2f}%  {tf_flag}")
+print(f"  {_('套牢盘（浮亏>20%）', 'Underwater (>20% loss)')}   {len(trapped)}   {_('持仓', 'hold')} {fpct(trapped_pct)}  {tf_flag}")
 print(f"  {_('平均持仓时长', 'Avg hold duration')}   {avg_hold_days:.1f} {_('天', 'days')}")
 print()
 
