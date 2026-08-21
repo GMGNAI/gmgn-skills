@@ -589,19 +589,16 @@ print(f"└{'─'*56}┘")
 print()
 
 if no_holders:
-    # 空数据也必须在所有 0.00% 之前说清楚，否则整份报告读起来像"干净得没有任何风险"
     print(f"  ⚠️  {_('上游未返回任何持仓地址 —— 筹码结构无法评估', 'Upstream returned no holder addresses — chip structure not assessable')}")
     print(_( "      下方所有占比与计数都是空集的渲染结果，不是“该项为 0”；评级已置为“无法评估”。",
-             "      Every percentage and count below renders an empty set, not a measured zero. Rating is set to “Cannot Assess”."))
+             "      Every percentage and count below renders an empty set, not a measured zero. Rating is set to \"Cannot Assess\"."))
     print(_( "      常见原因：代币已无活跃持仓、或上游索引里已不再收录该盘。可稍后重试确认。",
              "      Usual causes: the token has no active holders left, or upstream no longer indexes it. Retry later to confirm."))
     print()
 
 if float_degenerate:
-    # 退化时这行必须在所有百分比之前出现，否则读者会先把 100% 当成集中度结论。
-    # 同时给出绝对值（代币数 + 美元），这是此刻唯一有意义的量级。
-    _fl_tok = total_supply * max(float_raw, 0)
-    _fl_usd = _fl_tok * cur_price
+    _fl_tok   = total_supply * max(float_raw, 0)
+    _fl_usd   = _fl_tok * cur_price
     _fl_usd_s = "<$1" if 0 < _fl_usd < 1 else usd(_fl_usd)
     print(f"  ⚠️  {_('流通盘退化 —— 筹码结构此刻无法评估', 'Degenerate float — chip structure not assessable right now')}")
     print(_( f"      DEX 池 {pct(dex_pct):.1f}% + 销毁 {pct(burn_pct):.1f}% 占掉几乎全部供应，可流通部分只剩 {pct_s(float_raw)}",
@@ -611,448 +608,253 @@ if float_degenerate:
     print(_( "      下方“占流通盘”的百分比分母趋零，会把尘埃钱包放大成两位数甚至 100%，",
              "      Float percentages below divide by a near-zero denominator, inflating dust wallets to double digits or 100%,"))
     print(_( "      不能当作集中度结论；评级已置为“无法评估”，颜色标记一律显示 ⚪。",
-             "      so they are not concentration findings. Rating is set to “Cannot Assess” and flags show ⚪."))
+             "      so they are not concentration findings. Rating is set to \"Cannot Assess\" and flags show ⚪."))
     print()
 
+# ══════════════════════════════════════════════════════════
+# §1  🚨 砸盘风险
+# ══════════════════════════════════════════════════════════
 sec1 = _("🚨 砸盘风险", "🚨 Dump Risk")
 print(f"━━  {sec1}  {'━'*(54-len(sec1))}")
 print()
+
 c10f = pf("🔴" if top10>0.6 else ("🟡" if top10>0.4 else "🟢"))
 c20f = pf("🔴" if top20>0.75 else ("🟡" if top20>0.55 else "🟢"))
-print(f"  {_('集中度（占流通盘，已剔除 LP 与销毁）', 'Concentration (of tradeable float, LP + burn excluded)')}")
-print(f"    Top10 {fpct(top10, 1)} {c10f}   Top20 {fpct(top20, 1)} {c20f}")
-print()
-if burn:
-    print(f"  🔥 {_('销毁地址', 'Burn addr')}   {pct(burn_pct):.2f}%  ✅ {_('永久锁仓，无法流通', 'Permanently locked, non-circulating')}")
-    print()
-airf = pf("🔴" if airdrop_pct>0.25 else ("🟡" if airdrop_pct>0.1 else "🟢"))
-print(f"  {_('空降筹码（从未买入、靠转账获得）', 'Airdrop (never bought, received via transfer)')}   {len(airdrop)} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(airdrop_pct)}  {airf}")
-print()
-riskf = pf("🔴" if risk_pct>0.35 else ("🟡" if risk_pct>0.15 else "🟢"))
-print(f"  {_('风险钱包', 'Risk wallets')}   {_('合计', 'total')} {len(risk_all)} {_('个', '')}   {_('持仓', 'hold')} {fpct(risk_pct)}  {riskf}")
-for label, group, flag in RISK_GROUPS:
-    if group:
-        gp = fpct(fs(group))
-        print(f"    · {label:10s}  {len(group):2d} {_('个', '')}   {_('持仓', 'hold')} {gp}  {flag}")
-if not any(g for _lb, g, _fl in RISK_GROUPS):
-    # 空持仓表时"未发现"只是没数据可查，不能打成 🟢
-    if no_holders:
-        print(f"    · {_('没有钱包可供检查', 'No wallets available to check')}  ⚪")
-    else:
-        print(f"    · {_('未发现风险标签钱包', 'No risk-tagged wallets found')}  🟢")
-if risk_overlap > 0:
-    # 分类明细相加会大于"合计" —— 说明差额来自多标签钱包，而不是算错了
-    print(f"    · {_(f'合计已去重（{risk_overlap} 个钱包带多个风险标签）', f'Total is deduped ({risk_overlap} wallet(s) carry multiple risk tags)')}")
-print()
-if no_holders:
-    # 级联最后一档是"🟢 没发现明显砸盘风险"。空持仓表会一路落到那里，
-    # 把"没有数据"渲染成"没有风险" —— 必须在入口就拦掉。
-    sdp_summary = _( "⚪ 没有任何持仓数据，砸盘风险无法判断（不是“无风险”）",
-                     "⚪ No holder data at all — dump risk cannot be judged (this is not \"no risk\")")
-elif float_degenerate:
-    # 这段级联里每一条判据都是流通盘占比，退化时全是噪声 —— 只能重复"没法评"
-    sdp_summary = _( f"⚪ 流通盘只剩 {pct_s(float_raw)}，上面的占比都是除零放大的结果，砸盘风险无法判断",
-                     f"⚪ Only {pct_s(float_raw)} of supply is tradeable — the percentages above are divide-by-zero artifacts; dump risk cannot be judged")
-elif dangers:
-    sdp_summary = f"🔴 {dangers[0]}"
-elif rats_pct > 0.03:
-    sdp_summary = _( f"🔴 老鼠仓持仓 {pct(rats_pct):.1f}%，零成本拿的，随时可以无损砸盘",
-                     f"🔴 Rat traders hold {pct(rats_pct):.1f}% at zero cost — can dump with no loss anytime")
-elif top10 > 0.5:
-    sdp_summary = _( f"🟡 Top10 持仓 {pct(top10):.1f}%，筹码过于集中，大户一旦出货冲击很大",
-                     f"🟡 Top10 hold {pct(top10):.1f}% — highly concentrated, big impact if they sell")
-elif bundler_pct_val > 0.3:
-    sdp_summary = _( f"🟡 捆绑钱包持仓 {pct(bundler_pct_val):.1f}%，这批是开盘机器人扫货，出货时可能集中砸盘",
-                     f"🟡 Bundlers hold {pct(bundler_pct_val):.1f}% — bot-swept at open, may dump together")
-elif airdrop_pct > 0.2:
-    sdp_summary = _( f"🟡 空降筹码 {pct(airdrop_pct):.1f}%，这些人零成本拿到币，随时可能出货",
-                     f"🟡 Airdrop supply {pct(airdrop_pct):.1f}% at zero cost — may sell anytime")
-elif sniper_pct_val > 0.15:
-    sdp_summary = _( f"🟡 狙击者持仓 {pct(sniper_pct_val):.1f}%，开盘低价进的，浮盈高、随时可套现",
-                     f"🟡 Snipers hold {pct(sniper_pct_val):.1f}% at launch price — high unrealized gain, may cash out")
-elif risk_pct > 0.15:
-    sdp_summary = _( f"🟡 风险钱包合计持仓 {pct(risk_pct):.1f}%，需要留意动向",
-                     f"🟡 Risk wallets total {pct(risk_pct):.1f}% — watch their moves")
-elif burn_pct > 0.1:
-    sdp_summary = _( f"🟢 销毁了 {pct(burn_pct):.1f}%，流通筹码少，LP 也锁住了，相对干净",
-                     f"🟢 {pct(burn_pct):.1f}% burned — reduced supply, LP locked, relatively clean")
-else:
-    sdp_summary = _("🟢 集中度正常，没发现明显的砸盘风险",
-                    "🟢 Normal concentration, no obvious dump risk detected")
-print(f"  → {_('小结', 'Summary')}{_('：', ': ')}{sdp_summary}")
-print()
-print(f"  {_('Top5 持仓钱包抛压分析', 'Top 5 Holder Sell Pressure')}")
-print(f"  {_('浮盈越高 / 建仓MC越低 → 获利了结压力越强', 'Higher unrealized gain / lower entry MC → stronger sell pressure')}")
-print()
-for i, h in enumerate(top5_holders, 1):
-    role_str, display_id, cost_str, pnl_str, lv, note, beh_str, st = top5_pressure(h)
-    hp = fpct(f1(h['amount_percentage']))
-    print(f"    {i}. {role_str}{display_id}")
-    print(f"       {_('持仓', 'hold')} {hp}  {cost_str}  {_('盈亏', 'pnl')} {pnl_str}")
-    print(f"       {_('抛压', 'pressure')} {lv} — {note}")
-    print(f"       {_('状态', 'status')} {st}{beh_str}")
-    print()
+print(f"  Top10 {fpct(top10, 1)} {c10f} · Top20 {fpct(top20, 1)} {c20f} · {_('平均持仓', 'Avg hold')} {avg_hold_days:.1f}{_('天', 'd')}")
 
-sec2 = _("👨‍💻 Dev 钱包", "👨‍💻 Dev Wallets")
+airf  = pf("🔴" if airdrop_pct>0.25 else ("🟡" if airdrop_pct>0.1 else "🟢"))
+riskf = pf("🔴" if risk_pct>0.35 else ("🟡" if risk_pct>0.15 else "🟢"))
+print(f"  {_('转入筹码', 'Airdrop')} {len(airdrop)}{_('个', '')}({fpct(airdrop_pct)}) {airf} · {_('风险钱包', 'Risk')} {len(risk_all)}{_('个', '')}({fpct(risk_pct)}) {riskf}")
+
+any_risk = any(g for _lb, g, _fl in RISK_GROUPS)
+if any_risk:
+    for label, group, flag in RISK_GROUPS:
+        if group:
+            gp = fpct(fs(group))
+            print(f"    · {label} {len(group)}{_('个', '')}({gp}) {flag}")
+elif not no_holders:
+    print(f"    ✅ {_('未发现风险标签钱包', 'No risk-tagged wallets found')}")
+print()
+
+# Top5 出货风险
+top5_airdrop_n = sum(1 for h in top5_holders if h.get('buy_tx_count_cur', 0) == 0)
+top5_trapped_n = sum(1 for h in top5_holders
+                     if (h.get('unrealized_pnl') or 0) < -0.1 and (h.get('buy_tx_count_cur') or 0) > 0)
+top5_profit_n  = sum(1 for h in top5_holders
+                     if (h.get('unrealized_pnl') or 0) > 0.1 and (h.get('buy_tx_count_cur') or 0) > 0)
+top5_selling_n = sum(1 for h in top5_holders if is_selling(h))
+
+top5_parts = []
+if top5_airdrop_n: top5_parts.append(f"{_('转入筹码', 'Airdrop')}×{top5_airdrop_n}")
+if top5_trapped_n: top5_parts.append(f"{_('套牢', 'Trapped')}×{top5_trapped_n}")
+if top5_profit_n:  top5_parts.append(f"{_('浮盈', 'Profit')}×{top5_profit_n}")
+if top5_selling_n: top5_parts.append(f"{top5_selling_n}{_('人出货中', ' selling')}")
+top5_label   = _("Top5 出货风险", "Top5 Sell Risk")
+top5_summary = "  ".join(top5_parts) if top5_parts else _("暂无明显出货压力", "No obvious sell pressure")
+print(f"  {top5_label}  {top5_summary}")
+
+# 单个最危险钱包（优先级：零成本最大 > 高浮盈最大 > 出货最大）
+danger_wallet  = None
+danger_reason  = ""
+zero_cost_top5 = [h for h in top5_holders if h.get('buy_tx_count_cur', 0) == 0]
+if zero_cost_top5:
+    danger_wallet = max(zero_cost_top5, key=lambda h: h['amount_percentage'])
+    danger_reason = _("零成本转入，可随时出货", "Zero-cost airdrop — can dump anytime")
+if not danger_wallet:
+    high_profit_top5 = [h for h in top5_holders
+                        if (h.get('unrealized_pnl') or 0) > 1.0 and (h.get('buy_tx_count_cur') or 0) > 0]
+    if high_profit_top5:
+        danger_wallet = max(high_profit_top5, key=lambda h: h['amount_percentage'])
+        mult          = (danger_wallet.get('unrealized_pnl') or 0) + 1
+        danger_reason = _(f"浮盈 {mult:.1f}x，已获利了结压力强", f"{mult:.1f}x gain — strong take-profit pressure")
+if not danger_wallet:
+    selling_top5 = [h for h in top5_holders if is_selling(h)]
+    if selling_top5:
+        danger_wallet = max(selling_top5, key=lambda h: h['amount_percentage'])
+        sp            = (danger_wallet.get('sell_amount_percentage') or 0)
+        danger_reason = _(f"出货中（已卖 {pct(sp):.0f}%）", f"Selling ({pct(sp):.0f}% sold)")
+
+if danger_wallet:
+    roles    = wallet_roles(danger_wallet)
+    role_tag = "[" + "·".join(roles) + "] " if roles else ""
+    dname    = (danger_wallet.get('twitter_name') or '') or addr_short(danger_wallet['address'])
+    dhp      = fpct(f1(danger_wallet['amount_percentage']))
+    print(f"  ⚠️ {role_tag}{dname}  {dhp}  {danger_reason}")
+print()
+
+# ══════════════════════════════════════════════════════════
+# §2  👨‍💻 Dev
+# ══════════════════════════════════════════════════════════
+sec2 = _("👨‍💻 Dev", "👨‍💻 Dev")
 print(f"━━  {sec2}  {'━'*(54-len(sec2))}")
 print()
-# 一个 dev 都没查到 ≠ dev 已清仓 —— 前者是查不到，后者是查到了且为零
+
 if not devs:
-    dev_status = _("— 未查到 dev 钱包", "— no dev wallets found")
-elif not dev_holding:
-    dev_status = _("✅ 全部余额归零", "✅ All cleared")
+    print(f"  {_('— 未查到 Dev 钱包', '— no dev wallets found')}")
+elif not creator:
+    print(f"  {_('— 未找到 Creator 信息', '— creator wallet not found')}")
 else:
-    dev_status = _(f"⚠️ 仍有 {len(dev_holding)} 个持仓中", f"⚠️ {len(dev_holding)} still holding")
-if sub_devs:
-    print(f"  {_('共', 'Total')} {len(devs)} {_('个钱包（1 主号 + ', 'wallets (1 main + ')}{len(sub_devs)}{_(' 小号）', ' sub)')}   {dev_status}")
-else:
-    print(f"  {_('共', 'Total')} {len(devs)} {_('个钱包', 'wallets')}   {dev_status}")
-print(f"  {_('Dev 合计已实现利润', 'Dev total realized profit')}  {usd(dev_realized)}")
-print()
-if creator:
-    c_sell_v   = creator.get('sell_volume_cur') or 0
-    tf_out     = creator.get('history_transfer_out_amount') or 0
-    tf_val     = creator.get('history_transfer_out_income') or 0
-    sell_amt   = creator.get('sell_amount_cur') or 0
-    hold_pct_c = f1(creator.get('amount_percentage') or 0)
-    c_status   = (_("余额归零", "Balance zero") if (creator.get('balance') or 0)<1
-                  else _(f"⚠️ 持仓 {fpct(hold_pct_c)}", f"⚠️ Holding {fpct(hold_pct_c)}"))
-    print(f"  {_('主号 (Creator)', 'Main (Creator)')}   {addr_short(creator['address'])}")
-    parts = [c_status]
-    if sell_amt>0:
-        parts.append(_(f"卖出 {fmt_amt(sell_amt)} 个（{usd(c_sell_v)}）",
-                       f"Sold {fmt_amt(sell_amt)} ({usd(c_sell_v)})"))
-    if tf_out>0:
-        to_out  = creator.get('token_transfer_out') or {}
-        to_addr = to_out.get('address') or ''
-        if to_addr and to_addr in top100_map:
-            parts.append(_(f"转出 {fmt_amt(tf_out)} 个至 Top100 内部钱包（估值 {usd(tf_val)}）",
-                           f"Transferred {fmt_amt(tf_out)} to Top100 internal wallet (est. {usd(tf_val)})"))
-        else:
-            parts.append(_(f"转出 {fmt_amt(tf_out)} 个至外部地址（估值 {usd(tf_val)}）",
-                           f"Transferred {fmt_amt(tf_out)} to external addr (est. {usd(tf_val)})"))
-    print(f"  {'   '.join(parts)}")
+    c_bal   = creator.get('balance') or 0
+    c_pct   = f1(creator.get('amount_percentage') or 0)
     to_out  = creator.get('token_transfer_out') or {}
     to_addr = to_out.get('address') or ''
-    if to_addr and to_addr in top100_map:
-        target  = top100_map[to_addr]
-        t_mtags = [t for t in (target.get('maker_token_tags') or []) if t not in ('top_holder','transfer_in')]
-        print(f"\n  ⚠️ {_('转出筹码仍在 Top100（换马甲继续持有）：', 'Transferred chips still in Top100 (sock puppet):')}")
-        print(f"     {addr_short(to_addr)}  {_('持仓', 'hold')} {fpct(f1(target.get('amount_percentage') or 0))}  {_('标签', 'tags')}: {' '.join(t_mtags) or _('无','none')}")
-    elif (creator.get('balance') or 0)<1 and tf_out==0:
-        print(f"  ✅ {_('已完全卖出，无异常转账记录', 'Fully sold, no abnormal transfers')}")
-    print()
-    if to_addr and to_addr in top100_map:
-        dev_summary = _("🔴 Dev 换马甲持仓，这个很危险，随时可以砸盘",
-                        "🔴 Dev using sock puppet — very dangerous, can dump anytime")
-    elif dev_holding:
-        dev_summary = _("🟡 Dev 还没出完，有出货风险，关注钱包动向",
-                        "🟡 Dev hasn't fully exited — dump risk, watch wallet activity")
-    elif dev_realized > 50000:
-        dev_summary = _(f"🟡 Dev 已套现 {usd(dev_realized)}，虽然出完了但赚了不少",
-                        f"🟡 Dev cashed out {usd(dev_realized)} — exited but made significant profit")
+    sock    = bool(to_addr and to_addr in top100_map)
+
+    sub_holding     = [d for d in sub_devs if (d.get('balance') or 0) >= 1]
+    sub_holding_pct = f1(sum(d.get('amount_percentage', 0) for d in sub_holding))
+
+    if sock:
+        dev_line = f"🔴 {_('筹码已转至内部马甲，换手控盘', 'Chips routed to internal puppet — covert control')}"
+    elif c_bal >= 1:
+        if sub_holding:
+            dev_line = (f"⚠️ {_('持仓', 'Holding')} {fpct(c_pct)}"
+                        f"（{_('含', 'incl.')} {len(sub_holding)}{_('个小号', ' sub-wallets')}）")
+        else:
+            dev_line = f"⚠️ {_('持仓', 'Holding')} {fpct(c_pct)}"
     else:
-        dev_summary = _("🟢 Dev 已清仓，没有持仓压力",
-                        "🟢 Dev fully exited — no holding pressure")
-    print(f"  → {_('小结', 'Summary')}{_('：', ': ')}{dev_summary}")
-    print()
+        if sub_holding:
+            dev_line = (f"⚠️ {_('主号已清仓', 'Main cleared')}，"
+                        f"{len(sub_holding)}{_('个关联小号持仓', ' sub-wallet(s) holding')} {fpct(sub_holding_pct)}")
+        else:
+            dev_line = f"✅ {_('已清仓', 'Cleared')}"
+    print(f"  {dev_line}")
+
+    if sock:
+        target  = top100_map[to_addr]
+        t_mtags = [t for t in (target.get('maker_token_tags') or []) if t not in ('top_holder', 'transfer_in')]
+        sock_hp = fpct(f1(target.get('amount_percentage') or 0))
+        print(f"    ↳ {_('马甲', 'Puppet')} {addr_short(to_addr)}  {_('持仓', 'hold')} {sock_hp}"
+              f"  {_('标签', 'tags')}: {' '.join(t_mtags) or _('无', 'none')}")
+
+    hist_str = ""
     if created_data:
-        all_tokens = created_data.get('tokens') or []
-        total_cnt  = (created_data.get('inner_count') or 0)+(created_data.get('open_count') or 0)
-        mig_cnt    = created_data.get('open_count') or 0
-        nonmig_cnt = created_data.get('inner_count') or 0
-        print(f"  {_('历史发币', 'Token history')}   {_('共', 'total')} {total_cnt}   {_('已迁移', 'migrated')} {mig_cnt}   {_('未迁移', 'unmigrated')} {nonmig_cnt}")
-        top3_mc = sorted(all_tokens, key=lambda t: float(t.get('market_cap') or 0), reverse=True)[:3]
-        if top3_mc:
-            print(f"  {_('当前市值 Top3', 'Current MC Top3')}:")
-            for i, t in enumerate(top3_mc, 1):
-                mig_label = _('已迁移', 'migrated') if t.get('is_open') else _('未迁移', 'unmigrated')
-                print(f"    {i}. {t.get('symbol','?')}  {usd(float(t.get('market_cap') or 0))}  [{mig_label}]")
+        total_cnt = (created_data.get('inner_count') or 0) + (created_data.get('open_count') or 0)
+        mig_cnt   = created_data.get('open_count') or 0
+        hist_str  = (f" · {_('历史发币', 'Token history')} {total_cnt}{_('个', '')}，"
+                     f"{_('成功迁移', 'migrated')} {mig_cnt}{_('个', '')}")
+    print(f"  {_('已获利', 'Realized')} {usd(dev_realized)}{hist_str}")
+
+    if created_data:
         ath_info = created_data.get('creator_ath_info') or {}
         if ath_info and ath_info.get('ath_mc'):
-            ath_mc     = float(ath_info.get('ath_mc') or 0)
-            is_curr    = ath_info.get('ath_token','').lower()==TOKEN_ADDR.lower()
-            curr_label = _('（本币）', ' (this token)') if is_curr else ''
-            # 历史最高市值低于当前市值在数学上不可能（本币此刻的市值本身就是它的历史候选），
-            # 说明上游 ath 字段还没跟上这轮拉升 —— 实测 token info 的 ath_price 等于
-            # price_24h，一个 24 小时涨了上百倍的币，ATH 就会停在一天前的价位。
-            # 照原样打印会被当成真实峰值，进而拿去算"距离 ATH 还有多少空间"。留 5% 容差，
-            # 因为 cur_mc 自己是 median(usd_value/balance) × median(supply) 的估算值。
-            stale_ath = ath_mc > 0 and cur_mc > 0 and ath_mc < cur_mc * 0.95
-            ath_note  = "" if not stale_ath else _(
-                f"  ⚠️ 低于当前市值 {usd(cur_mc)}，上游 ATH 数据滞后，不可作为峰值参考",
-                f"  ⚠️ below current MC {usd(cur_mc)} — upstream ATH is stale, not a usable peak")
-            print(f"  {_('历史最高市值', 'All-time high MC')}: {ath_info.get('token_name','')}({ath_info.get('token_symbol','?')}){curr_label}  ATH {usd(ath_mc)}{ath_note}")
-        print()
+            ath_mc    = float(ath_info.get('ath_mc') or 0)
+            is_curr   = ath_info.get('ath_token', '').lower() == TOKEN_ADDR.lower()
+            curr_tag  = _('（本币）', ' (this)') if is_curr else ''
+            stale     = ath_mc > 0 and cur_mc > 0 and ath_mc < cur_mc * 0.95
+            stale_tag = (_(f"  ⚠️ ATH可能滞后（低于当前MC {usd(cur_mc)}）",
+                           f"  ⚠️ ATH may be stale (below current MC {usd(cur_mc)})") if stale else "")
+            print(f"  ↳ ATH: {ath_info.get('token_symbol', '?')}{curr_tag} {usd(ath_mc)}{stale_tag}")
+print()
 
+# ══════════════════════════════════════════════════════════
+# §3  🔗 关联资金
+# ══════════════════════════════════════════════════════════
 sec3 = _("🔗 关联资金", "🔗 Related Funds")
 print(f"━━  {sec3}  {'━'*(54-len(sec3))}")
 print()
-print(f"  {_('多个钱包来自同一资金来源地址，或在极短时间内同步注资', 'Multiple wallets from same funding source or funded in tight time windows')}")
-print()
-if related:
-    relf = pf("🔴" if related_pct>0.25 else ("🟡" if related_pct>0.1 else "🟢"))
-    # 秒级批量注资本身就是异常信号，不该因为占比小而在标题上显示为绿。判据是钱包数与
-    # 时间跨度，不含流通盘占比，所以流通盘退化时（relf 为 ⚪）这条升级依然有效。
-    if tight_groups and relf in ("🟢", "⚪"): relf = "🟡"
-    print(f"  {_('涉及', 'Involves')} {len(related)} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(related_pct)}   {usd(related_usd)}  {relf}")
-    print()
-    print(f"  ├─ {_('强关联（同一来源 + 时间集中或金额一致）', 'Strong (same source + tight timing or uniform amounts)')}   {len(same_src_groups)} {_('组', 'groups')} / {same_src_wallets} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(same_src_pct)}")
+
+has_related = bool(same_src_groups or win_groups)
+if has_related:
     if same_src_groups:
-        fa, ws = same_src_groups[0]
-        native_in = sum(float(_tr(w, 'amount', 0) or 0) for w in ws)
-        print(f"  │   {_('最大组', 'Largest group')}: {len(ws)} {_('个钱包', 'wallets')}   {_('来源', 'from')} {addr_short(fa)}   {_('合计注资', 'total funded')} {native_in:.4f} {NSYM}")
-    if weak_src_groups:
-        # 只共用转入地址、时间金额都不一致 —— 交易所热钱包和团伙长得一样，不能混进合计
-        print(f"  ├─ {_('弱关联（仅共用转入地址，可能是交易所热钱包）', 'Weak (shared source only, may be a CEX hot wallet)')}   {len(weak_src_groups)} {_('组', 'groups')} / {weak_src_wallets} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(weak_src_pct)}   {_('不计入上方合计', 'excluded from total above')}")
-    print(f"  │")
+        relf_src = pf("🔴" if same_src_pct>0.25 else ("🟡" if same_src_pct>0.1 else "🟢"))
+        print(f"  {_('相同资金来源', 'Same source'):10s}  {same_src_wallets}{_('个钱包', ' wallets')}  "
+              f"{_('持仓', 'hold')} {fpct(same_src_pct)} {relf_src}")
     if win_groups:
-        win_total = sum(len(v) for v in win_groups)
-        if tight_groups:
-            print(f"  └─ {_(f'同步注资（{WINDOW//60}min 内集中入场）', f'Coordinated funding (within {WINDOW//60}min)')}   {win_total} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(win_pct)}  🔴")
-            print(f"      🔴 {_(f'其中 {tight_wallets} 个钱包在 {TIGHT} 秒内被同步注资，基本可判定脚本批量打款', f'{tight_wallets} wallet(s) funded within {TIGHT}s — almost certainly scripted batch funding')}")
-        elif win_total>=3:
-            print(f"  └─ {_(f'同步注资（{WINDOW//60}min 内集中入场）', f'Coordinated funding (within {WINDOW//60}min)')}   {win_total} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(win_pct)}  ⚠️")
-        else:
-            print(f"  └─ {_(f'同步注资（{WINDOW//60}min 内集中入场）', f'Coordinated funding (within {WINDOW//60}min)')}   {win_total} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(win_pct)}")
-        # 只有一个批次时，明细就是上面那行，不重复打印
-        if len(win_groups) > 1:
-            v = win_groups[0]
-            print(f"      {_('最大批次', 'Largest batch')}: {len(v)} {_('个钱包', 'wallets')}   {_('合计持仓', 'total hold')} {fpct(fs(v), 3)}   {_('时间跨度', 'span')} {_span(v)}s")
-        else:
-            print(f"      {_('时间跨度', 'Span')} {_span(win_groups[0])}s")
-    else:
-        print(f"  └─ {_('未发现同步集中注资', 'No coordinated funding detected')}")
+        win_n    = sum(len(v) for v in win_groups)
+        relf_win = pf("🔴" if win_pct>0.25 else ("🟡" if win_pct>0.1 else "🟢"))
+        if tight_groups and relf_win in ("🟢", "⚪"): relf_win = pf("🟡")
+        tight_note = f"  {_('（含秒级批量注资）', '(incl. scripted batch)')}" if tight_groups else ""
+        print(f"  {_('同一时间段注资', 'Same-window'):10s}  {win_n}{_('个钱包', ' wallets')}  "
+              f"{_('持仓', 'hold')} {fpct(win_pct)} {relf_win}{tight_note}")
 else:
     if no_holders:
-        print(f"  {_('没有钱包可供检查资金来源', 'No wallets available to trace funding')}  ⚪")
+        print(f"  ⚪ {_('没有钱包可供检查', 'No wallets available to check')}")
     else:
-        print(f"  {_('未发现明显关联资金', 'No significant linked funds detected')}  🟢")
+        print(f"  ✅ {_('未发现同源/同期资金，筹码来源分散', 'No linked funds — dispersed origins')}")
     if weak_src_groups:
-        print(f"  ({_(f'{weak_src_wallets} 个钱包共用转入地址，但时间和金额都不一致，判为交易所出金而非团伙', f'{weak_src_wallets} wallets share a funding address but differ in timing and amount — read as CEX withdrawals, not a gang')})")
+        print(f"  ({_(f'{weak_src_wallets} 个钱包共用转入地址，时间金额不一致，判为交易所出金',f'{weak_src_wallets} wallets share a source but differ in timing/amount — likely CEX withdrawals')})")
 print()
 
+# ══════════════════════════════════════════════════════════
+# §4  🧠 优质信号
+# ══════════════════════════════════════════════════════════
 sec4 = _("🧠 优质信号", "🧠 Quality Signals")
 print(f"━━  {sec4}  {'━'*(54-len(sec4))}")
 print()
-# ✅/— 只表示"这类钱包在不在场"，是个数派生的、不经过 float_share，退化时依然成立，
-# 所以不走 pf()；被中和掉的只是占比数字本身。
-print(f"  {_('聪明钱', 'Smart Money')}   {len(smart):2d}   {_('持仓', 'hold')} {fpct(smart_pct)}  {'✅' if smart else '—'}")
-if smart: print(f"  {_('近期动向', 'Recent')}:  {trend_str(smart)}")
-print(f"  KOL          {len(kol):2d}   {_('持仓', 'hold')} {fpct(kol_pct)}  {'✅' if kol else '—'}")
-if kol:
-    for h in kol:
-        name = h.get('twitter_name') or h.get('name') or addr_short(h['address'])
-        print(f"    · {name}  {_('持仓', 'hold')} {fpct(f1(h['amount_percentage']))}  {holding_status(h)}  {_('买/卖', 'buy/sell')}: {h.get('buy_tx_count_cur',0)}/{h.get('sell_tx_count_cur',0)}")
-print(f"  {_('鲸鱼', 'Whale')}        {len(whales):2d}   {_('持仓', 'hold')} {fpct(whale_pct)}  {'✅' if whales else '—'}")
-if whales: print(f"  {_('近期动向', 'Recent')}:  {trend_str(whales)}")
-print()
-df = pf("✅" if diamond_pct>0.6 else ("🟡" if diamond_pct>0.35 else "⚠️"))
-print(f"  {_('钻石手（买入过且从未卖出）', 'Diamond hands (bought & never sold)')}   {len(diamond):2d}   {_('持仓', 'hold')} {fpct(diamond_pct, 1)}  {df}")
-if idle_airdrop:
-    # 单独一行，避免读者把这批零成本筹码当成"扛住了没卖"的钻石手
-    print(f"  {_('空降未动（从未买入也未卖出）', 'Idle airdrop (never bought, never sold)')}   {len(idle_airdrop):2d}   {_('持仓', 'hold')} {fpct(idle_airdrop_pct, 1)}   {_('零成本，不计入钻石手', 'zero cost — not counted as diamond hands')}")
-print(f"  {_('部分卖出(<50%)', 'Partial sell (<50%)')}  {len(partial):2d}   {_('大量卖出(≥50%)', 'Heavy sell (≥50%)')}  {len(heavy_sell):2d}")
-if sig_count == 0:
-    sig_summary = _("🟡 没有聪明钱和KOL，这个币没什么外部背书",
-                    "🟡 No smart money or KOL — no external endorsement")
-elif kol_selling and len(kol_selling) >= max(1, len(kol)//2+1):
-    sig_summary = _(f"🟡 {len(kol)}个KOL里有{len(kol_selling)}个已开始卖——跟进要小心",
-                    f"🟡 {len(kol_selling)}/{len(kol)} KOL(s) already selling — be careful following")
-elif smart_selling and len(smart_selling) >= max(1, len(smart)//2+1):
-    sig_summary = _(f"🟡 聪明钱里有{len(smart_selling)}个已经在出货，信号在减弱",
-                    f"🟡 {len(smart_selling)} smart money wallet(s) selling — signal weakening")
-elif smart_holding:
-    sig_summary = _(f"🟢 {len(smart_holding)}个聪明钱一直持仓没卖，这类人通常提前判断，信号较强",
-                    f"🟢 {len(smart_holding)} smart money wallet(s) holding firm — usually early movers, strong signal")
-elif kol_holding:
-    sig_summary = _(f"🟢 {len(kol_holding)}个KOL全程持仓未卖，参考价值保留",
-                    f"🟢 {len(kol_holding)} KOL(s) fully holding — signal still valid")
+
+if not smart and not kol and not whales:
+    print(f"  {_('聪明钱/KOL/鲸鱼 均无', 'No smart money / KOL / whale found')}")
 else:
-    sig_summary = _("🟢 鲸鱼在场，有大资金背书",
-                    "🟢 Whales present — backed by large capital")
-print(f"  → {_('小结', 'Summary')}{_('：', ': ')}{sig_summary}")
+    if smart:
+        s_trend = trend_str(smart)
+        print(f"  {_('聪明钱', 'Smart')} {len(smart)}{_('个', '')}({fpct(smart_pct)})  {s_trend}")
+    if kol:
+        k_trend = trend_str(kol)
+        print(f"  KOL {len(kol)}{_('个', '')}({fpct(kol_pct)})  {k_trend}")
+    if whales:
+        w_trend = trend_str(whales)
+        print(f"  {_('鲸鱼', 'Whale')} {len(whales)}{_('个', '')}({fpct(whale_pct)})  {w_trend}")
+
+if diamond:
+    df = pf("✅" if diamond_pct>0.6 else ("🟡" if diamond_pct>0.35 else "⚠️"))
+    print(f"  {_('钻石手', 'Diamond')} {len(diamond)}{_('个', '')}({fpct(diamond_pct, 1)}) {df}")
+if idle_airdrop:
+    print(f"  {_('转入筹码未动', 'Idle airdrop')} {len(idle_airdrop)}{_('个', '')}({fpct(idle_airdrop_pct, 1)})"
+          f"  {_('零成本，未计入钻石手', 'zero cost, not counted as diamond')}")
 print()
 
-sec5 = _("📈 入场成本分析", "📈 Entry Cost Analysis")
+# ══════════════════════════════════════════════════════════
+# §5  💰 持仓购买力
+# ══════════════════════════════════════════════════════════
+sec5 = _("💰 持仓购买力", "💰 Buying Power")
 print(f"━━  {sec5}  {'━'*(54-len(sec5))}")
 print()
-print(f"  {_('当前 MC', 'Current MC')} {usd(cur_mc)}")
+
+if not HAS_NATIVE:
+    print(f"  ⚠️  {_(f'{CHAIN} 链原生代币精度未确认，购买力无法评估', f'Native decimals unconfirmed for {CHAIN} — not assessed')}")
+else:
+    if high_wallets:
+        if HAS_PRICE:
+            print(f"  {_('高余额大户', 'High balance')}  {len(high_wallets)}{_('个', '')}({fpct(high_pct_val, 1)})  "
+                  f"{_('可用', 'avail.')} {usd(high_total)}")
+        else:
+            print(f"  {_('高余额大户', 'High balance')}  {len(high_wallets)}{_('个', '')}({fpct(high_pct_val, 1)})  "
+                  f"{fmt_native(high_native)}")
+    else:
+        print(f"  {_('高余额大户', 'High balance')}  {_('0个（暂无强加仓力量）', '0 (no strong buying power)')}")
+    lz_n     = len(zero_wallets) + len(low_wallets) + len(mid_wallets)
+    lz_pct_v = zero_pct_val + low_pct_val + mid_pct_val
+    if lz_n > 0:
+        print(f"  {_('低/零余额', 'Low/zero')}   {lz_n}{_('个', '')}({fpct(lz_pct_v, 1)})  "
+              f"{_('基本无加仓能力', 'Limited buying power')}")
 print()
-time_clusters = defaultdict(list)
-for h in normal:
-    sh = h.get('start_holding_at') or 0
-    if sh<=0: continue
-    time_clusters[(sh-token_launch)//86400].append(h)
-sig_clusters = sorted([(age,ws) for age,ws in time_clusters.items() if len(ws)>=2],
-                      key=lambda x: -sum(h['amount_percentage'] for h in x[1]))[:4]
 
-for rank, (age, ws) in enumerate(sig_clusters, 1):
-    entry_ts    = token_launch + age*86400
-    label       = age_label(entry_ts)
-    total_hp    = fs(ws)
-    costed      = [h for h in ws if (h.get('avg_cost') or 0)>0]
-    selling_out = [h for h in ws if is_distributing(h)]
-    still_hold  = [h for h in ws if (h.get('balance') or 0)>=1]
-    if costed:
-        avg_entry = sum(total_supply*h['avg_cost'] for h in costed)/len(costed)
-        roi       = (cur_mc-avg_entry)/avg_entry*100 if avg_entry>0 else 0
-        mc_str    = _(f"建仓MC {usd(avg_entry)} → 现 {usd(cur_mc)} ({roi:+.0f}%)",
-                      f"Entry MC {usd(avg_entry)} → now {usd(cur_mc)} ({roi:+.0f}%)")
-    else:
-        avg_entry=0; roi=0
-        mc_str    = _("建仓MC 未知（转账获得）", "Entry MC unknown (received via transfer)")
-    sell_ratio = len(selling_out)/len(still_hold) if still_hold else 0
-    if roi>500 and sell_ratio>0.15:
-        risk_flag = "🔴"
-        conclusion = _(f"这批人建仓时才 {usd(avg_entry)}，涨了 {roi:.0f}%，现在有 {len(selling_out)} 个在卖出套现——追入容易接到他们的盘",
-                       f"Entry at {usd(avg_entry)}, up {roi:.0f}%, {len(selling_out)} already selling — buying now means catching their exits")
-    elif roi>200 and sell_ratio>0.1:
-        risk_flag = "🟡"
-        conclusion = _(f"涨了 {roi:.0f}%，有 {len(selling_out)} 个开始出货，但多数还没动——注意大户下一步动向",
-                       f"Up {roi:.0f}%, {len(selling_out)} starting to sell but most still holding — watch whale next moves")
-    elif roi>0:
-        risk_flag = "🟢"
-        conclusion = _(f"涨了 {roi:.0f}%，出货的人不多，短期卖压不大",
-                       f"Up {roi:.0f}%, few selling — limited short-term pressure")
-    else:
-        risk_flag = "🟢"
-        conclusion = _(f"这批人目前亏着呢（{roi:.0f}%），不到割肉的程度，短期不太会卖",
-                       f"Currently down {roi:.0f}% — unlikely to sell at a loss short-term")
-    batch_label = _('批次', 'Batch')
-    selling_cnt  = len([h for h in ws if is_selling(h)])
-    holding_cnt  = len([h for h in ws if is_buying_only(h)])
-    sell_str     = f"  🚨 {_('出货中','selling')} {selling_cnt}" if selling_cnt else ""
-    hold_str     = f"  📈 {_('加仓中','accumulating')} {holding_cnt}" if holding_cnt else ""
-    # 批次占比同样以流通盘为分母 —— 退化时会把一个尘埃批次打成 "hold 100.00% 🟢"，
-    # 一行之内同时给出"全部筹码"和"没风险"两个错误结论。数字和旗标都要中和。
-    print(f"  {batch_label}{rank}{_('（', '(')}{label}{_('）', ')')}  {len(ws)} {_('个钱包', 'wallets')}  {_('持仓', 'hold')} {fpct(total_hp)}  {pf(risk_flag)}{sell_str}{hold_str}")
-    print(f"       {mc_str}")
-    print(f"       ➤ {conclusion}")
-    print()
-
-sec6 = _("💰 持仓者购买力", "💰 Holder Buying Power")
+# ══════════════════════════════════════════════════════════
+# §6  🤖 建议
+# ══════════════════════════════════════════════════════════
+sec6 = _("🤖 建议", "🤖 Advice")
 print(f"━━  {sec6}  {'━'*(54-len(sec6))}")
 print()
-if not HAS_NATIVE:
-    print(f"  {_('衡量现有持仓者还有多少子弹可以加仓', 'How much ammo holders have left to add')}")
-    print()
-    print(f"  ⚠️  {_(f'{CHAIN} 链的原生代币精度未确认，native_balance 无法换算 —— 本节不做评估', f'Native decimals unconfirmed for {CHAIN}; native_balance cannot be converted — section not assessed')}")
-    print()
-else:
-    if HAS_PRICE:
-        bp_str = _(f"{usd(total_buying_power)}（{fmt_native(total_buying_power_native)} @ {price_str(NATIVE_PRICE)}）",
-                   f"{usd(total_buying_power)} ({fmt_native(total_buying_power_native)} @ {price_str(NATIVE_PRICE)})")
-    else:
-        bp_str = fmt_native(total_buying_power_native)
-    print(f"  {_('衡量现有持仓者还有多少子弹可以加仓', 'How much ammo holders have left to add')}   {_('合计可用余额', 'Total balance')} {bp_str}")
-    print()
-if zero_wallets:
-    print(f"  ⚫ {_('零余额', 'Zero balance')}     {len(zero_wallets):3d} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(zero_pct_val)}   —    → {_('无加仓能力，可能是分仓小号', 'No buying power, likely sub-wallets')}")
-if HAS_PRICE:
-    if low_wallets:
-        low_total = sum(native_usd(h) for h in low_wallets)
-        print(f"  🟡 {_('低（<$200）', 'Low (<$200)')}   {len(low_wallets):3d} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(low_pct_val)}   {usd(low_total)}")
-    if mid_wallets:
-        mid_total = sum(native_usd(h) for h in mid_wallets)
-        print(f"  🟠 {_('中（$200~$1200）', 'Mid ($200~$1200)')}  {len(mid_wallets):3d} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(mid_pct_val)}   {usd(mid_total)}")
-    if high_wallets:
-        print(f"  🔴 {_('高（$1200+）', 'High ($1200+)')}  {len(high_wallets):3d} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(high_pct_val)}   {usd(high_total)}   → {_('可随时加仓', 'can add anytime')}")
-elif high_wallets:
-    # 拿不到原生代币价格，只按原生数量分档，不编造美元金额
-    print(f"  🟢 {_('有余额', 'Has balance')}     {len(high_wallets):3d} {_('个钱包', 'wallets')}   {_('持仓', 'hold')} {fpct(high_pct_val)}   {fmt_native(high_native)}")
-    print(f"     ({_(f'{CHAIN} 链拿不到 {NSYM} 价格，仅显示原生数量', f'No {NSYM} price for {CHAIN}, native amount only')})")
-print()
-if high_wallets and HAS_PRICE:
-    print(f"  ➤ {_('高余额钱包', 'High-balance wallets')} {len(high_wallets)} {_('个持仓', 'holding')} {fpct(high_pct_val, 1)}{_('，', ', ')}{_('合计', 'total')} {usd(high_total)} {_('可随时加仓', 'ready to add')}")
-if zero_wallets and zero_pct_val > 0.1:
-    print(f"  ➤ {len(zero_wallets)} {_('个钱包零余额（持仓 ', 'wallets with zero balance (hold ')}{fpct(zero_pct_val, 1)}{_('）', ')')}, {_('无加仓能力，可能是分仓小号', 'no buying power, likely sub-wallets')}")
-print()
 
-sec7 = _("📊 筹码结构", "📊 Chip Structure")
-print(f"━━  {sec7}  {'━'*(54-len(sec7))}")
-print()
-total_n = len(normal)
-if total_n > 0:
-    # 钱包个数答"多数人赚没赚"，流通盘占比答"赚钱的筹码有多重" —— 抛压看后者
-    print(f"  {_('盈利', 'Profit')} {len(profit_w)}   ({len(profit_w)/total_n*100:.0f}% {_('钱包', 'wallets')} / {fpct(profit_pct, 1)} {_('流通盘', 'float')})")
-    print(f"  {_('亏损', 'Loss')} {len(loss_w)}   ({len(loss_w)/total_n*100:.0f}% {_('钱包', 'wallets')} / {fpct(loss_pct, 1)} {_('流通盘', 'float')})   {_('持平', 'Break-even')} {total_n-len(profit_w)-len(loss_w)}")
-tf_flag = "⚠️" if len(trapped)>30 else ""
-print(f"  {_('套牢盘（浮亏>20%）', 'Underwater (>20% loss)')}   {len(trapped)}   {_('持仓', 'hold')} {fpct(trapped_pct)}  {tf_flag}")
-print(f"  {_('平均持仓时长', 'Avg hold duration')}   {avg_hold_days:.1f} {_('天', 'days')}")
-print()
-
-sec8 = _("🤖 AI 建议", "🤖 AI Advice")
-print(f"━━  {sec8}  {'━'*(54-len(sec8))}")
-print()
 print(f"  {rating_em} {rating_text}")
 print()
+
 if dangers:
-    print(f"  {_('核心风险', 'Core Risks')}:")
-    for d in dangers: print(f"    · {d}")
-if warns:
-    print(f"  {_('注意信号', 'Warnings')}:")
-    for w in warns:   print(f"    · {w}")
-if goods:
-    print(f"  {_('积极因素', 'Positives')}:")
-    for g in goods:   print(f"    · {g}")
-# 三个桶互斥、相加为 100%，读者能看出缺口是"有前科"还是"来源未知"造成的
-if no_holders:
-    # 三个桶全是 0.0% 时打印它们，等于宣称"筹码里既没有风险标签也没有空降"
-    print(f"\n  {_('筹码质量', 'Chip quality')} ⚪   "
-          f"{_('没有观测到任何钱包，无法计算', 'no wallets observed — cannot compute')}")
+    core = _("⚠️ 高风险：", "⚠️ High risk: ") + dangers[0]
+elif warns:
+    core = warns[0]
+elif goods:
+    core = goods[0]
+elif unassessable:
+    core = _("当前无法判断筹码质量，建议稍后重试", "Cannot assess chip quality right now — retry later")
 else:
-    # 三个桶的分母是 normal_pct（总供应基准），不受流通盘退化影响，所以构成照常打印；
-    # 但退化盘里被观测到的筹码本身只有尘埃级，对着尘埃下 🔴/🟢 的结论没有意义 ——
-    # 评级已经是"无法评估"，这里再亮一个红灯只会自相矛盾。故只中和旗标，并注明筹码体量。
-    _qf_disp = pf(qf)
-    _qf_note = "" if not float_degenerate else _(
-        f"，仅占总供应 {pct_s(normal_pct)}", f", only {pct_s(normal_pct)} of supply")
-    print(f"\n  {_('筹码质量', 'Chip quality')} {_qf_disp}   "
-          f"({_('占观测到的钱包筹码', 'share of observed wallet chips')}{_qf_note})")
-    print(f"    {_('自己买入且无风险标签', 'Bought in, no risk tag')} {pct(clean_ratio):.1f}%"
-          f"   {_('零成本空降', 'Zero-cost airdrop')} {pct(airdrop_ratio):.1f}%"
-          f"   {_('风险标签', 'Risk-tagged')} {pct(risk_ratio):.1f}%")
-    if clean_ratio < 0.5 and airdrop_ratio > risk_ratio:
-        print(_( "    （缺口主要来自零成本空降：来源未知，不等于已证实的坏筹码）",
-                 "    (Shortfall is mostly zero-cost airdrop — unknown provenance, not proven-bad chips)"))
-# 退化时 .1f 会把 0.0035% 打成 0.0%，和"未发现 LP"的 0 混成一个数
-_fs_disp = pct_s(float_raw) if float_degenerate else f"{pct(float_share):.1f}%"
-# coverage = normal_pct / float_share，退化时它同样是除零结果（恒等于 100%），不能报
-_cov_disp = "" if unassessable else _(f"   Top100 覆盖流通盘 {pct(coverage):.0f}%",
-                                      f"   Top100 covers {pct(coverage):.0f}% of float")
-if burn_pct + dex_pct > 0.001:
-    print(_( f"  流通盘 {_fs_disp}（销毁 {pct(burn_pct):.1f}% + DEX {pct(dex_pct):.1f}% 已剔除，不纳入评估）{_cov_disp}",
-             f"  Float {_fs_disp} (burn {pct(burn_pct):.1f}% + DEX {pct(dex_pct):.1f}% excluded){_cov_disp}"))
-else:
-    # 没有销毁也没有 LP 行，就别写"已剔除 0.0%"
-    print(_( f"  流通盘 100%（未发现销毁地址与 DEX 池）{_cov_disp}",
-             f"  Float 100% (no burn address or DEX pool found){_cov_disp}"))
-# 这条脚注必须跟着实际覆盖率走。原先无条件打印，于是在 Top100 覆盖 100% 流通盘的币上，
-# 它和上一行的"Top100 覆盖流通盘 100%"当场自相矛盾 —— 一行说覆盖满了，下一行说没覆盖满。
-if no_holders:
-    # coverage = 0 会让下面那条打成"Top100 覆盖 0%，所以是下限"—— 下限的说法预设了有数据
-    print(_( "  以上占比没有任何持仓数据支撑，既不是下限也不是完整值，请勿据此比较",
-             "  The percentages above rest on no holder data at all — they are neither floors nor complete values; do not compare on them"))
-elif float_degenerate:
-    # 退化时 coverage 本身也是 f1() 的产物，同样是噪声，两种说法都不能给
-    print(_( "  以上持仓占比的分母（流通盘）趋零，数值不可用于横向比较，请以本节顶部的绝对值为准",
-             "  The float denominator above is near zero, so these percentages are not comparable — use the absolute figures at the top of this section"))
-elif coverage < 0.995:
-    print(_( f"  以上持仓占比均以流通盘为分母；Top100 只覆盖其中 {pct(coverage):.0f}%，未覆盖的部分意味着这些占比是下限",
-             f"  Percentages above are share of tradeable float; Top100 covers {pct(coverage):.0f}% of it, so they are floors"))
-else:
-    print(_( "  以上持仓占比均以流通盘为分母；Top100 已覆盖全部流通盘，占比即完整值而非下限",
-             "  Percentages above are share of tradeable float; Top100 covers all of it, so they are complete values, not floors"))
-if coverage < 0.5 and not unassessable:
-    # 覆盖率低时，"占比小"只说明 Top100 之外还有很多筹码，不能读成利好
-    print(_( f"  ⚠️ Top100 只覆盖了流通盘的 {pct(coverage):.0f}%，占比偏低的指标属于未知而非利好",
-             f"  ⚠️ Top100 covers only {pct(coverage):.0f}% of float — low percentages mean unknown, not good"))
+    core = _("筹码结构正常，未发现明显风险信号", "Chip structure normal — no obvious risk signals")
+print(f"  {core}")
 print()
-print(f"  {_('关注以下信号，出现则考虑离场：', 'Watch for these exit signals:')}")
-for sig in exit_signals:
-    print(f"    · {sig}")
+
+print(f"  💡 {_('离场信号：', 'Exit signals: ')}{' / '.join(exit_signals)}")
 print()
+
 print("=" * 58)
 print("  [OUTPUT COMPLETE — COPY ABOVE VERBATIM, DO NOT SUMMARIZE]")
 print("=" * 58)
