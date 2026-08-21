@@ -743,7 +743,7 @@ else:
             stale     = ath_mc > 0 and cur_mc > 0 and ath_mc < cur_mc * 0.95
             stale_tag = (_(f"  ⚠️ ATH可能滞后（低于当前MC {usd(cur_mc)}）",
                            f"  ⚠️ ATH may be stale (below current MC {usd(cur_mc)})") if stale else "")
-            print(f"  ↳ ATH: {ath_info.get('token_symbol', '?')}{curr_tag} {usd(ath_mc)}{stale_tag}")
+            print(f"  ↳ {_('历史最高市值', 'All-time high MC')}: {ath_info.get('token_symbol', '?')}{curr_tag} {usd(ath_mc)}{stale_tag}")
 print()
 
 # ══════════════════════════════════════════════════════════
@@ -759,6 +759,8 @@ if has_related:
         relf_src = pf("🔴" if same_src_pct>0.25 else ("🟡" if same_src_pct>0.1 else "🟢"))
         print(f"  {_('相同资金来源', 'Same source'):10s}  {same_src_wallets}{_('个钱包', ' wallets')}  "
               f"{_('持仓', 'hold')} {fpct(same_src_pct)} {relf_src}")
+    else:
+        print(f"  {_('相同资金来源', 'Same source'):10s}  {_('✅ 未发现', '✅ None detected')}")
     if win_groups:
         win_n    = sum(len(v) for v in win_groups)
         relf_win = pf("🔴" if win_pct>0.25 else ("🟡" if win_pct>0.1 else "🟢"))
@@ -766,6 +768,8 @@ if has_related:
         tight_note = f"  {_('（含秒级批量注资）', '(incl. scripted batch)')}" if tight_groups else ""
         print(f"  {_('同一时间段注资', 'Same-window'):10s}  {win_n}{_('个钱包', ' wallets')}  "
               f"{_('持仓', 'hold')} {fpct(win_pct)} {relf_win}{tight_note}")
+    else:
+        print(f"  {_('同一时间段注资', 'Same-window'):10s}  {_('✅ 未发现', '✅ None detected')}")
 else:
     if no_holders:
         print(f"  ⚪ {_('没有钱包可供检查', 'No wallets available to check')}")
