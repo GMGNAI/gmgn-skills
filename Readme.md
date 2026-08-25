@@ -100,6 +100,9 @@ No more scraping web pages or getting blocked by Cloudflare. Query all the profe
 | [`/gmgn-track`](skills/gmgn-track/SKILL.md) | Follow-wallet trades, KOL trades, Smart Money trades | [SKILL.md](skills/gmgn-track/SKILL.md) |
 | [`/gmgn-swap`](skills/gmgn-swap/SKILL.md) | Swap submission + limit orders + strategy orders + order query | [SKILL.md](skills/gmgn-swap/SKILL.md) |
 | [`/gmgn-cooking`](skills/gmgn-cooking/SKILL.md) | One-command cooking orders (buy + take-profit/stop-loss in a single flow) | [SKILL.md](skills/gmgn-cooking/SKILL.md) |
+| [`/gmgn-kline-pattern`](skills/gmgn-kline-pattern/SKILL.md) | Price-action pattern reading — names the chart pattern and scores it 0-100 | [SKILL.md](skills/gmgn-kline-pattern/SKILL.md) |
+| [`/gmgn-ca-verdict`](skills/gmgn-ca-verdict/SKILL.md) | Contract due-diligence score — contract safety + holder structure + price action in one 0-100 composite | [SKILL.md](skills/gmgn-ca-verdict/SKILL.md) |
+| [`/gmgn-x-narrative`](skills/gmgn-x-narrative/SKILL.md) | X narrative & chatter — whether anyone is actually talking about a token | [SKILL.md](skills/gmgn-x-narrative/SKILL.md) |
 
 > For detailed CLI commands, parameters, and recommended values, see the [Wiki documentation](https://github.com/GMGNAI/gmgn-skills/wiki).
 
