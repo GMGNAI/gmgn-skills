@@ -27,7 +27,9 @@ This is a **Claude Code plugin** — a collection of GMGN OpenAPI skills for on-
 | Skill | Purpose | When to Use |
 |-------|---------|-------------|
 | `gmgn-token` | Token info, security, pool, holders, traders | User asks about a token's price, market cap, security risk, liquidity pool, top holders, or top traders; user wants to research a token before buying; user asks "is this token safe", "who holds this token", "what's the liquidity" |
+| `gmgn-contract-dd` | One 0-100 due-diligence composite for a token address — contract safety 0.45 + holder structure 0.35 + price action 0.20, every deduction naming the field it read, with a reported coverage that bounds the claim | User wants **one verdict number** rather than fields: 尽调, CA 尽调, 给这个币打个分, 这个币安全吗, 有没有貔貅, 能不能买, rug check, honeypot check, score this contract, due diligence. Refuses to score an address GMGN has no record of, and hands a bare wallet address to `gmgn-wallet-analysis` |
 | `gmgn-market` | K-line / candlestick market data + trending tokens + newly launched launchpad tokens | User asks for price history, chart data, OHLCV candles, trading volume over time; user wants to analyze price trends; user asks "show me the 1h chart", "what was the price last week", "give me kline data for this token"; user wants to discover hot or trending tokens; user asks "what tokens are trending", "show me top tokens by volume", "find hot tokens on SOL"; **user asks about newly launched tokens, fresh tokens, latest tokens on launchpads** — e.g. "show me new tokens on pump.fun", "what tokens just launched on SOL", "find newly created tokens", "latest tokens on letsbonk" → use `market trenches --type new_creation` |
+| `gmgn-wallet-analysis` | The copy-trade dossier on one wallet — four pass/fail gates, what it holds and buys now, entry market-cap band, copy window, size cap | User pastes a **bare wallet address**, or asks 「这个钱包能跟吗」, 「帮我分析一下这个钱包」, 「它现在在买什么」, "can I copy this wallet", "analyze this wallet". This is the default for a bare wallet address; `gmgn-portfolio` is for the raw holdings / P&L / activity behind it |
 | `gmgn-portfolio` | Wallet holdings, activity, trading stats, token balance | User asks about a wallet's holdings, P&L, transaction history, trading statistics, or token balance; user wants to analyze a wallet; user asks "what tokens does this wallet hold", "show me recent trades", "what's the win rate of this wallet" |
 | `gmgn-wallet-score` | Wallet scoring across three angles — profitability (track-record score), copy-tradeability (score + latency/slippage/gas backtest), and Dev reputation for token-creator wallets — plus trading-style tags | User asks about a wallet's profitability ("钱包盈利能力怎么样", "is this wallet profitable"), copy-trade worthiness ("is this wallet worth copying", "跟单评分", "钱包评分", "值不值得跟单", "if I copy this wallet what's my real return"), or launch/Dev reputation ("钱包发盘情况怎么样", "是不是发币方钱包", "dev 信誉怎么样"); user gives a wallet address and wants any of these judgments |
 | `gmgn-track` | Track trade activity of wallets I follow, KOL trades, Smart Money trades across chains | User asks about trades from wallets they follow; user wants to see what KOLs or Smart Money are buying/selling; user asks "show me what wallets I follow have traded recently", "what are KOLs buying", "show me smart money moves on BSC" |
@@ -40,7 +42,9 @@ Match the user's request to the right skill and workflow:
 
 | User says | Action |
 |-----------|--------|
-| "is this token safe", "check this token", "research this token", token address provided | `gmgn-token` → full workflow: `docs/workflow-token-research.md` |
+| "打个分", "尽调", "CA 尽调", "这个币安全吗", "能不能买", "rug check", "score this contract" — user wants **one number** | `gmgn-contract-dd` |
+| "check this token", "research this token", "what's the liquidity", "who holds this" — user wants **the fields** | `gmgn-token` → full workflow: `docs/workflow-token-research.md` |
+| bare token contract address, no question attached | `gmgn-contract-dd` for the verdict number, then offer `gmgn-token` for the raw fields. If the address turns out to be a wallet, `gmgn-wallet-analysis` |
 | "deep report", "full analysis", "全面分析这个项目", "深度报告", "值不值得重仓" | `gmgn-token` + `gmgn-market` → `docs/workflow-project-deep-report.md` |
 | "what's trending", "hot tokens", "top tokens by volume" | `gmgn-market trending` |
 | "走势怎么样", "什么形态", "is it breaking down" | `gmgn-kline-pattern` |
@@ -49,7 +53,7 @@ Match the user's request to the right skill and workflow:
 | "daily brief", "today's market", "每日简报", "今天市场怎么样", "聪明钱今天买了什么" | `gmgn-market` + `gmgn-track` → `docs/workflow-daily-brief.md` |
 | "what is smart money buying", "what are KOLs trading" | `gmgn-track smartmoney` / `gmgn-track kol` |
 | "wallets I follow", "my followed wallets traded" | `gmgn-track follow-wallet` |
-| "analyze this wallet", "is this wallet worth following", wallet address provided | `gmgn-portfolio` → full workflow: `docs/workflow-wallet-analysis.md` |
+| "analyze this wallet", "is this wallet worth following", bare wallet address provided | `gmgn-wallet-analysis` for the verdict dossier; `gmgn-portfolio` → `docs/workflow-wallet-analysis.md` when the raw holdings / P&L / activity are what is wanted |
 | "wallet style", "smart money profile", "聪明钱画像", "这个钱包是长线还是短线", "跟着他买收益如何", "聪明钱排行榜" | `gmgn-portfolio` + `gmgn-track` → `docs/workflow-smart-money-profile.md` |
 | "钱包盈利能力怎么样", "钱包战绩怎么样", "is this wallet profitable" | `gmgn-wallet-score` (profitability angle — track-record score) |
 | "跟单评分", "钱包评分", "值不值得跟单", "is this wallet worth copying", "copy trade score", wallet address provided + copy-trade decision | `gmgn-wallet-score` (copy-tradeability angle — score + backtest) |
@@ -72,7 +76,7 @@ Match the user's request to the right skill and workflow:
 ## Architecture
 
 - **`src/`** — TypeScript source (CLI commands, API client, signer)
-- **`skills/`** — 9 skill definitions for Claude Code
+- **`skills/`** — 11 skill definitions for Claude Code
 - **`dist/`** — Compiled output (generated by `npm run build`)
 - **`.claude-plugin/`** — Plugin metadata for Claude Code
 
