@@ -12,6 +12,17 @@ export function validateChain(chain: string): void {
   }
 }
 
+const STRATEGY_V1_CHAINS = new Set(["sol", "bsc", "base", "eth", "robinhood"]);
+
+export function validateStrategyV1Chain(chain: string): void {
+  if (!STRATEGY_V1_CHAINS.has(chain)) {
+    console.error(
+      `[gmgn-cli] Invalid V1 strategy chain: "${chain}". Must be one of: ${[...STRATEGY_V1_CHAINS].join(", ")}. Use order strategy create-v2 for arc / stable.`
+    );
+    process.exit(1);
+  }
+}
+
 export function validateAddress(address: string, chain: string, label: string): void {
   const isEvm = chain === "bsc" || chain === "base" || chain === "eth" || chain === "robinhood" || chain === "arc" || chain === "stable" /* || chain === "monad" */;
   const valid = isEvm ? EVM_ADDRESS_RE.test(address) : SOL_ADDRESS_RE.test(address);

@@ -713,6 +713,15 @@ gmgn-cli order strategy list --chain sol
 
 # Cancel a strategy order
 gmgn-cli order strategy cancel --chain sol --from <wallet_address> --order-id <order_id>
+
+# Create a V2 smart-trade strategy
+gmgn-cli order strategy create-v2 \
+  --chain sol --from <wallet_address> \
+  --base-token <token_address> --quote-token So11111111111111111111111111111111111111112 \
+  --buy-type limit --quote-investment 1000000 \
+  --buy-order '{"order_type":"buy_low","side":"buy","check_price":"0.0185"}' \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"10","sell_ratio":"100"}]' \
+  --sell-param '{"slippage":30,"priority_fee":"0.0001","tip_fee":"0.00001"}'
 ```
 
 ### Cooking (requires private key)

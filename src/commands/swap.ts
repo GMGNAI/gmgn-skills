@@ -1,9 +1,9 @@
 import { Command } from "commander";
-import { OpenApiClient, SwapParams, MultiSwapParams, StrategyCreateParams, StrategyCancelParams } from "../client/OpenApiClient.js";
+import { OpenApiClient, SwapParams, MultiSwapParams, StrategyCreateParams, StrategyCreateV2Params, StrategyCancelParams } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
 import { confirmTrade } from "../confirm.js";
-import { validateAddress, validateChain, validateConditionOrdersSupported, validatePercent, validatePositiveInt } from "../validate.js";
+import { validateAddress, validateChain, validateConditionOrdersSupported, validatePercent, validatePositiveInt, validateStrategyV1Chain } from "../validate.js";
 
 export function registerSwapCommands(program: Command): void {
   program
@@ -230,11 +230,11 @@ export function registerSwapCommands(program: Command): void {
   strategy
     .command("create")
     .description("Create a limit/strategy order (requires private key)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / robinhood / arc / stable")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / robinhood")
     .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
     .requiredOption("--base-token <address>", "Base token contract address")
     .requiredOption("--quote-token <address>", "Quote token contract address")
-    .requiredOption("--order-type <type>", "Order type: limit_order / smart_trade (arc / stable support limit_order only)")
+    .requiredOption("--order-type <type>", "Order type: limit_order / smart_trade")
     .requiredOption("--sub-order-type <type>", "Sub-order type: buy_low / buy_high / stop_loss / take_profit (limit_order); mix_trade (smart_trade with condition_orders)")
     .option("--check-price <price>", "Trigger check price (required for limit_order; omit for smart_trade)")
     .option("--open-price <price>", "Open price of the position")
@@ -268,7 +268,7 @@ export function registerSwapCommands(program: Command): void {
         console.error("[gmgn-cli] Either --slippage or --auto-slippage must be provided");
         process.exit(1);
       }
-      validateChain(opts.chain);
+      validateStrategyV1Chain(opts.chain);
       if (opts.orderType === "smart_trade") {
         validateConditionOrdersSupported(opts.chain, "strategy create (smart_trade)");
       }
@@ -327,6 +327,8 @@ export function registerSwapCommands(program: Command): void {
       printResult(data, opts.raw);
     });
 
+  registerStrategyCreateV2(strategy);
+
   strategy
     .command("list")
     .description("List strategy orders (requires private key)")
@@ -374,4 +376,99 @@ export function registerSwapCommands(program: Command): void {
       const data = await client.cancelStrategyOrder(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
+}
+
+function registerStrategyCreateV2(strategy: Command): void {
+  strategy
+    .command("create-v2")
+    .description("Create a V2 smart-trade strategy order (requires private key)")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / robinhood / arc / stable")
+    .requiredOption("--from <address>", "Wallet address (must match API Key binding)")
+    .requiredOption("--base-token <address>", "Base token contract address")
+    .requiredOption("--quote-token <address>", "Quote token contract address")
+    .requiredOption("--buy-type <type>", "Entry type: market / limit / position")
+    .requiredOption("--condition-orders <json>", "JSON array of take-profit/stop-loss condition orders")
+    .requiredOption("--sell-param <json>", "JSON object of sell-side trade parameters")
+    .option("--quote-investment <amount>", "Quote investment in smallest units (market / limit)")
+    .option("--buy-order <json>", "JSON object describing the entry order (required for limit)")
+    .option("--buy-param <json>", "JSON object of buy-side trade parameters (market / limit)")
+    .option("--open-amount <amount>", "Existing position amount in smallest units (required for position)")
+    .option("--open-price <price>", "Existing position entry price (required for position)")
+    .option("--cost-price <price>", "Optional position cost price")
+    .option("--sell-ratio-type <type>", "Sell ratio basis: buy_amount / hold_amount")
+    .option("--limit-price-mode <mode>", "Limit price mode: exact / slippage")
+    .option("--expire-in <seconds>", "Order expiry in seconds", parseInt)
+    .option("--yes", "Skip the interactive confirmation prompt (requires GMGN_ALLOW_AUTOMATED_TRADES=1)")
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      validateChain(opts.chain);
+      validateAddress(opts.from, opts.chain, "--from");
+      validateAddress(opts.baseToken, opts.chain, "--base-token");
+      validateAddress(opts.quoteToken, opts.chain, "--quote-token");
+      if (!["market", "limit", "position"].includes(opts.buyType)) {
+        console.error("[gmgn-cli] --buy-type must be market, limit, or position");
+        process.exit(1);
+      }
+      if ((opts.buyType === "market" || opts.buyType === "limit") && !opts.quoteInvestment) {
+        console.error("[gmgn-cli] --quote-investment is required for market and limit entries");
+        process.exit(1);
+      }
+      if (opts.buyType === "limit" && !opts.buyOrder) {
+        console.error("[gmgn-cli] --buy-order is required for limit entries");
+        process.exit(1);
+      }
+      if (opts.buyType === "position" && (!opts.openAmount || !opts.openPrice)) {
+        console.error("[gmgn-cli] --open-amount and --open-price are required for position entries");
+        process.exit(1);
+      }
+      const params: StrategyCreateV2Params = {
+        chain: opts.chain,
+        from_address: opts.from,
+        base_token: opts.baseToken,
+        quote_token: opts.quoteToken,
+        sub_order_type: "mix_trade",
+        buy_type: opts.buyType,
+        condition_orders: parseJsonOption(opts.conditionOrders, "--condition-orders", true),
+        sell_param: parseJsonOption(opts.sellParam, "--sell-param", false),
+      };
+      if (opts.quoteInvestment) params.quote_investment = opts.quoteInvestment;
+      if (opts.buyOrder) params.buy_order = parseJsonOption(opts.buyOrder, "--buy-order", false);
+      if (opts.buyParam) params.buy_param = parseJsonOption(opts.buyParam, "--buy-param", false);
+      if (opts.openAmount) params.open_amount = opts.openAmount;
+      if (opts.openPrice) params.open_price = opts.openPrice;
+      if (opts.costPrice) params.cost_price = opts.costPrice;
+      if (opts.sellRatioType) params.sell_ratio_type = opts.sellRatioType;
+      if (opts.limitPriceMode) params.limit_price_mode = opts.limitPriceMode;
+      if (opts.expireIn != null) params.expire_in = opts.expireIn;
+      confirmTrade({
+        action: "Create V2 strategy order",
+        lines: [
+          `Chain:       ${params.chain}`,
+          `Wallet:      ${params.from_address}`,
+          `Base token:  ${params.base_token}`,
+          `Quote token: ${params.quote_token}`,
+          `Entry type:  ${params.buy_type}`,
+          `Amount:      ${params.quote_investment ?? params.open_amount}`,
+        ],
+      }, opts.yes);
+      const client = new OpenApiClient(getConfig(true));
+      const data = await client.createStrategyOrderV2(params).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
+}
+
+function parseJsonOption(value: string, label: string, expectArray: true): Record<string, unknown>[];
+function parseJsonOption(value: string, label: string, expectArray: false): Record<string, unknown>;
+function parseJsonOption(value: string, label: string, expectArray: boolean): Record<string, unknown> | Record<string, unknown>[] {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    const valid = expectArray
+      ? Array.isArray(parsed) && parsed.every((item) => item !== null && typeof item === "object" && !Array.isArray(item))
+      : parsed !== null && typeof parsed === "object" && !Array.isArray(parsed);
+    if (!valid) throw new Error("wrong JSON shape");
+    return parsed as Record<string, unknown> | Record<string, unknown>[];
+  } catch {
+    console.error(`[gmgn-cli] ${label} must be valid JSON ${expectArray ? "array" : "object"}`);
+    process.exit(1);
+  }
 }

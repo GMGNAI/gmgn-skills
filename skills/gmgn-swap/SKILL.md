@@ -1,7 +1,7 @@
 ---
 name: gmgn-swap
 description: "[FINANCIAL EXECUTION] Buy and sell meme coins and crypto tokens on Solana, BSC, Base, or Ethereum — single swap, multi-wallet batch trading, limit orders, stop loss, take profit, trailing stop loss, trailing take profit via GMGN API. Requires explicit user confirmation. Use when user asks to buy, sell, or swap a token, trade from multiple wallets, set a limit order, stop loss, take profit, or check order status."
-argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [gas-price --chain <eth|bsc|base|sol>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type <limit_order|smart_trade> --sub-order-type <buy_low|buy_high|stop_loss|take_profit|mix_trade> ...]"
+argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [gas-price --chain <chain>] | [order strategy create ...] | [order strategy create-v2 --buy-type <market|limit|position> ...]"
 metadata:
   cliHelp: "gmgn-cli swap --help"
 ---
@@ -38,7 +38,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. `GMGN
 
 **This skill executes REAL, IRREVERSIBLE blockchain transactions.**
 
-- Every `swap` and `order strategy create` command submits an on-chain transaction that moves real funds.
+- Every `swap`, `order strategy create`, and `order strategy create-v2` command can move real funds.
 - Transactions cannot be undone once confirmed on-chain.
 - The AI agent must **never auto-execute a swap** — explicit user confirmation is required every time, without exception.
 - Only use this skill with funds you are willing to trade. Start with small amounts when testing.
@@ -62,7 +62,8 @@ This is a hard, code-level barrier — do not attempt to work around it.
 | `order quote` | Get a swap quote (no transaction submitted; exist auth — API Key only, no private key needed) |
 | `order get` | Query order status |
 | `gas-price` | Query recommended gas price (low / average / high tiers) for any chain; exist auth (API Key only) |
-| `order strategy create` | Create a limit/strategy order (requires private key) |
+| `order strategy create` | Create a V1 limit/strategy order (requires private key) |
+| `order strategy create-v2` | Create a V2 smart-trade strategy (requires private key) |
 | `order strategy list` | List strategy orders (requires private key) |
 | `order strategy cancel` | Cancel a strategy order (requires private key) |
 
@@ -100,6 +101,7 @@ All swap-related routes used by this skill go through GMGN's leaky-bucket limite
 | `order quote` | `GET /v1/trade/quote` | 2 |
 | `order get` | `GET /v1/trade/query_order` | 1 |
 | `order strategy create` | `POST /v1/trade/strategy/create` | 5 |
+| `order strategy create-v2` | `POST /v2/trade/strategy/create` | 5 |
 | `order strategy cancel` | `POST /v1/trade/strategy/cancel` | 2 |
 | `order strategy list` | `GET /v1/trade/strategy/orders` | 1 |
 | `gas-price` | `GET /v1/trade/gas_price` | 1 |
@@ -166,7 +168,7 @@ gmgn-cli swap \
 
 | Parameter | Required | Chain | Description |
 |-----------|----------|-------|-------------|
-| `--chain` | Yes | all | `sol` / `bsc` / `base` / `eth` / `robinhood` / `arc` / `stable` |
+| `--chain` | Yes | all | V1: `sol` / `bsc` / `base` / `eth` / `robinhood`; use `create-v2` for `arc` / `stable` |
 | `--from` | Yes | all | Wallet address (must match API Key binding) |
 | `--input-token` | Yes | all | Input token contract address |
 | `--output-token` | Yes | all | Output token contract address |
@@ -557,7 +559,7 @@ gmgn-cli order strategy create \
 | `--from` | Yes | all | Wallet address (must match API Key binding) |
 | `--base-token` | Yes | all | Base token contract address |
 | `--quote-token` | Yes | all | Quote token contract address |
-| `--order-type` | Yes | all | Order type: `limit_order` / `smart_trade`. **`arc` / `stable` support `limit_order` only** — `smart_trade` returns a 400. |
+| `--order-type` | Yes | all | Order type: `limit_order` / `smart_trade` |
 | `--sub-order-type` | Yes | all | `limit_order`: `buy_low` / `buy_high` / `stop_loss` / `take_profit`; `smart_trade` with condition_orders: `mix_trade` |
 | `--check-price` | No* | all | Trigger price — required for `limit_order`; omit for `smart_trade` (trigger is in the `buy_low` condition order) |
 | `--open-price` | No | all | Open price of the position |
@@ -588,6 +590,25 @@ gmgn-cli order strategy create \
 |-------|------|-------------|
 | `order_id` | string | Created strategy order ID |
 | `is_update` | bool | `true` if an existing order was updated, `false` if newly created |
+
+## `order strategy create-v2` Usage
+
+V2 is a separate smart-trade contract; do not translate its fields into the V1 command.
+
+```bash
+gmgn-cli order strategy create-v2 \
+  --chain sol \
+  --from <wallet_address> \
+  --base-token <token_address> \
+  --quote-token So11111111111111111111111111111111111111112 \
+  --buy-type limit \
+  --quote-investment 1000000 \
+  --buy-order '{"order_type":"buy_low","side":"buy","check_price":"0.0185"}' \
+  --condition-orders '[{"order_type":"profit_stop","side":"sell","price_scale":"10","sell_ratio":"100"}]' \
+  --sell-param '{"slippage":30,"priority_fee":"0.0001","tip_fee":"0.00001"}'
+```
+
+All entry types require `--chain`, `--from`, `--base-token`, `--quote-token`, `--buy-type`, `--condition-orders`, and `--sell-param`. Market and limit entries require `--quote-investment`; limit also requires `--buy-order`. Position entries require `--open-amount` and `--open-price`. Supported chains are `sol`, `bsc`, `base`, `eth`, `robinhood`, `arc`, and `stable`.
 
 ---
 
