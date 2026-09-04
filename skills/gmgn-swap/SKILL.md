@@ -1,6 +1,28 @@
 ---
 name: gmgn-swap
-description: "[FINANCIAL EXECUTION] Buy and sell meme coins and crypto tokens on Solana, BSC, Base, or Ethereum — single swap, multi-wallet batch trading, limit orders, stop loss, take profit, trailing stop loss, trailing take profit via GMGN API. Requires explicit user confirmation. Use when user asks to buy, sell, or swap a token, trade from multiple wallets, set a limit order, stop loss, take profit, or check order status."
+description: >-
+  [FINANCIAL EXECUTION] Buy and sell meme coins and crypto tokens on Solana,
+  BSC, Base, or Ethereum — single swap, multi-wallet batch trading, limit
+  orders, stop loss, take profit, trailing stop loss, trailing take profit via
+  GMGN API. Requires explicit user confirmation. Use when user asks to buy,
+  sell, or swap a token, trade from multiple wallets, set a limit order, stop
+  loss, take profit, or check order status. This skill SUBMITS the trade — it
+  is the only skill holding a private key, and every buy still ends here. It
+  is not the entry point for a buy that has not been vetted yet: 「帮我买 200u 的
+  PENGU」, "buy me $500 of BONK", 「帮我买点 dogwifhat」, 「XX 能不能买」 start at
+  gmgn-token-buy, which resolves the name to the one right contract among its
+  copycats, gates volume / depth / security, sizes slippage and gas, then
+  hands the confirmed parameters back here to execute. Come straight here for
+  a buy only once the contract is settled AND the user says they do not want a
+  pre-buy check ("skip the security check", "I already checked", 「直接买」,
+  「不用尽调」, 「我很急」). Two facts make the split unavoidable rather than a
+  preference: the pre-swap check here reads only `is_honeypot` and
+  `rug_ratio`, and there is no name resolution at all — `--output-token` takes
+  a contract address and the only names resolved here are the SOL/BNB/ETH/USDC
+  currencies — so a same-name copycat is a total loss this skill has no way to
+  catch. Everything else is unchanged and unconditionally this skill's:
+  selling, percentage sells, swaps, multi-wallet batch trading, limit orders,
+  stop loss, take profit, trailing orders, order status, gas prices.
 argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [gas-price --chain <eth|bsc|base|sol>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type <limit_order|smart_trade> --sub-order-type <buy_low|buy_high|stop_loss|take_profit|mix_trade> ...]"
 metadata:
   cliHelp: "gmgn-cli swap --help"
