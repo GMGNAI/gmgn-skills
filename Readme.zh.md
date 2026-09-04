@@ -97,10 +97,14 @@ SOL / BSC / Base / ETH 多链数据每次查询均为实时，支持多参数个
 | 技能 | 说明 | 参考 |
 |------|------|------|
 | [`/gmgn-token`](skills/gmgn-token/SKILL.md) | Token 信息、安全、池子、持有者、交易者 | [SKILL.md](skills/gmgn-token/SKILL.md) |
+| [`/gmgn-contract-dd`](skills/gmgn-contract-dd/SKILL.md) | 合约尽调评分——合约安全、持仓结构、价格行为合成单一 0-100 结论 | [SKILL.md](skills/gmgn-contract-dd/SKILL.md) |
+| [`/gmgn-holder-analysis`](skills/gmgn-holder-analysis/SKILL.md) | 持有人筹码分析——筹码分布、建仓成本、巨鲸/Dev/KOL 行为、风险钱包 | [SKILL.md](skills/gmgn-holder-analysis/SKILL.md) |
 | [`/gmgn-market`](skills/gmgn-market/SKILL.md) | K 线行情数据、热门代币 | [SKILL.md](skills/gmgn-market/SKILL.md) |
 | [`/gmgn-portfolio`](skills/gmgn-portfolio/SKILL.md) | 钱包持仓、活动、统计 | [SKILL.md](skills/gmgn-portfolio/SKILL.md) |
+| [`/gmgn-wallet-analysis`](skills/gmgn-wallet-analysis/SKILL.md) | 钱包决策档案——四道通过/不通过闸门，外加当前持仓与正在买什么 | [SKILL.md](skills/gmgn-wallet-analysis/SKILL.md) |
 | [`/gmgn-wallet-score`](skills/gmgn-wallet-score/SKILL.md) | 钱包跟单评分——真实战绩分、可跟单分、跟单回测、Dev 信誉分 | [SKILL.md](skills/gmgn-wallet-score/SKILL.md) |
 | [`/gmgn-track`](skills/gmgn-track/SKILL.md) | 追踪关注钱包交易动态、KOL 交易动态、聪明钱交易动态 | [SKILL.md](skills/gmgn-track/SKILL.md) |
+| [`/gmgn-token-buy`](skills/gmgn-token-buy/SKILL.md) | 买入尽调——把代币名字解析成正确合约，三道硬门槛，算好滑点与 gas，产出订单卡交给 gmgn-swap | [SKILL.md](skills/gmgn-token-buy/SKILL.md) |
 | [`/gmgn-swap`](skills/gmgn-swap/SKILL.md) | 兑换提交 + 限价单 + 策略单 + 订单查询 | [SKILL.md](skills/gmgn-swap/SKILL.md) |
 | [`/gmgn-cooking`](skills/gmgn-cooking/SKILL.md) | 一键 Cooking 策略单（买入 + 止盈止损条件单一体化） | [SKILL.md](skills/gmgn-cooking/SKILL.md) |
 | [`/gmgn-kline-pattern`](skills/gmgn-kline-pattern/SKILL.md) | K 线形态判读——识别形态并给出 0-100 分 | [SKILL.md](skills/gmgn-kline-pattern/SKILL.md) |

@@ -52,3 +52,40 @@ export function validatePercent(value: number): void {
     process.exit(1);
   }
 }
+
+// ---- `market search` input validation ----
+//
+// Search is deliberately more permissive about chains than the other commands:
+// the endpoint accepts the literal "all" plus any chain the platform currently has
+// enabled — including ones the core commands don't support yet (tron / monad /
+// megaeth / xlayer / hyperevm). A stale local allowlist would reject valid
+// searches, so shape-check only and let the server be the authority.
+const SEARCH_CHAIN_RE = /^[a-z][a-z0-9_]{1,19}$/;
+
+export function validateSearchChain(chain: string): void {
+  if (chain !== "all" && !SEARCH_CHAIN_RE.test(chain)) {
+    console.error(
+      `[gmgn-cli] Invalid --chain: "${chain}". Use "all" or a chain identifier such as sol / eth / bsc / base / tron.`
+    );
+    process.exit(1);
+  }
+}
+
+// Zero-width, bidi-override and C0/C1 control characters can make one token's name
+// render identically to another's, so strip them before measuring length and send
+// the cleaned string upstream. Length is counted in code points, not UTF-16 units,
+// so emoji-heavy ticker names are not over-counted.
+const INVISIBLE_CHARS_RE =
+  /[\u0000-\u001F\u007F-\u009F\u00AD\u034F\u061C\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u206F\uFEFF\uFFF9-\uFFFB]/g;
+
+export function normalizeSearchQuery(raw: string): string {
+  const cleaned = raw.replace(INVISIBLE_CHARS_RE, "").trim();
+  const length = [...cleaned].length;
+  if (length < 1 || length > 100) {
+    console.error(
+      `[gmgn-cli] Invalid --query: must be 1-100 characters after removing invisible characters (got ${length}).`
+    );
+    process.exit(1);
+  }
+  return cleaned;
+}

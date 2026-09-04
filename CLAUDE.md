@@ -31,8 +31,13 @@ This is a **Claude Code plugin** — a collection of GMGN OpenAPI skills for on-
 | `gmgn-portfolio` | Wallet holdings, activity, trading stats, token balance | User asks about a wallet's holdings, P&L, transaction history, trading statistics, or token balance; user wants to analyze a wallet; user asks "what tokens does this wallet hold", "show me recent trades", "what's the win rate of this wallet" |
 | `gmgn-wallet-score` | Wallet scoring across three angles — profitability (track-record score), copy-tradeability (score + latency/slippage/gas backtest), and Dev reputation for token-creator wallets — plus trading-style tags | User asks about a wallet's profitability ("钱包盈利能力怎么样", "is this wallet profitable"), copy-trade worthiness ("is this wallet worth copying", "跟单评分", "钱包评分", "值不值得跟单", "if I copy this wallet what's my real return"), or launch/Dev reputation ("钱包发盘情况怎么样", "是不是发币方钱包", "dev 信誉怎么样"); user gives a wallet address and wants any of these judgments |
 | `gmgn-track` | Track trade activity of wallets I follow, KOL trades, Smart Money trades across chains | User asks about trades from wallets they follow; user wants to see what KOLs or Smart Money are buying/selling; user asks "show me what wallets I follow have traded recently", "what are KOLs buying", "show me smart money moves on BSC" |
-| `gmgn-swap` | Token swap execution + order status query | User wants to swap tokens, execute a trade, or check an order status; user asks "swap SOL for USDC", "buy this token", "check my order"; **requires private key configured in `.env`** |
+| `gmgn-swap` | Token swap execution + order status query | User wants to swap tokens, execute a trade, or check an order status; user asks "swap SOL for USDC", "check my order", or "buy this token" **only when they also say to skip the checks**; a plain buy request with no skip instruction is `gmgn-token-buy`; **requires private key configured in `.env`** |
 | `gmgn-kline-pattern` | Names the chart pattern (uptrend channel / breakdown / bounce off the lows / distribution / basing / chop) and scores it 0-100 from six measurements computed off the kline response | User asks about 走势, 趋势, 形态, price action, chart pattern, "is it breaking down", "is it consolidating"; user wants a read of the chart rather than the raw candles |
+| `gmgn-token-buy` | Resolves a token NAME to the one right contract, then sizes the buy order | User names a token by name/symbol (not only an address) and wants to buy it, or gives an address plus an amount and wants the order sized: 能不能买, 能不能冲, 我想梭, 帮我买 200u 的 XX, 确认是正主不是仿盘再买. Owns copycat disambiguation and position/slippage/gas sizing; hands execution to `gmgn-swap` after explicit confirmation. |
+| `gmgn-contract-dd` | One 0-100 contract due-diligence score for a bare address | User pastes a token address and wants a verdict number, with no name to disambiguate and no amount to size. |
+| `gmgn-holder-analysis` | Chip / holder structure of one token | User asks about holder distribution or chip concentration. |
+| `gmgn-wallet-analysis` | Wallet decision dossier | User asks whether a wallet is worth copy-trading. |
+| `gmgn-cooking` | Launchpad token creation | User wants to create or launch a token. |
 
 ## Quick Decision Guide
 
@@ -40,7 +45,10 @@ Match the user's request to the right skill and workflow:
 
 | User says | Action |
 |-----------|--------|
-| "is this token safe", "check this token", "research this token", token address provided | `gmgn-token` → full workflow: `docs/workflow-token-research.md` |
+| a plain buy request naming a token and/or an amount, with NO instruction to skip checks — "我想买 200u 的 PENGU", "帮我买 500 刀的 BONK", "买 1 个 SOL 的 WIF", "想梭 100u 的 XX", "帮我买点 dogwifhat", "XX 现在能买吗", "buy me $500 of PENGU" | `gmgn-token-buy` — **this is the DEFAULT for any plain buy request.** Route to `gmgn-swap` only if the user explicitly says skip/don't check/just buy/我很急. |
+| token NAME or symbol + buy intent — "能不能买", "能不能冲", "我想梭", "帮我买 200u 的 XX", "确认是正主不是仿盘再买", with or without an amount | `gmgn-token-buy` — the only skill that resolves a name to the one right contract and sizes the order |
+| bare token address + "safe?" / "打个分" / "尽调", no name to disambiguate and no amount to size | `gmgn-contract-dd` |
+| "is this token safe", "check this token", "research this token", raw fields for an address already in hand | `gmgn-token` → full workflow: `docs/workflow-token-research.md` |
 | "deep report", "full analysis", "全面分析这个项目", "深度报告", "值不值得重仓" | `gmgn-token` + `gmgn-market` → `docs/workflow-project-deep-report.md` |
 | "what's trending", "hot tokens", "top tokens by volume" | `gmgn-market trending` |
 | "走势怎么样", "什么形态", "is it breaking down" | `gmgn-kline-pattern` |
@@ -55,7 +63,7 @@ Match the user's request to the right skill and workflow:
 | "跟单评分", "钱包评分", "值不值得跟单", "is this wallet worth copying", "copy trade score", wallet address provided + copy-trade decision | `gmgn-wallet-score` (copy-tradeability angle — score + backtest) |
 | "钱包发盘情况怎么样", "是不是发币方钱包", "dev 信誉怎么样", "is this a token-creator wallet" | `gmgn-wallet-score` (Dev-reputation angle) |
 | "risk warning", "风险预警", "有没有巨鲸出货", "流动性正常吗", "这个项目还安全吗" | `gmgn-token` + `gmgn-track` → `docs/workflow-risk-warning.md` |
-| "swap", "buy TOKEN", "sell TOKEN" | `gmgn-swap` — MUST run `gmgn-token security` on output token first |
+| "swap", "sell TOKEN", "buy TOKEN" **only when the user says skip the checks** | `gmgn-swap` — MUST run `gmgn-token security` on output token first. A plain "buy TOKEN" with no skip-the-checks instruction is `gmgn-token-buy`. |
 | "chart", "price history", "kline", "OHLCV" | `gmgn-market kline` |
 | "my holdings", "my portfolio", "what tokens do I hold" | `gmgn-portfolio holdings` |
 

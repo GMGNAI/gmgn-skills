@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { OpenApiClient, TokenSignalGroup, HotSearchesParam } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
-import { validateAddress, validateChain } from "../validate.js";
+import { validateAddress, validateChain, validateSearchChain, normalizeSearchQuery } from "../validate.js";
 
 // Parse token age string. If a unit suffix is present (s/m), use it as-is.
 // Bare numbers (no unit) are treated as minutes with a warning.
@@ -17,6 +17,14 @@ function parseDuration(value: string): string {
   console.error(
     `[gmgn-cli] Invalid duration "${value}". Use seconds (e.g. 30s) or minutes (e.g. 0.5m / 1m / 5m).`
   );
+  process.exit(1);
+}
+
+// --is-og / --is-launched are tri-state: true, false, or omitted (no filter at all).
+// A plain boolean flag cannot express "false", so they take an explicit value.
+function parseSearchBool(value: string, flag: string): string {
+  if (value === "true" || value === "false") return value;
+  console.error(`[gmgn-cli] Invalid ${flag} "${value}". Must be true or false.`);
   process.exit(1);
 }
 
@@ -267,6 +275,57 @@ export function registerMarketCommands(program: Command): void {
     const data = await client.getHotSearches(params).catch(exitOnError);
     printResult(data, opts.raw);
   });
+
+  market
+    .command("search")
+    .description("Search for a specific token or wallet by name, symbol, contract address, wallet address, or ENS")
+    .requiredOption("-q, --query <keyword>", "Search keyword: token name / symbol / contract address / wallet address / ENS")
+    .option("--chain <chain>", 'Scope results to one chain, or "all" (default: search all chains)')
+    .option("--launchpad-platform <platform...>", "Launchpad platform filter, repeatable (max 50), e.g. pump / moonshot / raydium. Filters tokens only")
+    .option("--is-og <bool>", "true = OG tokens only; false = non-OG only; omit for no filter. Tokens only")
+    .option("--is-launched <bool>", "true = already-launched tokens only; omit for no filter. Tokens only")
+    .option("--order-by <field>", 'Only "weight" is accepted — sorts tokens by weighted relevance and drops honeypots. Tokens only')
+    .option("--raw", "Output raw JSON")
+    .action(async (opts) => {
+      const query = normalizeSearchQuery(String(opts.query));
+      const extra: Record<string, string | number | string[]> = {};
+
+      if (opts.chain) {
+        validateSearchChain(opts.chain);
+        // The upstream endpoint does not understand chain="all" — it answers with an
+        // empty result set instead of an error, which reads as "no such token" and is
+        // worse than failing. Omitting the parameter is what actually searches every
+        // chain, so accept the documented spelling and translate it, loudly.
+        if (opts.chain === "all") {
+          console.warn(
+            '[gmgn-cli] Note: --chain all is not accepted upstream (it returns no results). Searching all chains by omitting the chain filter instead.'
+          );
+        } else {
+          extra["chain"] = opts.chain;
+        }
+      }
+      if (opts.launchpadPlatform?.length) {
+        const platforms = opts.launchpadPlatform as string[];
+        if (platforms.length > 50) {
+          console.error(`[gmgn-cli] Too many --launchpad-platform values: ${platforms.length}. Maximum is 50.`);
+          process.exit(1);
+        }
+        extra["launchpad_platform"] = platforms;
+      }
+      if (opts.isOg != null) extra["is_og"] = parseSearchBool(String(opts.isOg), "--is-og");
+      if (opts.isLaunched != null) extra["is_launched"] = parseSearchBool(String(opts.isLaunched), "--is-launched");
+      if (opts.orderBy != null) {
+        if (opts.orderBy !== "weight") {
+          console.error(`[gmgn-cli] Invalid --order-by "${opts.orderBy}". Only "weight" is supported.`);
+          process.exit(1);
+        }
+        extra["order_by"] = "weight";
+      }
+
+      const client = new OpenApiClient(getConfig());
+      const data = await client.searchMarket(query, extra).catch(exitOnError);
+      printResult(data, opts.raw);
+    });
 }
 
 const HOT_SEARCHES_INTERVALS = new Set(["1m", "5m", "1h", "6h", "24h"]);

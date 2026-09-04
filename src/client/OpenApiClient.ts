@@ -464,6 +464,13 @@ export class OpenApiClient {
     return this.authExistRequest("POST", "/v1/market/hot_searches", {}, { params });
   }
 
+  async searchMarket(
+    query: string,
+    extra: Record<string, string | number | string[]> = {}
+  ): Promise<unknown> {
+    return this.authExistRequest("GET", "/v1/market/search", { q: query, ...extra });
+  }
+
   // ---- User endpoints (exist auth) ----
 
   async getUserInfo(): Promise<unknown> {

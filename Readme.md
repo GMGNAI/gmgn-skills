@@ -94,10 +94,14 @@ No more scraping web pages or getting blocked by Cloudflare. Query all the profe
 | Skill | Description | Reference |
 |-------|-------------|-----------|
 | [`/gmgn-token`](skills/gmgn-token/SKILL.md) | Token info, security, pool, holders, traders | [SKILL.md](skills/gmgn-token/SKILL.md) |
+| [`/gmgn-contract-dd`](skills/gmgn-contract-dd/SKILL.md) | Contract due-diligence score for one token address — safety, holder structure and price action as a single 0-100 verdict | [SKILL.md](skills/gmgn-contract-dd/SKILL.md) |
+| [`/gmgn-holder-analysis`](skills/gmgn-holder-analysis/SKILL.md) | Token holder chip analysis — chip distribution, entry cost, whale/dev/KOL behavior, risk wallets | [SKILL.md](skills/gmgn-holder-analysis/SKILL.md) |
 | [`/gmgn-market`](skills/gmgn-market/SKILL.md) | K-line market data, trending tokens | [SKILL.md](skills/gmgn-market/SKILL.md) |
 | [`/gmgn-portfolio`](skills/gmgn-portfolio/SKILL.md) | Wallet holdings, activity, stats | [SKILL.md](skills/gmgn-portfolio/SKILL.md) |
+| [`/gmgn-wallet-analysis`](skills/gmgn-wallet-analysis/SKILL.md) | Wallet decision dossier — four pass/fail gates plus what the wallet holds and is buying now | [SKILL.md](skills/gmgn-wallet-analysis/SKILL.md) |
 | [`/gmgn-wallet-score`](skills/gmgn-wallet-score/SKILL.md) | Wallet copy-trade scoring — track-record, copy-tradeability, backtest, Dev reputation | [SKILL.md](skills/gmgn-wallet-score/SKILL.md) |
 | [`/gmgn-track`](skills/gmgn-track/SKILL.md) | Follow-wallet trades, KOL trades, Smart Money trades | [SKILL.md](skills/gmgn-track/SKILL.md) |
+| [`/gmgn-token-buy`](skills/gmgn-token-buy/SKILL.md) | Buy-side due diligence — resolves a token name to the right contract, three hard gates, slippage and gas sizing, order card handed to gmgn-swap | [SKILL.md](skills/gmgn-token-buy/SKILL.md) |
 | [`/gmgn-swap`](skills/gmgn-swap/SKILL.md) | Swap submission + limit orders + strategy orders + order query | [SKILL.md](skills/gmgn-swap/SKILL.md) |
 | [`/gmgn-cooking`](skills/gmgn-cooking/SKILL.md) | One-command cooking orders (buy + take-profit/stop-loss in a single flow) | [SKILL.md](skills/gmgn-cooking/SKILL.md) |
 | [`/gmgn-kline-pattern`](skills/gmgn-kline-pattern/SKILL.md) | Price-action pattern reading — names the chart pattern and scores it 0-100 | [SKILL.md](skills/gmgn-kline-pattern/SKILL.md) |

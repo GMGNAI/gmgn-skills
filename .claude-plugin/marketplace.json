@@ -9,7 +9,7 @@
     {
       "name": "gmgn-cli",
       "source": "./",
-      "description": "9 GMGN skills — token info & security, holder chip analysis, K-line market data & trending tokens, wallet portfolio analysis, wallet copy-trade scoring, follow/KOL/Smart Money tracking, DEX swap execution, and launchpad token creation, and chart pattern reading on top of that market data",
+      "description": "12 GMGN skills — token info & security, contract due-diligence scoring, holder chip analysis, K-line market data & trending tokens & token/wallet search, chart pattern reading, wallet portfolio analysis, wallet decision dossier, wallet copy-trade scoring, follow/KOL/Smart Money tracking, buy-side due diligence that turns a token name into a vetted order, DEX swap execution, and launchpad token creation",
       "version": "1.0.0",
       "author": {
         "name": "GMGN"
