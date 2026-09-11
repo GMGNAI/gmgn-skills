@@ -45,7 +45,7 @@ Run this Python script inline, replacing the `<FILL_IN_*>` placeholders with the
 
 ```python
 python3 << 'PYEOF'
-import json, math, subprocess
+import json, math, os, shutil, subprocess
 
 CHAIN        = "<FILL_IN_CHAIN>"
 WALLET       = "<FILL_IN_WALLET_ADDRESS>"
@@ -59,7 +59,13 @@ ZH = (LANG == 'zh')
 def _(zh, en): return zh if ZH else en
 
 def run_cli(args, timeout=30):
-    r = subprocess.run(['gmgn-cli'] + args + ['--raw'], capture_output=True, text=True, timeout=timeout)
+    # On Windows, npm installs 'gmgn-cli' as a .cmd shim that subprocess cannot
+    # launch by bare name — resolve it through cmd.exe. Unix behavior unchanged.
+    cmd = ['gmgn-cli']
+    if os.name == 'nt':
+        exe = shutil.which('gmgn-cli') or 'gmgn-cli'
+        cmd = [os.environ.get('COMSPEC', 'cmd.exe'), '/c', exe] if exe.lower().endswith('.cmd') else [exe]
+    r = subprocess.run(cmd + args + ['--raw'], capture_output=True, text=True, timeout=timeout)
     if r.returncode != 0:
         raise RuntimeError(r.stderr)
     return json.loads(r.stdout)
