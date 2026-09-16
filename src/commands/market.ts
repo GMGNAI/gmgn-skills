@@ -4,6 +4,8 @@ import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
 import { validateAddress, validateChain, validateSearchChain, normalizeSearchQuery } from "../validate.js";
 
+const unsupportedSignalTypes = new Set([14, 15, 16]);
+
 // Parse token age string. If a unit suffix is present (s/m), use it as-is.
 // Bare numbers (no unit) are treated as minutes with a warning.
 function parseDuration(value: string): string {
@@ -166,7 +168,7 @@ export function registerMarketCommands(program: Command): void {
     .command("signal")
     .description("Query token signals (price spikes, smart money buys, large buys, etc.) — max 50 results per group")
     .requiredOption("--chain <chain>", "Chain: sol / bsc / robinhood / arc / stable")
-    .option("--signal-type <n...>", "Signal type(s), repeatable: 1–21 (default: all types)", (v: string, acc: number[]) => { acc.push(parseInt(v, 10)); return acc; }, [] as number[])
+    .option("--signal-type <n...>", "Signal type(s), repeatable: 1–13, 17–21 (default: all supported types)", (v: string, acc: number[]) => { acc.push(parseInt(v, 10)); return acc; }, [] as number[])
     .option("--mc-min <usd>", "Min market cap at trigger time (USD)", parseFloat)
     .option("--mc-max <usd>", "Max market cap at trigger time (USD)", parseFloat)
     .option("--trigger-mc-min <usd>", "Min market cap at signal trigger (USD)", parseFloat)
@@ -189,13 +191,20 @@ export function registerMarketCommands(program: Command): void {
         try {
           groups = JSON.parse(opts["groups"] as string) as TokenSignalGroup[];
         } catch {
-          console.error(`[gmgn-cli] --groups must be a valid JSON array, e.g. '[{"signal_type":[12,14]},{"signal_type":[6,7],"mc_min":50000}]'`);
+          console.error(`[gmgn-cli] --groups must be a valid JSON array, e.g. '[{"signal_type":[12,17]},{"signal_type":[6,7],"mc_min":50000}]'`);
           process.exit(1);
         }
       } else {
         const group: TokenSignalGroup = {};
         const signalType = opts["signalType"] as number[] | undefined;
-        if (signalType?.length) group.signal_type = signalType;
+        if (signalType?.length) {
+          const invalidType = signalType.find((type) => !Number.isInteger(type) || type < 1 || type > 21 || unsupportedSignalTypes.has(type));
+          if (invalidType != null) {
+            console.error(`[gmgn-cli] Invalid --signal-type ${invalidType}. Supported values: 1–13, 17–21.`);
+            process.exit(1);
+          }
+          group.signal_type = signalType;
+        }
         if (opts["mcMin"] != null) group.mc_min = opts["mcMin"] as number;
         if (opts["mcMax"] != null) group.mc_max = opts["mcMax"] as number;
         if (opts["triggerMcMin"] != null) group.trigger_mc_min = opts["triggerMcMin"] as number;

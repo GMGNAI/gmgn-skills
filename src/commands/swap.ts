@@ -333,7 +333,7 @@ export function registerSwapCommands(program: Command): void {
     .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable")
     .option("--type <type>", "open (default) / history")
     .option("--from <address>", "Filter by wallet address")
-    .option("--group-tag <tag>", "Filter by group: LimitOrder / STMix")
+    .requiredOption("--group-tag <tag>", "Filter by group: LimitOrder / STMix")
     .option("--base-token <address>", "Filter by token address")
     .option("--page-token <token>", "Pagination cursor from previous response")
     .option("--limit <n>", "Results per page", parseInt)
