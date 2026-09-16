@@ -16,7 +16,7 @@ npx gmgn-cli token info --chain <chain> --address <address> [--raw]
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
 | `--address` | Yes | Token contract address |
 
 ---
@@ -31,7 +31,7 @@ npx gmgn-cli token security --chain <chain> --address <address> [--raw]
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
 | `--address` | Yes | Token contract address |
 
 ---
@@ -46,7 +46,7 @@ npx gmgn-cli token pool --chain <chain> --address <address> [--raw]
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
 | `--address` | Yes | Token contract address |
 
 ---
@@ -61,7 +61,7 @@ npx gmgn-cli token holders --chain <chain> --address <address> [--limit <n>] [--
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
 | `--address` | Yes | Token contract address |
 | `--limit` | No | Number of results (default 20, max 100) |
 
@@ -77,7 +77,7 @@ npx gmgn-cli token traders --chain <chain> --address <address> [--limit <n>] [--
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
 | `--address` | Yes | Token contract address |
 | `--limit` | No | Number of results (default 20, max 100) |
 
@@ -99,7 +99,7 @@ npx gmgn-cli market kline \
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
 | `--address` | Yes | Token contract address |
 | `--resolution` | Yes | Candlestick resolution: `1s` (**Pro only; max 500 candles per request**) / `30s` / `1m` / `5m` / `15m` / `1h` / `4h` / `1d` |
 | `--from` | No | Start time (Unix seconds) |
@@ -169,7 +169,7 @@ npx gmgn-cli portfolio holdings \
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
 | `--wallet` | Yes | Wallet address |
 | `--limit` | No | Page size (default `20`, max 50) |
 | `--cursor` | No | Pagination cursor |
@@ -201,7 +201,7 @@ npx gmgn-cli portfolio activity \
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
 | `--wallet` | Yes | Wallet address |
 | `--token` | No | Filter by token contract address |
 | `--limit` | No | Page size |
@@ -223,7 +223,7 @@ npx gmgn-cli portfolio stats \
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
 | `--wallet` | Yes | Wallet address (repeatable for batch queries) |
 
 ---
@@ -276,7 +276,7 @@ npx gmgn-cli portfolio token-balance \
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
 | `--wallet` | Yes | Wallet address |
 | `--token` | Yes | Token contract address |
 
@@ -298,7 +298,7 @@ npx gmgn-cli portfolio created-tokens \
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
 | `--wallet` | Yes | Developer wallet address |
 | `--order-by` | No | Sort field: `market_cap` / `token_ath_mc` |
 | `--direction` | No | Sort direction: `asc` / `desc` |
@@ -354,7 +354,7 @@ gmgn-cli market signal --chain sol --groups '<json_array>' [--raw]
 | Option | Required | Description |
 |--------|----------|-------------|
 | `--chain` | Yes | `sol` / `bsc` / `robinhood` / `arc` / `stable` |
-| `--signal-type` | No | Signal type(s), repeatable (1–21, default: all). See Signal Types below. |
+| `--signal-type` | No | Signal type(s), repeatable: `1`–`13`, `17`–`21`; default: all supported types. Values `14` / `15` / `16` are rejected by the API. See Signal Types below. |
 | `--mc-min` | No | Min market cap at trigger time (USD) |
 | `--mc-max` | No | Max market cap at trigger time (USD) |
 | `--trigger-mc-min` | No | Min market cap at signal trigger moment (USD) |
@@ -382,9 +382,9 @@ gmgn-cli market signal --chain sol --groups '<json_array>' [--raw]
 | 11 | SignalTypeCto | Community takeover (CTO) |
 | 12 | SignalTypeSmartDegenBuy | Smart money buy |
 | 13 | SignalTypePlatformCall | Platform call |
-| 14 | SignalTypeLargeAmountBuy | Large amount buy |
-| 15 | SignalTypeMultiBuy | Multiple buys |
-| 16 | SignalTypeMultiLargeBuy | Multiple large buys |
+| 14 | SignalTypeLargeAmountBuy | Large amount buy — not accepted as a query filter |
+| 15 | SignalTypeMultiBuy | Multiple buys — not accepted as a query filter |
+| 16 | SignalTypeMultiLargeBuy | Multiple large buys — not accepted as a query filter |
 | 17 | SignalTypeBagsClaims | Bags Claim |
 | 18 | SignalTypePumpClaims | Pump Claim |
 | 19 | SignalTypePlatformCallV2 | Platform call (V2) |
@@ -487,7 +487,7 @@ gmgn-cli track follow-wallet \
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
 | `--wallet` | No | Wallet address (optional; follow list resolved from API Key's bound user account) |
 | `--limit` | No | Page size (1–100, default 10) |
 | `--side` | No | Trade direction: `buy` / `sell` |
@@ -546,7 +546,7 @@ npx gmgn-cli order quote \
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
 | `--from` | Yes | Wallet address |
 | `--input-token` | Yes | Input token contract address |
 | `--output-token` | Yes | Output token contract address |
@@ -789,15 +789,15 @@ gmgn-cli order strategy create \
 List strategy orders. **Requires `GMGN_PRIVATE_KEY` configured in `.env`.**
 
 ```bash
-gmgn-cli order strategy list --chain <chain> [--type <open|history>] [--from <address>] [--group-tag <tag>] [--base-token <address>] [--page-token <token>] [--limit <n>] [--raw]
+gmgn-cli order strategy list --chain <chain> --group-tag <LimitOrder|STMix> [--type <open|history>] [--from <address>] [--base-token <address>] [--page-token <token>] [--limit <n>] [--raw]
 ```
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
 | `--type` | No | `open` (default) / `history` |
 | `--from` | No | Filter by wallet address |
-| `--group-tag` | No | Filter by group: `LimitOrder` / `STMix` |
+| `--group-tag` | Yes | Group: `LimitOrder` / `STMix` |
 | `--base-token` | No | Filter by token address |
 | `--page-token` | No | Pagination cursor from previous response |
 | `--limit` | No | Results per page |
