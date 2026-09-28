@@ -37,6 +37,8 @@ This is a **Claude Code plugin** — a collection of GMGN OpenAPI skills for on-
 | `gmgn-contract-dd` | One 0-100 contract due-diligence score for a bare address | User pastes a token address and wants a verdict number, with no name to disambiguate and no amount to size. |
 | `gmgn-holder-analysis` | Chip / holder structure of one token | User asks about holder distribution or chip concentration. |
 | `gmgn-wallet-analysis` | Wallet decision dossier | User asks whether a wallet is worth copy-trading. |
+| `gmgn-wallet-style` | One wallet's trading-style tags — a main title from the 20-cell frequency × P&L grid, a speed subtitle, badges; every tag states its triggering number | User asks what kind of trader a wallet is: 这个钱包什么风格, 交易风格, 是不是机器人, 是不是狙击盘的, 帮我给这个钱包打标签, "what's this wallet's trading style", "tag this wallet" |
+| `gmgn-wallet-review` | One wallet in three lines — a single style tag, a one-sentence recap of its record, a one-sentence next step; 你 for the user's own wallet, 他 for others | A wallet address plus a request for a brief recap or what to change: 帮我复盘一下这个钱包, 一句话总结他的战绩, 我的打法有什么问题, 我钱包下一步该怎么打, 交易画像, 钱包风格加建议 |
 | `gmgn-cooking` | Launchpad token creation | User wants to create or launch a token. |
 
 ## Quick Decision Guide
@@ -58,8 +60,10 @@ Match the user's request to the right skill and workflow:
 | "what is smart money buying", "what are KOLs trading" | `gmgn-track smartmoney` / `gmgn-track kol` |
 | "wallets I follow", "my followed wallets traded" | `gmgn-track follow-wallet` |
 | "analyze this wallet", "is this wallet worth following", wallet address provided | `gmgn-portfolio` → full workflow: `docs/workflow-wallet-analysis.md` |
-| "wallet style", "smart money profile", "聪明钱画像", "这个钱包是长线还是短线", "跟着他买收益如何", "聪明钱排行榜" | `gmgn-portfolio` + `gmgn-track` → `docs/workflow-smart-money-profile.md` |
-| "钱包盈利能力怎么样", "钱包战绩怎么样", "is this wallet profitable" | `gmgn-wallet-score` (profitability angle — track-record score) |
+| "这个钱包什么风格", "交易风格", "是不是机器人", "是不是狙击盘的", "帮我给这个钱包打标签", "wallet style", "tag this wallet" — wallet address + wants the style tags themselves | `gmgn-wallet-style`. A bare address with no question stays with `gmgn-wallet-analysis` |
+| "smart money profile", "聪明钱画像", "这个钱包是长线还是短线", "跟着他买收益如何", "聪明钱排行榜" | `gmgn-portfolio` + `gmgn-track` → `docs/workflow-smart-money-profile.md` |
+| "帮我复盘一下这个钱包", "一句话总结他的战绩", "我的打法有什么问题", "我钱包下一步该怎么打", "交易画像", "钱包风格加建议，简短点" — wallet address + wants a short recap or what to change | `gmgn-wallet-review` — 打法 / 风格 / 战绩 paired with 问题, 建议, 复盘 or 一句话 routes here; asked alone, they stay with the rows around it |
+| "钱包盈利能力怎么样", "钱包战绩怎么样", "is this wallet profitable" | `gmgn-wallet-score` (profitability angle — track-record score); a one-line recap of the record → `gmgn-wallet-review` |
 | "跟单评分", "钱包评分", "值不值得跟单", "is this wallet worth copying", "copy trade score", wallet address provided + copy-trade decision | `gmgn-wallet-score` (copy-tradeability angle — score + backtest) |
 | "钱包发盘情况怎么样", "是不是发币方钱包", "dev 信誉怎么样", "is this a token-creator wallet" | `gmgn-wallet-score` (Dev-reputation angle) |
 | "risk warning", "风险预警", "有没有巨鲸出货", "流动性正常吗", "这个项目还安全吗" | `gmgn-token` + `gmgn-track` → `docs/workflow-risk-warning.md` |

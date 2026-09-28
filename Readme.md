@@ -100,6 +100,8 @@ No more scraping web pages or getting blocked by Cloudflare. Query all the profe
 | [`/gmgn-portfolio`](skills/gmgn-portfolio/SKILL.md) | Wallet holdings, activity, stats | [SKILL.md](skills/gmgn-portfolio/SKILL.md) |
 | [`/gmgn-wallet-analysis`](skills/gmgn-wallet-analysis/SKILL.md) | Wallet decision dossier — four pass/fail gates plus what the wallet holds and is buying now | [SKILL.md](skills/gmgn-wallet-analysis/SKILL.md) |
 | [`/gmgn-wallet-score`](skills/gmgn-wallet-score/SKILL.md) | Wallet copy-trade scoring — track-record, copy-tradeability, backtest, Dev reputation | [SKILL.md](skills/gmgn-wallet-score/SKILL.md) |
+| [`/gmgn-wallet-style`](skills/gmgn-wallet-style/SKILL.md) | Wallet trading-style tags — 20-cell frequency × P&L title, speed subtitle, badges, each with its triggering number | [SKILL.md](skills/gmgn-wallet-style/SKILL.md) |
+| [`/gmgn-wallet-review`](skills/gmgn-wallet-review/SKILL.md) | Wallet trading portrait — one style tag, a one-sentence recap and a one-sentence next step, per 1D / 7D / 30D / all | [SKILL.md](skills/gmgn-wallet-review/SKILL.md) |
 | [`/gmgn-track`](skills/gmgn-track/SKILL.md) | Follow-wallet trades, KOL trades, Smart Money trades | [SKILL.md](skills/gmgn-track/SKILL.md) |
 | [`/gmgn-token-buy`](skills/gmgn-token-buy/SKILL.md) | Buy-side due diligence — resolves a token name to the right contract, three hard gates, slippage and gas sizing, order card handed to gmgn-swap | [SKILL.md](skills/gmgn-token-buy/SKILL.md) |
 | [`/gmgn-swap`](skills/gmgn-swap/SKILL.md) | Swap submission + limit orders + strategy orders + order query | [SKILL.md](skills/gmgn-swap/SKILL.md) |

@@ -103,6 +103,8 @@ SOL / BSC / Base / ETH 多链数据每次查询均为实时，支持多参数个
 | [`/gmgn-portfolio`](skills/gmgn-portfolio/SKILL.md) | 钱包持仓、活动、统计 | [SKILL.md](skills/gmgn-portfolio/SKILL.md) |
 | [`/gmgn-wallet-analysis`](skills/gmgn-wallet-analysis/SKILL.md) | 钱包决策档案——四道通过/不通过闸门，外加当前持仓与正在买什么 | [SKILL.md](skills/gmgn-wallet-analysis/SKILL.md) |
 | [`/gmgn-wallet-score`](skills/gmgn-wallet-score/SKILL.md) | 钱包跟单评分——真实战绩分、可跟单分、跟单回测、Dev 信誉分 | [SKILL.md](skills/gmgn-wallet-score/SKILL.md) |
+| [`/gmgn-wallet-style`](skills/gmgn-wallet-style/SKILL.md) | 钱包交易风格标签——20 格频次×盈亏主标题、速度副标题、徽章，每个标签附触发数字 | [SKILL.md](skills/gmgn-wallet-style/SKILL.md) |
+| [`/gmgn-wallet-review`](skills/gmgn-wallet-review/SKILL.md) | 钱包交易画像——一个风格标签、一句战绩复盘、一句下一步建议，支持 1D / 7D / 30D / 全部 | [SKILL.md](skills/gmgn-wallet-review/SKILL.md) |
 | [`/gmgn-track`](skills/gmgn-track/SKILL.md) | 追踪关注钱包交易动态、KOL 交易动态、聪明钱交易动态 | [SKILL.md](skills/gmgn-track/SKILL.md) |
 | [`/gmgn-token-buy`](skills/gmgn-token-buy/SKILL.md) | 买入尽调——把代币名字解析成正确合约，三道硬门槛，算好滑点与 gas，产出订单卡交给 gmgn-swap | [SKILL.md](skills/gmgn-token-buy/SKILL.md) |
 | [`/gmgn-swap`](skills/gmgn-swap/SKILL.md) | 兑换提交 + 限价单 + 策略单 + 订单查询 | [SKILL.md](skills/gmgn-swap/SKILL.md) |
