@@ -1,10 +1,10 @@
 import { Command } from "commander";
-import { OpenApiClient, BuyWalletInfo, CreateTokenParams } from "../client/OpenApiClient.js";
+import { OpenApiClient, BuyWalletInfo, CreateTokenParams, WRITE_ROUTES } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
-import { confirmTrade, displayText, extraFeeTotal, nativeSymbol, sumDecimals, weiAnnotations } from "../confirm.js";
+import { confirmTrade, displayText, nativeSymbol, Protection, SLIPPAGE_PROTECTION, sumDecimals, weiAnnotations } from "../confirm.js";
 import { sanitizeMetadataField, validateMetadataUrl, MAX_DESCRIPTION_LEN, MAX_NAME_LEN } from "../sanitize.js";
-import { validateChain } from "../validate.js";
+import { nonNegativeInt, nonNegativeNumber, parseJsonOption, validateAddress, validateChain } from "../validate.js";
 
 export function registerCookingCommands(program: Command): void {
   const cooking = program.command("cooking").description("Token creation and launchpad commands");
@@ -34,7 +34,7 @@ export function registerCookingCommands(program: Command): void {
     .option("--website <url>", "Website URL")
     .option("--twitter <url>", "Twitter link")
     .option("--telegram <url>", "Telegram link")
-    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", parseFloat)
+    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", nonNegativeNumber("--slippage"))
     .option("--auto-slippage", "Enable automatic slippage")
     .option("--fee <amount>", "Base gas / fee")
     .option("--priority-fee <sol>", "Priority fee in SOL (SOL only)")
@@ -45,7 +45,7 @@ export function registerCookingCommands(program: Command): void {
     .option("--anti-mev", "Enable anti-MEV protection (SOL only)")
     .option("--anti-mev-mode <mode>", "Anti-MEV mode: off / normal / secure (SOL only)")
     .option("--raised-token <symbol>", "Raise token symbol: pump→USDC; bonk→USD1; fourmeme→USDT/USD1; base/robinhood→native only; leave empty for native")
-    .option("--dev-wallet-bps <n>", "Dev wallet fee in basis points (100 = 1%)", parseInt)
+    .option("--dev-wallet-bps <n>", "Dev wallet fee in basis points (100 = 1%)", nonNegativeInt("--dev-wallet-bps"))
     .option("--dev-gas <amount>", "Dev gas amount")
     .option("--dev-priority <amount>", "Dev priority fee")
     .option("--dev-tip <amount>", "Dev tip fee")
@@ -84,6 +84,7 @@ export function registerCookingCommands(program: Command): void {
         process.exit(1);
       }
       validateChain(opts.chain);
+      validateAddress(opts.from, opts.chain, "--from");
       // Validate/clean all free-text and link metadata before publishing. This
       // prevents the CLI from being used to mint tokens whose metadata carries a
       // prompt-injection payload aimed at other users' AI agents.
@@ -132,53 +133,44 @@ export function registerCookingCommands(program: Command): void {
       if (opts.buyTradeConfig) params.buy_trade_config = parseJsonOption(opts.buyTradeConfig, "--buy-trade-config");
       if (opts.sellTradeConfig) params.sell_trade_config = parseJsonOption(opts.sellTradeConfig, "--sell-trade-config");
       if (opts.sellConfigs) params.sell_configs = parseJsonOption(opts.sellConfigs, "--sell-configs");
+      const client = new OpenApiClient(getConfig(true));
       confirmTrade({
         action: "Create token",
+        route: WRITE_ROUTES.createToken,
         params,
         keyFields: ["chain", "dex", "from_address", "name", "symbol", "buy_amt", "raised_token", "slippage", "auto_slippage", "is_anti_mev", "anti_mev_mode"],
-        protections: params.chain === "sol"
-          ? [{ fields: ["is_anti_mev", "anti_mev_mode"], text: "Anti-MEV protection not requested (is_anti_mev / anti_mev_mode not sent) — the launch buy can be sandwiched." }]
-          : [],
+        blobFields: ["image"],
+        protections: [SLIPPAGE_PROTECTION, LAUNCH_ANTI_MEV_PROTECTION],
         totals: cookingTotals(params),
         annotations: weiAnnotations(params, ["gas_price", "max_fee_per_gas", "max_priority_fee_per_gas", "dev_max_fee_per_gas"]),
       }, opts.yes);
 
-      const client = new OpenApiClient(getConfig(true));
       const data = await client.createToken(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
 }
 
-function parseJsonOption<T>(raw: string, flag: string): T {
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    console.error(`[gmgn-cli] ${flag} must be valid JSON`);
-    process.exit(1);
-  }
-}
+// A standard launch sends anti-MEV off, so on SOL say so unless it is turned on.
+const LAUNCH_ANTI_MEV_PROTECTION: Protection = {
+  text: "Anti-MEV protection is off for the launch buy (is_anti_mev not set and anti_mev_mode not normal / secure) — the dev buy can be sandwiched.",
+  isSet: (b) => b.chain !== "sol" || b.is_anti_mev === true || b.anti_mev_mode === "normal" || b.anti_mev_mode === "secure",
+};
 
 // Totals whose meaning only this command knows: the native-token spend across
-// the dev buy, bundle wallets and snipe wallets, the extra fees, and where the
-// creator fees go.
+// the dev buy, bundle wallets and snipe wallets, and where the creator fees go.
+// (Tip / priority fee totals, nested configs included, are added by confirmTrade.)
 function cookingTotals(params: CreateTokenParams): string[] {
-  const buyWallets = Array.isArray(params.buy_wallets) ? params.buy_wallets : [];
-  const snipWallets = Array.isArray(params.snip_buy_wallets) ? params.snip_buy_wallets : [];
-  const walletSum = (ws: BuyWalletInfo[]) => sumDecimals(ws.map((w) => String(w?.buy_amt)));
   const terms = [`${displayText(String(params.buy_amt))} (dev)`];
   const amounts = [String(params.buy_amt)];
-  if (buyWallets.length) {
-    terms.push(`${walletSum(buyWallets) ?? "?"} (${buyWallets.length} buy wallets)`);
-    amounts.push(...buyWallets.map((w) => String(w?.buy_amt)));
-  }
-  if (snipWallets.length) {
-    terms.push(`${walletSum(snipWallets) ?? "?"} (${snipWallets.length} snipe wallets)`);
-    amounts.push(...snipWallets.map((w) => String(w?.buy_amt)));
-  }
+  const addGroup = (wallets: BuyWalletInfo[] | undefined, label: string) => {
+    if (!Array.isArray(wallets) || wallets.length === 0) return;
+    const group = wallets.map((w) => String(w?.buy_amt));
+    terms.push(`${sumDecimals(group) ?? "?"} (${wallets.length} ${label})`);
+    amounts.push(...group);
+  };
+  addGroup(params.buy_wallets, "buy wallets");
+  addGroup(params.snip_buy_wallets, "snipe wallets");
   const lines = [`Total buy spend: ${terms.join(" + ")} = ${sumDecimals(amounts) ?? "?"} ${nativeSymbol(params.chain)}`];
-
-  const fees = extraFeeTotal(params.chain, params.tip_fee, params.priority_fee);
-  if (fees) lines.push(fees);
 
   const shares = [params.pump_fee_share_list, params.bags_fee_share_list].flatMap((l) => (Array.isArray(l) ? l : []));
   if (shares.length) {

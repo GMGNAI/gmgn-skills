@@ -1,9 +1,9 @@
 import { Command } from "commander";
-import { OpenApiClient, SwapParams, MultiSwapParams, StrategyCreateParams, StrategyCancelParams } from "../client/OpenApiClient.js";
+import { OpenApiClient, SwapParams, MultiSwapParams, StrategyCreateParams, StrategyCancelParams, WRITE_ROUTES } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
-import { confirmTrade, extraFeeTotal, UnsetProtection, weiAnnotations } from "../confirm.js";
-import { validateAddress, validateChain, validateConditionOrdersSupported, validatePercent, validatePositiveInt, validateV1SmartTradeSupported } from "../validate.js";
+import { ANTI_MEV_PROTECTION, confirmTrade, EXPIRY_PROTECTION, MIN_OUTPUT_PROTECTION, SLIPPAGE_PROTECTION, weiAnnotations } from "../confirm.js";
+import { gweiToWei, nonNegativeInt, nonNegativeNumber, parseJsonOption, validateAddress, validateChain, validateConditionOrdersSupported, validatePercent, validatePositiveInt, validateV1SmartTradeSupported } from "../validate.js";
 
 export function registerSwapCommands(program: Command): void {
   program
@@ -14,8 +14,8 @@ export function registerSwapCommands(program: Command): void {
     .requiredOption("--input-token <address>", "Input token contract address")
     .requiredOption("--output-token <address>", "Output token contract address")
     .option("--amount <amount>", "Input raw amount (smallest unit)")
-    .option("--percent <pct>", "Input amount as a percentage, e.g. 50 = 50%, 1 = 1%; only valid when input_token is NOT a currency", parseFloat)
-    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", parseFloat)
+    .option("--percent <pct>", "Input amount as a percentage, e.g. 50 = 50%, 1 = 1%; only valid when input_token is NOT a currency", nonNegativeNumber("--percent"))
+    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", nonNegativeNumber("--slippage"))
     .option("--auto-slippage", "Enable automatic slippage")
     .option("--min-output <amount>", "Minimum output amount")
     .option("--anti-mev", "Enable anti-MEV protection, default true")
@@ -56,35 +56,31 @@ export function registerSwapCommands(program: Command): void {
       if (opts.priorityFee) params.priority_fee = opts.priorityFee;
       if (opts.tipFee) params.tip_fee = opts.tipFee;
       if (opts.autoFee) params.auto_fee = true;
-      if (opts.gasPrice) params.gas_price = String(Math.round(parseFloat(opts.gasPrice) * 1e9));
+      if (opts.gasPrice) params.gas_price = gweiToWei(opts.gasPrice, "--gas-price");
       if (opts.gasLevel) params.gas_level = opts.gasLevel;
       if (opts.maxFeePerGas) params.max_fee_per_gas = opts.maxFeePerGas;
       if (opts.maxPriorityFeePerGas) params.max_priority_fee_per_gas = opts.maxPriorityFeePerGas;
       if (opts.conditionOrders) {
         validateConditionOrdersSupported(opts.chain, "swap");
-        try {
-          params.condition_orders = JSON.parse(opts.conditionOrders);
-        } catch {
-          console.error("[gmgn-cli] --condition-orders must be valid JSON");
-          process.exit(1);
-        }
+        params.condition_orders = parseJsonOption(opts.conditionOrders, "--condition-orders");
       }
       if (opts.sellRatioType) params.sell_ratio_type = opts.sellRatioType;
 
+      const client = new OpenApiClient(getConfig(true));
       confirmTrade({
         action: "Swap",
+        route: WRITE_ROUTES.swap,
         params,
-        keyFields: ["chain", "from_address", "input_token", "output_token", "input_amount", "input_amount_bps", "slippage", "auto_slippage", "min_output_amount", "is_anti_mev"],
-        protections: [MIN_OUTPUT_PROTECTION, SLIPPAGE_PROTECTION, ANTI_MEV_PROTECTION],
-        totals: feeTotals(params),
+        keyFields: ["chain", "from_address", "input_token", "output_token", "input_amount_bps", "input_amount", "slippage", "auto_slippage", "min_output_amount", "is_anti_mev"],
+        protections: [MIN_OUTPUT_PROTECTION, SLIPPAGE_PROTECTION],
         annotations: {
           ...weiAnnotations(params, ["gas_price"]),
-          input_amount: "smallest unit",
-          ...(params.input_amount_bps ? { input_amount_bps: `${Number(params.input_amount_bps) / 100}% of balance` } : {}),
+          ...(params.input_amount_bps
+            ? { input_amount_bps: `${Number(params.input_amount_bps) / 100}% of balance`, input_amount: "ignored — amount is set by input_amount_bps" }
+            : { input_amount: "smallest unit" }),
         },
       }, opts.yes);
 
-      const client = new OpenApiClient(getConfig(true));
       const data = await client.swap(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
@@ -99,7 +95,7 @@ export function registerSwapCommands(program: Command): void {
     .option("--input-amount <json>", 'JSON map of wallet→amount (smallest unit), e.g. \'{"addr1":"1000000","addr2":"2000000"}\'')
     .option("--input-amount-bps <json>", 'JSON map of wallet→percent in bps (1–10000, e.g. 5000=50%), e.g. \'{"addr1":"5000"}\'')
     .option("--output-amount <json>", "JSON map of wallet→target output amount")
-    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", parseFloat)
+    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", nonNegativeNumber("--slippage"))
     .option("--auto-slippage", "Enable automatic slippage")
     .option("--anti-mev", "Enable anti-MEV protection")
     .option("--priority-fee <sol>", "Priority fee in SOL (SOL only, ≥ 0.00001)")
@@ -124,6 +120,9 @@ export function registerSwapCommands(program: Command): void {
         console.error("[gmgn-cli] --accounts must be 1–100 comma-separated wallet addresses");
         process.exit(1);
       }
+      accounts.forEach((a: string) => validateAddress(a, opts.chain, "--accounts"));
+      validateAddress(opts.inputToken, opts.chain, "--input-token");
+      validateAddress(opts.outputToken, opts.chain, "--output-token");
       const params: MultiSwapParams = {
         chain: opts.chain,
         accounts: opts.chain === "sol" ? accounts : accounts.map((a: string) => a.toLowerCase()),
@@ -131,16 +130,13 @@ export function registerSwapCommands(program: Command): void {
         output_token: opts.outputToken,
       };
       if (opts.inputAmount) {
-        try { params.input_amount = JSON.parse(opts.inputAmount); }
-        catch { console.error("[gmgn-cli] --input-amount must be valid JSON"); process.exit(1); }
+        params.input_amount = parseJsonOption(opts.inputAmount, "--input-amount");
       }
       if (opts.inputAmountBps) {
-        try { params.input_amount_bps = JSON.parse(opts.inputAmountBps); }
-        catch { console.error("[gmgn-cli] --input-amount-bps must be valid JSON"); process.exit(1); }
+        params.input_amount_bps = parseJsonOption(opts.inputAmountBps, "--input-amount-bps");
       }
       if (opts.outputAmount) {
-        try { params.output_amount = JSON.parse(opts.outputAmount); }
-        catch { console.error("[gmgn-cli] --output-amount must be valid JSON"); process.exit(1); }
+        params.output_amount = parseJsonOption(opts.outputAmount, "--output-amount");
       }
       if (opts.slippage != null) params.slippage = opts.slippage;
       if (opts.autoSlippage) params.auto_slippage = true;
@@ -148,27 +144,32 @@ export function registerSwapCommands(program: Command): void {
       if (opts.priorityFee) params.priority_fee = opts.priorityFee;
       if (opts.tipFee) params.tip_fee = opts.tipFee;
       if (opts.autoFee) params.auto_fee = true;
-      if (opts.gasPrice) params.gas_price = String(Math.round(parseFloat(opts.gasPrice) * 1e9));
+      if (opts.gasPrice) params.gas_price = gweiToWei(opts.gasPrice, "--gas-price");
       if (opts.gasLevel) params.gas_level = opts.gasLevel;
       if (opts.maxFeePerGas) params.max_fee_per_gas = opts.maxFeePerGas;
       if (opts.maxPriorityFeePerGas) params.max_priority_fee_per_gas = opts.maxPriorityFeePerGas;
       if (opts.conditionOrders) {
         validateConditionOrdersSupported(opts.chain, "multi_swap");
-        try { params.condition_orders = JSON.parse(opts.conditionOrders); }
-        catch { console.error("[gmgn-cli] --condition-orders must be valid JSON"); process.exit(1); }
+        params.condition_orders = parseJsonOption(opts.conditionOrders, "--condition-orders");
       }
       if (opts.sellRatioType) params.sell_ratio_type = opts.sellRatioType;
 
+      const client = new OpenApiClient(getConfig(true));
       confirmTrade({
         action: "Multi-wallet swap",
+        route: WRITE_ROUTES.multiSwap,
         params,
         keyFields: ["chain", "accounts", "input_token", "output_token", "input_amount", "input_amount_bps", "output_amount", "slippage", "auto_slippage", "is_anti_mev"],
         protections: [SLIPPAGE_PROTECTION, ANTI_MEV_PROTECTION],
-        totals: feeTotals(params, `Extra fees per wallet transaction (${params.accounts.length} wallets)`),
-        annotations: weiAnnotations(params, ["gas_price"]),
+        totals: [`Wallets: ${params.accounts.length}`],
+        feeLabel: "Extra fees per wallet transaction",
+        annotations: {
+          ...weiAnnotations(params, ["gas_price"]),
+          ...perWalletAnnotations("input_amount", params.input_amount, () => "smallest unit"),
+          ...perWalletAnnotations("input_amount_bps", params.input_amount_bps, (v) => `${Number(v) / 100}% of balance`),
+        },
       }, opts.yes);
 
-      const client = new OpenApiClient(getConfig(true));
       const data = await client.multiSwap(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
@@ -238,10 +239,10 @@ export function registerSwapCommands(program: Command): void {
     .option("--amount-in <amount>", "Input amount (smallest unit)")
     .option("--amount-in-percent <pct>", "Input amount as a percentage (e.g. 50 = 50%)")
     .option("--limit-price-mode <mode>", "Price mode: exact / slippage (default: slippage)")
-    .option("--expire-in <seconds>", "Order expiry in seconds", parseInt)
+    .option("--expire-in <seconds>", "Order expiry in seconds", nonNegativeInt("--expire-in"))
     .option("--sell-ratio-type <type>", "Sell ratio basis: buy_amount (default) / hold_amount")
     .option("--quote-investment <amount>", "Quote token investment amount (smart_trade)")
-    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", parseFloat)
+    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", nonNegativeNumber("--slippage"))
     .option("--auto-slippage", "Enable automatic slippage")
     .option("--priority-fee <sol>", "Priority fee in SOL (required for SOL chain)")
     .option("--tip-fee <amount>", "Tip fee (required for SOL chain)")
@@ -266,6 +267,9 @@ export function registerSwapCommands(program: Command): void {
         process.exit(1);
       }
       validateChain(opts.chain);
+      validateAddress(opts.from, opts.chain, "--from");
+      validateAddress(opts.baseToken, opts.chain, "--base-token");
+      validateAddress(opts.quoteToken, opts.chain, "--quote-token");
       if (opts.orderType === "smart_trade") {
         validateV1SmartTradeSupported(opts.chain);
       }
@@ -290,37 +294,35 @@ export function registerSwapCommands(program: Command): void {
       if (opts.priorityFee) params.priority_fee = opts.priorityFee;
       if (opts.tipFee) params.tip_fee = opts.tipFee;
       if (opts.autoFee) params.auto_fee = true;
-      if (opts.gasPrice) params.gas_price = String(Math.round(parseFloat(opts.gasPrice) * 1e9));
+      if (opts.gasPrice) params.gas_price = gweiToWei(opts.gasPrice, "--gas-price");
       if (opts.gasLevel) params.gas_level = opts.gasLevel;
       if (opts.maxFeePerGas) params.max_fee_per_gas = opts.maxFeePerGas;
       if (opts.maxPriorityFeePerGas) params.max_priority_fee_per_gas = opts.maxPriorityFeePerGas;
       if (opts.antiMev) params.is_anti_mev = true;
       if (opts.conditionOrders) {
-        try { params.condition_orders = JSON.parse(opts.conditionOrders); }
-        catch { console.error("[gmgn-cli] --condition-orders must be valid JSON"); process.exit(1); }
+        params.condition_orders = parseJsonOption(opts.conditionOrders, "--condition-orders");
       }
       if (opts.sellParam) {
-        try { params.sell_param = JSON.parse(opts.sellParam); }
-        catch { console.error("[gmgn-cli] --sell-param must be valid JSON"); process.exit(1); }
+        params.sell_param = parseJsonOption(opts.sellParam, "--sell-param");
       }
       if (opts.buyParam) {
-        try { params.buy_param = JSON.parse(opts.buyParam); }
-        catch { console.error("[gmgn-cli] --buy-param must be valid JSON"); process.exit(1); }
+        params.buy_param = parseJsonOption(opts.buyParam, "--buy-param");
       }
+      const client = new OpenApiClient(getConfig(true));
       confirmTrade({
         action: "Create strategy order",
+        route: WRITE_ROUTES.strategyCreate,
         params,
         keyFields: ["chain", "from_address", "base_token", "quote_token", "order_type", "sub_order_type", "amount_in", "amount_in_percent", "quote_investment", "open_price", "limit_price_mode", "expire_in", "slippage", "auto_slippage", "is_anti_mev"],
-        protections: [
-          SLIPPAGE_PROTECTION,
-          ANTI_MEV_PROTECTION,
-          { fields: ["expire_in"], text: "No expiry (expire_in) sent — the order stays live for the server-default lifetime." },
-        ],
-        totals: feeTotals(params, "Extra fees when the order executes"),
-        annotations: weiAnnotations(params, ["gas_price"]),
+        protections: [SLIPPAGE_PROTECTION, ANTI_MEV_PROTECTION, EXPIRY_PROTECTION],
+        feeLabel: "Extra fees when the order executes",
+        annotations: {
+          ...weiAnnotations(params, ["gas_price"]),
+          ...(params.amount_in_percent ? { amount_in_percent: `${params.amount_in_percent}% of balance` } : {}),
+          ...(params.expire_in != null ? { expire_in: "seconds" } : {}),
+        },
       }, opts.yes);
 
-      const client = new OpenApiClient(getConfig(true));
       const data = await client.createStrategyOrder(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
@@ -362,6 +364,7 @@ export function registerSwapCommands(program: Command): void {
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       validateChain(opts.chain);
+      validateAddress(opts.from, opts.chain, "--from");
       const params: StrategyCancelParams = {
         chain: opts.chain,
         from_address: opts.from,
@@ -369,34 +372,25 @@ export function registerSwapCommands(program: Command): void {
       };
       if (opts.orderType) params.order_type = opts.orderType;
       if (opts.closeSellModel) params.close_sell_model = opts.closeSellModel;
+      const client = new OpenApiClient(getConfig(true));
       confirmTrade({
         action: "Cancel strategy order",
+        route: WRITE_ROUTES.strategyCancel,
         params,
         keyFields: ["chain", "from_address", "order_id", "order_type"],
       }, opts.yes);
 
-      const client = new OpenApiClient(getConfig(true));
       const data = await client.cancelStrategyOrder(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
 }
 
-const SLIPPAGE_PROTECTION: UnsetProtection = {
-  fields: ["slippage", "auto_slippage"],
-  text: "No slippage limit (slippage / auto_slippage) sent — the server default applies.",
-};
-
-const ANTI_MEV_PROTECTION: UnsetProtection = {
-  fields: ["is_anti_mev"],
-  text: "Anti-MEV protection not requested (is_anti_mev not sent) — the trade can be front-run or sandwiched.",
-};
-
-const MIN_OUTPUT_PROTECTION: UnsetProtection = {
-  fields: ["min_output_amount"],
-  text: "No minimum-received floor (min_output_amount) — only slippage bounds what you get back.",
-};
-
-function feeTotals(params: { chain: string; tip_fee?: string; priority_fee?: string }, label?: string): string[] {
-  const total = extraFeeTotal(params.chain, params.tip_fee, params.priority_fee, label);
-  return total ? [total] : [];
+// "input_amount.<wallet>" → hint, for the per-wallet maps of multi-swap.
+function perWalletAnnotations(field: string, map: Record<string, string> | undefined, hint: (v: string) => string): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (map == null || typeof map !== "object") return out;
+  for (const [wallet, v] of Object.entries(map)) {
+    if (/^\w+$/.test(wallet)) out[`${field}.${wallet}`] = hint(String(v));
+  }
+  return out;
 }

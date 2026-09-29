@@ -10,10 +10,11 @@
  *
  * This gate enforces confirmation in CODE, not in a SKILL.md instruction:
  *
- *   1. Interactive terminal (default): we read a typed "yes" directly from the
- *      controlling TTY (/dev/tty), NOT from stdin. An autonomous agent driving the
- *      CLI over a pipe cannot answer this prompt, and no text in the agent's
- *      context can satisfy it — a real human must be present at the keyboard.
+ *   1. Interactive terminal (default): the confirmation block is written to, and
+ *      a typed "yes" is read from, the controlling TTY (/dev/tty) — NOT
+ *      stdout/stderr/stdin. An autonomous agent driving the CLI over a pipe
+ *      cannot answer this prompt or filter what the human reads, and no text in
+ *      the agent's context can satisfy it — a real human must be present.
  *
  *   2. Intentional automation: to run headless, the operator must BOTH pass
  *      `--yes` AND set the environment variable GMGN_ALLOW_AUTOMATED_TRADES=1 in
@@ -25,39 +26,46 @@
  * signed. So the summary is NOT hand-written per command: it is derived from the
  * exact request body, flattened to every leaf field, and printed in four sections
  * (key fields, risky fields with a plain-language consequence, protections that
- * are NOT set, and everything else). Section 4 is by definition "every leaf the
- * first three did not print", so a newly added parameter shows up automatically.
+ * are NOT in effect, and everything else). Section 4 is by definition "every leaf
+ * the first three did not print", so a newly added parameter shows up
+ * automatically.
  *
- * Once confirmed, the canonical-JSON sha256 of that body is recorded. The API
- * client refuses to sign a fund-moving request whose body digest was not
- * confirmed (see consumeConfirmation), which catches both a new command that
- * forgot to call confirmTrade and a body mutated after confirmation.
+ * Once confirmed, the sha256 of the canonical {method, path, query, body} is
+ * recorded. The API client refuses to sign ANY non-GET request whose digest was
+ * not confirmed (see consumeConfirmation), which catches a new command or route
+ * that forgot to call confirmTrade, a body or query mutated after confirmation,
+ * and a confirmation replayed against a different route.
  *
  * If neither confirmation path is satisfied, the trade is refused before any
  * signature is made.
  */
 
 import { createHash } from "node:crypto";
-import { openSync, readSync, closeSync, existsSync } from "node:fs";
+import { openSync, readSync, writeSync, closeSync, existsSync } from "node:fs";
 
 const AUTOMATION_ENV = "GMGN_ALLOW_AUTOMATED_TRADES";
 
-// Strings longer than this are folded to <string, size, sha256> so a 2MB base64
-// image does not scroll the rest of the summary off screen. Risky fields are
-// never folded.
+// Blob fields (e.g. a base64 --image) longer than this are folded to
+// <string, size, sha256> so they do not scroll the rest of the summary away.
+// Only fields a command declares in blobFields are ever folded.
 const FOLD_THRESHOLD = 256;
 
-export interface UnsetProtection {
-  fields: string[]; // printed when NONE of these top-level fields is in the body
-  text: string; // what the user is exposed to because of it
+export type Body = Record<string, unknown>;
+
+export interface Protection {
+  text: string; // printed when the protection is not in effect
+  isSet: (body: Body) => boolean; // judged on the values actually being sent
 }
 
 export interface TradeSummary {
   action: string; // e.g. "Swap", "Create token", "Create strategy order"
+  route: string; // API path the body is POSTed to; bound into the digest
   params: object; // the exact object that will be signed and sent
   keyFields: string[]; // top-level fields shown first, in this order
-  protections?: UnsetProtection[];
-  totals?: string[]; // derived totals whose units only the command knows
+  blobFields?: string[]; // top-level fields that may be folded (e.g. image)
+  protections?: Protection[];
+  totals?: string[]; // derived totals whose meaning only the command knows
+  feeLabel?: string; // label for the top-level tip / priority fee total
   annotations?: Record<string, string>; // leaf path → unit hint, e.g. "0.05 gwei"
 }
 
@@ -103,28 +111,56 @@ const RISK_RULES: RiskRule[] = [
 
 const RISK_FIELDS = new Set(RISK_RULES.map((r) => r.field));
 
+// ---- Protections shared by several commands ----
+
+export const SLIPPAGE_PROTECTION: Protection = {
+  text: "No slippage limit — neither a positive slippage nor auto_slippage is sent, so the server default applies.",
+  isSet: (b) => b.auto_slippage === true || (typeof b.slippage === "number" && b.slippage > 0),
+};
+
+export const MIN_OUTPUT_PROTECTION: Protection = {
+  text: "No minimum-received floor (min_output_amount missing or 0) — only slippage bounds what you get back.",
+  isSet: (b) => typeof b.min_output_amount === "string" && /^\d+$/.test(b.min_output_amount) && /[1-9]/.test(b.min_output_amount),
+};
+
+export const EXPIRY_PROTECTION: Protection = {
+  text: "No expiry (expire_in missing or 0) — the order stays live for the server-default lifetime.",
+  isSet: (b) => typeof b.expire_in === "number" && b.expire_in > 0,
+};
+
+const ANTI_MEV_CHAINS = new Set(["sol", "bsc", "eth"]);
+
+// For commands whose anti-MEV default is not documented as on: warn only where
+// the flag is supported, and say what actually happens.
+export const ANTI_MEV_PROTECTION: Protection = {
+  text: "Anti-MEV protection not requested (is_anti_mev not sent) — the server default applies.",
+  isSet: (b) => b.is_anti_mev === true || !ANTI_MEV_CHAINS.has(String(b.chain)),
+};
+
 const confirmedDigests = new Set<string>();
 
 /**
- * Enforce human confirmation for a financial write. Prints a summary derived
+ * Enforce human confirmation for a financial write. Shows a summary derived
  * from the request body, then either reads an interactive "yes" from the TTY or
  * verifies the explicit automation opt-in. Aborts the process if confirmation is
- * not obtained; on success records the body digest for consumeConfirmation.
+ * not obtained; on success records the request digest for consumeConfirmation.
  */
 export function confirmTrade(summary: TradeSummary, assumeYes: boolean): void {
   // Render from the JSON round-trip, i.e. exactly what JSON.stringify will put on
   // the wire (undefined dropped, NaN → null).
-  const payload = JSON.parse(JSON.stringify(summary.params)) as Record<string, unknown>;
-  printSummary(summary, payload);
-
-  const automationOptIn = process.env[AUTOMATION_ENV] === "1";
+  const payload = JSON.parse(JSON.stringify(summary.params)) as Body;
+  const block = renderSummary(summary, payload).join("\n") + "\n";
+  // Queries on fund-moving routes are always empty today; the client binds the
+  // real query into its digest, so a future query parameter fails closed here.
+  const digest = requestDigest("POST", summary.route, {}, payload);
 
   if (assumeYes) {
-    if (automationOptIn) {
+    process.stderr.write(block);
+    if (process.env[AUTOMATION_ENV] === "1") {
       console.error(
         `[gmgn-cli] Proceeding non-interactively (--yes + ${AUTOMATION_ENV}=1).`
       );
-      confirmedDigests.add(payloadDigest(payload));
+      confirmedDigests.add(digest);
       return;
     }
     // --yes alone is deliberately NOT enough: an injected agent can pass it.
@@ -135,11 +171,9 @@ export function confirmTrade(summary: TradeSummary, assumeYes: boolean): void {
     );
   }
 
-  const answer = readFromTty(
-    `\nType "yes" to confirm this ${summary.action.toLowerCase()}, anything else to cancel: `
-  );
-
-  if (answer == null) {
+  const tty = openTty();
+  if (tty == null) {
+    process.stderr.write(block);
     abort(
       `No interactive terminal available to confirm this ${summary.action.toLowerCase()}. ` +
         `Refusing to execute a financial transaction without human confirmation. ` +
@@ -147,24 +181,35 @@ export function confirmTrade(summary: TradeSummary, assumeYes: boolean): void {
     );
   }
 
-  if (answer.trim().toLowerCase() !== "yes") {
+  let answer: string | null;
+  try {
+    // Written to the terminal itself, so whoever launched the process cannot
+    // filter or rewrite what the human reads before typing "yes".
+    tty.write(block);
+    tty.write(`\nType "yes" to confirm this ${summary.action.toLowerCase()}, anything else to cancel: `);
+    answer = tty.readLine();
+  } finally {
+    tty.close();
+  }
+
+  if (answer == null || answer.trim().toLowerCase() !== "yes") {
     abort("Confirmation not received. Transaction cancelled.");
   }
 
-  confirmedDigests.add(payloadDigest(payload));
+  confirmedDigests.add(digest);
 }
 
 /**
- * Check that a serialized request body is exactly one the user confirmed, and
+ * Check that a request about to be signed is exactly one the user confirmed, and
  * consume that confirmation so it authorizes a single signature.
  */
-export function consumeConfirmation(body: string): boolean {
-  const digest = payloadDigest(JSON.parse(body));
+export function consumeConfirmation(method: string, path: string, query: unknown, body: string): boolean {
+  const digest = requestDigest(method, path, query, body === "" ? null : JSON.parse(body));
   return confirmedDigests.delete(digest);
 }
 
-export function payloadDigest(payload: unknown): string {
-  return createHash("sha256").update(canonicalJson(payload)).digest("hex");
+function requestDigest(method: string, path: string, query: unknown, body: unknown): string {
+  return createHash("sha256").update(canonicalJson({ method, path, query, body })).digest("hex");
 }
 
 function canonicalJson(value: unknown): string {
@@ -195,8 +240,9 @@ function flatten(value: unknown, path = "", segments: string[] = [], out: Leaf[]
     const keys = Object.keys(value);
     if (keys.length === 0) out.push({ path, segments, value });
     for (const k of keys) {
-      const key = /^[A-Za-z0-9_]+$/.test(k) ? k : `[${escapeText(JSON.stringify(k))}]`;
-      const childPath = path === "" ? key : key.startsWith("[") ? `${path}${key}` : `${path}.${key}`;
+      const childPath = /^\w+$/.test(k)
+        ? (path ? `${path}.${k}` : k)
+        : `${path}[${escapeText(JSON.stringify(k))}]`;
       flatten((value as Record<string, unknown>)[k], childPath, [...segments, k], out);
     }
   } else {
@@ -205,83 +251,115 @@ function flatten(value: unknown, path = "", segments: string[] = [], out: Leaf[]
   return out;
 }
 
-function printSummary(summary: TradeSummary, payload: Record<string, unknown>): void {
+function renderSummary(summary: TradeSummary, payload: Body): string[] {
   const header = `⚠️  ${summary.action} — confirmation required`;
-  console.error(`\n${header}`);
-  console.error("-".repeat(header.length));
-  console.error("  Every field below is part of the request that will be signed.");
+  const out = [`\n${header}`, "-".repeat(header.length), "  Every field below is part of the request that will be signed."];
 
   const leaves = flatten(payload);
+  const blobs = new Set(summary.blobFields ?? []);
   const printed = new Set<Leaf>();
-  const line = (leaf: Leaf, fold: boolean, indent = "    ") => {
+  const line = (leaf: Leaf, indent = "    ") => {
     const note = summary.annotations?.[leaf.path];
-    console.error(`${indent}${leaf.path} = ${renderValue(leaf.value, fold)}${note ? `  (${note})` : ""}`);
+    const value = renderValue(leaf.value, blobs.has(leaf.segments[0]));
+    out.push(`${indent}${leaf.path} = ${value}${note ? `  (${displayText(note)})` : ""}`);
     printed.add(leaf);
   };
 
-  // ① Key fields, in the order the command lists them.
-  console.error("\n  ① Key fields");
+  // ① Key fields, in the order the command lists them, then derived totals.
+  out.push("", "  ① Key fields");
   for (const field of summary.keyFields) {
     for (const leaf of leaves) {
-      if (leaf.segments[0] === field) line(leaf, true);
+      if (leaf.segments[0] === field) line(leaf);
     }
   }
-  for (const total of summary.totals ?? []) {
-    console.error(`    ${total}`);
+  for (const total of [...(summary.totals ?? []), ...feeTotals(leaves, String(payload.chain), summary.feeLabel)]) {
+    out.push(`    ${total}`);
   }
 
   // ② Risky fields, grouped by rule, each with its consequence. Never folded.
-  const keySet = new Set(summary.keyFields);
   const byRule = new Map<string, Leaf[]>();
   for (const leaf of leaves) {
-    if (printed.has(leaf) || keySet.has(leaf.segments[0])) continue;
+    if (printed.has(leaf)) continue;
     const field = leaf.segments.find((s) => RISK_FIELDS.has(s));
     if (field == null) continue;
-    byRule.set(field, [...(byRule.get(field) ?? []), leaf]);
+    const group = byRule.get(field);
+    if (group) group.push(leaf);
+    else byRule.set(field, [leaf]);
   }
-  console.error("\n  ② ⚠️  What else this transaction will do");
-  if (byRule.size === 0) console.error("    (nothing beyond the key fields)");
+  out.push("", "  ② ⚠️  What else this transaction will do");
+  if (byRule.size === 0) out.push("    (nothing beyond the key fields)");
   for (const rule of RISK_RULES) {
     const group = byRule.get(rule.field);
     if (!group) continue;
-    console.error(`    ${rule.field} — ${rule.consequence}`);
-    for (const leaf of group) line(leaf, false, "      ");
+    out.push(`    ${rule.field} — ${rule.consequence}`);
+    for (const leaf of group) line(leaf, "      ");
   }
 
-  // ③ Protections that are NOT set — removing a field is an attack too.
-  const missing = (summary.protections ?? []).filter((p) => p.fields.every((f) => !(f in payload)));
-  console.error("\n  ③ ⚠️  Protections NOT set");
-  if (missing.length === 0) console.error("    (none)");
-  for (const p of missing) {
-    console.error(`    - ${p.text}`);
-  }
+  // ③ Protections NOT in effect — removing or zeroing a field is an attack too.
+  const missing = (summary.protections ?? []).filter((p) => !p.isSet(payload));
+  out.push("", "  ③ ⚠️  Protections NOT in effect");
+  if (missing.length === 0) out.push("    (none)");
+  for (const p of missing) out.push(`    - ${p.text}`);
 
   // ④ Everything the first three sections did not print.
   const rest = leaves.filter((leaf) => !printed.has(leaf));
-  console.error("\n  ④ All other fields");
-  if (rest.length === 0) console.error("    (none)");
-  for (const leaf of rest) line(leaf, true);
+  out.push("", "  ④ All other fields");
+  if (rest.length === 0) out.push("    (none)");
+  for (const leaf of rest) line(leaf);
+
+  return out;
 }
 
-function renderValue(value: unknown, fold: boolean): string {
+// "Extra fees: tip 5 SOL + priority 0.1 SOL = 5.1 SOL", one line per object that
+// carries tip_fee / priority_fee — the top level and every nested trade config
+// (sell_param, buy_trade_config, ...), since each pays for its own transaction.
+function feeTotals(leaves: Leaf[], chain: string, topLabel = "Extra fees"): string[] {
+  const groups = new Map<string, Array<[string, string]>>();
+  for (const leaf of leaves) {
+    const name = leaf.segments[leaf.segments.length - 1];
+    if (name !== "tip_fee" && name !== "priority_fee") continue;
+    const container = leaf.path.slice(0, -(name.length + 1));
+    const group = groups.get(container) ?? [];
+    group.push([name === "tip_fee" ? "tip" : "priority", String(leaf.value)]);
+    groups.set(container, group);
+  }
+  const unit = nativeSymbol(chain);
+  return [...groups].map(([container, parts]) => {
+    const terms = parts.map(([name, v]) => `${name} ${displayText(v)} ${unit}`).join(" + ");
+    const total = parts.length > 1 ? ` = ${sumDecimals(parts.map(([, v]) => v)) ?? "?"} ${unit}` : "";
+    return `${container ? `Extra fees in ${container}` : topLabel}: ${terms}${total}`;
+  });
+}
+
+function renderValue(value: unknown, foldable: boolean): string {
   if (Array.isArray(value)) return "[]";
   if (value !== null && typeof value === "object") return "{}";
   if (typeof value !== "string") return String(value);
-  const bytes = Buffer.byteLength(value, "utf8");
-  if (fold && value.length > FOLD_THRESHOLD) {
+  if (foldable && value.length > FOLD_THRESHOLD) {
     const sha = createHash("sha256").update(value).digest("hex").slice(0, 12);
-    return `<string, ${formatBytes(bytes)}, sha256 ${sha}…>`;
+    return `<string, ${formatBytes(Buffer.byteLength(value, "utf8"))}, sha256 ${sha}…>`;
   }
   return escapeText(JSON.stringify(value));
 }
 
-// JSON.stringify escapes C0 controls but not C1 controls, bidi overrides or
-// zero-width characters, any of which can hide or reorder what the human reads.
+// Anything that is not a plainly visible character is shown as an escape:
+// control / format / unassigned / private-use (\p{C}), separators other than the
+// ASCII space (\p{Z}), combining marks (\p{M}), default-ignorable code points
+// (soft hyphen, Hangul fillers, variation selectors, tag characters...) and the
+// blank braille pattern. Any of these can make one value look like another.
+const UNSAFE_CHARS_RE = /[\p{C}\p{Z}\p{M}\p{Default_Ignorable_Code_Point}\u2800]/gu;
+
 function escapeText(s: string): string {
-  return s.replace(
-    /[\u0080-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u2064\u2066-\u2069\ufeff]/g,
-    (ch) => `\\u${ch.charCodeAt(0).toString(16).padStart(4, "0")}`
-  );
+  return s.replace(UNSAFE_CHARS_RE, (ch) => {
+    if (ch === " ") return ch;
+    const cp = ch.codePointAt(0)!;
+    return cp > 0xffff ? `\\u{${cp.toString(16)}}` : `\\u${cp.toString(16).padStart(4, "0")}`;
+  });
+}
+
+/** Quote-free, escaped rendering of untrusted text for the confirmation block. */
+export function displayText(s: string): string {
+  return escapeText(JSON.stringify(s).slice(1, -1));
 }
 
 function formatBytes(bytes: number): string {
@@ -290,6 +368,7 @@ function formatBytes(bytes: number): string {
   return `${bytes} B`;
 }
 
+// Only chains whose gas token the docs name; the rest are labelled by chain.
 const NATIVE_SYMBOLS: Record<string, string> = {
   sol: "SOL",
   bsc: "BNB",
@@ -300,7 +379,7 @@ const NATIVE_SYMBOLS: Record<string, string> = {
 };
 
 export function nativeSymbol(chain: string): string {
-  return NATIVE_SYMBOLS[chain] ?? "native token";
+  return NATIVE_SYMBOLS[chain] ?? `${chain} native token`;
 }
 
 /**
@@ -318,21 +397,6 @@ export function sumDecimals(values: string[]): string | null {
   if (scale === 0) return digits;
   const frac = digits.slice(-scale).replace(/0+$/, "");
   return frac ? `${digits.slice(0, -scale)}.${frac}` : digits.slice(0, -scale);
-}
-
-/**
- * "Extra fees: tip 5 SOL + priority 0.1 SOL = 5.1 SOL" for the tip / priority
- * fees in a body, or null when neither is set.
- */
-export function extraFeeTotal(chain: string, tipFee?: string, priorityFee?: string, label = "Extra fees"): string | null {
-  const parts: Array<[string, string]> = [];
-  if (tipFee) parts.push(["tip", tipFee]);
-  if (priorityFee) parts.push(["priority", priorityFee]);
-  if (parts.length === 0) return null;
-  const unit = nativeSymbol(chain);
-  const terms = parts.map(([name, v]) => `${name} ${displayText(v)} ${unit}`).join(" + ");
-  const total = sumDecimals(parts.map(([, v]) => v));
-  return `${label}: ${terms}${parts.length > 1 ? ` = ${total ?? "?"} ${unit}` : ""}`;
 }
 
 /** Render a wei amount string as gwei for display, e.g. "50000000" → "0.05 gwei". */
@@ -358,50 +422,60 @@ export function weiAnnotations<T extends object>(params: T, keys: Array<keyof T 
   return out;
 }
 
-/** Quote-free, escaped rendering of untrusted text for the confirmation block. */
-export function displayText(s: string): string {
-  return escapeText(JSON.stringify(s)).slice(1, -1);
+interface Tty {
+  write(s: string): void;
+  readLine(): string | null;
+  close(): void;
 }
 
 /**
- * Read a single line from the controlling terminal (/dev/tty), bypassing stdin so
- * a piped/automated caller cannot supply the answer. Returns null if no TTY is
- * available (e.g. headless CI, agent driving the CLI over a pipe).
+ * Open the controlling terminal (/dev/tty, or CONIN$/CONOUT$ on Windows),
+ * bypassing stdio so a piped/automated caller can neither supply the answer nor
+ * alter the text shown. Returns null if no TTY is available (e.g. headless CI,
+ * agent driving the CLI over a pipe).
  */
-function readFromTty(prompt: string): string | null {
-  const ttyPath = process.platform === "win32" ? "CONIN$" : "/dev/tty";
-  if (process.platform !== "win32" && !existsSync(ttyPath)) {
-    return null;
-  }
+function openTty(): Tty | null {
+  const win = process.platform === "win32";
+  if (!win && !existsSync("/dev/tty")) return null;
 
-  let fd: number;
+  let inFd: number | undefined;
+  let outFd: number;
   try {
-    fd = openSync(ttyPath, "r");
+    inFd = openSync(win ? "CONIN$" : "/dev/tty", "r");
+    outFd = openSync(win ? "CONOUT$" : "/dev/tty", "w");
   } catch {
+    if (inFd !== undefined) closeSync(inFd);
     return null;
   }
+  const fdIn = inFd;
 
-  try {
-    process.stderr.write(prompt);
-    const buf = Buffer.alloc(1);
-    let line = "";
-    while (true) {
-      let bytes = 0;
-      try {
-        bytes = readSync(fd, buf, 0, 1, null);
-      } catch {
-        return null;
+  return {
+    write: (s) => {
+      writeSync(outFd, s);
+    },
+    readLine: () => {
+      const buf = Buffer.alloc(1);
+      let line = "";
+      while (true) {
+        let bytes = 0;
+        try {
+          bytes = readSync(fdIn, buf, 0, 1, null);
+        } catch {
+          return null;
+        }
+        if (bytes === 0) break; // EOF
+        const ch = buf.toString("utf8", 0, 1);
+        if (ch === "\n") break;
+        if (ch === "\r") continue;
+        line += ch;
       }
-      if (bytes === 0) break; // EOF
-      const ch = buf.toString("utf8", 0, 1);
-      if (ch === "\n") break;
-      if (ch === "\r") continue;
-      line += ch;
-    }
-    return line;
-  } finally {
-    closeSync(fd);
-  }
+      return line;
+    },
+    close: () => {
+      closeSync(fdIn);
+      closeSync(outFd);
+    },
+  };
 }
 
 function abort(msg: string): never {
