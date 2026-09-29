@@ -8,10 +8,21 @@
 
 import { createRequire } from "node:module";
 
+import { consumeConfirmation } from "../confirm.js";
 import { buildAuthQuery, buildMessage, detectAlgorithm, sign } from "./signer.js";
 
 const RATE_LIMIT_RETRY_BUFFER_MS = 1000;
 const DEFAULT_RATE_LIMIT_AUTO_RETRY_MAX_WAIT_MS = 5000;
+
+// Fund-moving routes. Commands pass these to confirmTrade so the confirmation
+// digest is bound to the route the body is actually posted to.
+export const WRITE_ROUTES = {
+  swap: "/v1/trade/swap",
+  multiSwap: "/v1/trade/multi_swap",
+  strategyCreate: "/v1/trade/strategy/create",
+  strategyCancel: "/v1/trade/strategy/cancel",
+  createToken: "/v1/cooking/create_token",
+} as const;
 
 const { version: CLI_VERSION } = createRequire(import.meta.url)("../../package.json") as { version: string };
 const USER_AGENT = `gmgn-cli/${CLI_VERSION}`;
@@ -522,11 +533,11 @@ export class OpenApiClient {
   // ---- Swap endpoints (signed auth) ----
 
   async swap(params: SwapParams): Promise<unknown> {
-    return this.authSignedRequest("POST", "/v1/trade/swap", {}, params);
+    return this.authSignedRequest("POST", WRITE_ROUTES.swap, {}, params);
   }
 
   async multiSwap(params: MultiSwapParams): Promise<unknown> {
-    return this.authSignedRequest("POST", "/v1/trade/multi_swap", {}, params);
+    return this.authSignedRequest("POST", WRITE_ROUTES.multiSwap, {}, params);
   }
 
   async queryOrder(orderId: string, chain: string): Promise<unknown> {
@@ -540,7 +551,7 @@ export class OpenApiClient {
   // ---- Strategy order endpoints (signed auth) ----
 
   async createStrategyOrder(params: StrategyCreateParams): Promise<unknown> {
-    return this.authSignedRequest("POST", "/v1/trade/strategy/create", {}, params);
+    return this.authSignedRequest("POST", WRITE_ROUTES.strategyCreate, {}, params);
   }
 
   async getStrategyOrders(chain: string, extra: Record<string, string | number> = {}): Promise<unknown> {
@@ -548,7 +559,7 @@ export class OpenApiClient {
   }
 
   async cancelStrategyOrder(params: StrategyCancelParams): Promise<unknown> {
-    return this.authSignedRequest("POST", "/v1/trade/strategy/cancel", {}, params);
+    return this.authSignedRequest("POST", WRITE_ROUTES.strategyCancel, {}, params);
   }
 
   // ---- Cooking endpoints ----
@@ -558,7 +569,7 @@ export class OpenApiClient {
   }
 
   async createToken(params: CreateTokenParams): Promise<unknown> {
-    return this.authSignedRequest("POST", "/v1/cooking/create_token", {}, params);
+    return this.authSignedRequest("POST", WRITE_ROUTES.createToken, {}, params);
   }
 
   // ---- Internal methods ----
@@ -600,10 +611,19 @@ export class OpenApiClient {
       throw new Error("GMGN_PRIVATE_KEY is required for critical-auth commands (swap, order, follow-wallet, and portfolio holdings commands)");
     }
 
+    // Serialize once: the digest checked here is of the exact bytes signed below.
+    // Deny by default — every signed write needs a matching human confirmation.
+    const bodyStr = body !== null ? JSON.stringify(body) : "";
+    if (method !== "GET" && !consumeConfirmation(method, subPath, queryExtra, bodyStr)) {
+      throw new Error(
+        `${method} ${subPath} refused: request does not match the confirmed summary. ` +
+          `Nothing was signed or sent.`
+      );
+    }
+
     return this.executePreparedRequest(() => {
       const { timestamp, client_id } = buildAuthQuery();
       const query: Record<string, string | number | string[]> = { ...queryExtra, timestamp, client_id };
-      const bodyStr = body !== null ? JSON.stringify(body) : "";
       const message = buildMessage(subPath, query, bodyStr, timestamp);
       const signature = sign(message, this.privateKeyPem!, detectAlgorithm(this.privateKeyPem!));
 

@@ -102,3 +102,51 @@ export function normalizeSearchQuery(raw: string): string {
   }
   return cleaned;
 }
+
+// ---- Option parsers for fund-moving commands ----
+//
+// A malformed number must not reach a signed body: parseFloat("abc") is NaN and
+// JSON.stringify turns NaN / Infinity into null, which silently drops the value.
+
+/** Commander parser for a finite, non-negative number, e.g. --slippage. */
+export function nonNegativeNumber(flag: string): (raw: string) => number {
+  return (raw) => {
+    const n = Number(raw);
+    if (raw.trim() === "" || !Number.isFinite(n) || n < 0) {
+      console.error(`[gmgn-cli] Invalid ${flag}: "${raw}". Must be a non-negative number.`);
+      process.exit(1);
+    }
+    return n;
+  };
+}
+
+/** Commander parser for a non-negative integer, e.g. --expire-in. */
+export function nonNegativeInt(flag: string): (raw: string) => number {
+  return (raw) => {
+    if (!POSITIVE_INT_RE.test(raw) || !Number.isSafeInteger(Number(raw))) {
+      console.error(`[gmgn-cli] Invalid ${flag}: "${raw}". Must be a non-negative integer.`);
+      process.exit(1);
+    }
+    return Number(raw);
+  };
+}
+
+/** Parse a JSON option value, exiting with a clear message when it is malformed. */
+export function parseJsonOption<T>(raw: string, flag: string): T {
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    console.error(`[gmgn-cli] ${flag} must be valid JSON`);
+    process.exit(1);
+  }
+}
+
+/** Exact gwei → wei conversion for --gas-price, e.g. "0.05" → "50000000". */
+export function gweiToWei(raw: string, flag: string): string {
+  const m = /^(\d+)(?:\.(\d{1,9}))?$/.exec(raw.trim());
+  if (!m) {
+    console.error(`[gmgn-cli] Invalid ${flag}: "${raw}". Must be a gwei amount with at most 9 decimals.`);
+    process.exit(1);
+  }
+  return BigInt(m[1] + (m[2] ?? "").padEnd(9, "0")).toString();
+}

@@ -817,7 +817,7 @@ gmgn-cli order strategy list --chain <chain> --group-tag <LimitOrder|STMix> [--t
 Cancel a strategy order. **Requires `GMGN_PRIVATE_KEY` configured in `.env`.**
 
 ```bash
-gmgn-cli order strategy cancel --chain <chain> --from <wallet_address> --order-id <id> [--order-type <type>] [--close-sell-model <model>] [--raw]
+gmgn-cli order strategy cancel --chain <chain> --from <wallet_address> --order-id <id> [--order-type <type>] [--close-sell-model <model>] [--yes] [--raw]
 ```
 
 | Option | Required | Description |
@@ -827,6 +827,7 @@ gmgn-cli order strategy cancel --chain <chain> --from <wallet_address> --order-i
 | `--order-id` | Yes | Order ID to cancel |
 | `--order-type` | No | Order type: `limit_order` / `smart_trade` |
 | `--close-sell-model` | No | Sell model when closing |
+| `--yes` | No | Skip the interactive confirmation prompt (requires `GMGN_ALLOW_AUTOMATED_TRADES=1`) |
 
 ---
 
