@@ -8,10 +8,21 @@
 
 import { createRequire } from "node:module";
 
+import { consumeConfirmation } from "../confirm.js";
 import { buildAuthQuery, buildMessage, detectAlgorithm, sign } from "./signer.js";
 
 const RATE_LIMIT_RETRY_BUFFER_MS = 1000;
 const DEFAULT_RATE_LIMIT_AUTO_RETRY_MAX_WAIT_MS = 5000;
+
+// Signed routes that move funds. Their body must match one the user confirmed in
+// confirmTrade, field-for-field (canonical-JSON sha256), or nothing is signed.
+const CONFIRMED_WRITE_PATHS = new Set([
+  "/v1/trade/swap",
+  "/v1/trade/multi_swap",
+  "/v1/trade/strategy/create",
+  "/v1/trade/strategy/cancel",
+  "/v1/cooking/create_token",
+]);
 
 const { version: CLI_VERSION } = createRequire(import.meta.url)("../../package.json") as { version: string };
 const USER_AGENT = `gmgn-cli/${CLI_VERSION}`;
@@ -600,10 +611,18 @@ export class OpenApiClient {
       throw new Error("GMGN_PRIVATE_KEY is required for critical-auth commands (swap, order, follow-wallet, and portfolio holdings commands)");
     }
 
+    // Serialize once: the digest checked here is of the exact bytes signed below.
+    const bodyStr = body !== null ? JSON.stringify(body) : "";
+    if (CONFIRMED_WRITE_PATHS.has(subPath) && !(bodyStr && consumeConfirmation(bodyStr))) {
+      throw new Error(
+        `${method} ${subPath} refused: request body does not match the confirmed summary. ` +
+          `Nothing was signed or sent.`
+      );
+    }
+
     return this.executePreparedRequest(() => {
       const { timestamp, client_id } = buildAuthQuery();
       const query: Record<string, string | number | string[]> = { ...queryExtra, timestamp, client_id };
-      const bodyStr = body !== null ? JSON.stringify(body) : "";
       const message = buildMessage(subPath, query, bodyStr, timestamp);
       const signature = sign(message, this.privateKeyPem!, detectAlgorithm(this.privateKeyPem!));
 

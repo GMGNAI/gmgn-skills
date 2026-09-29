@@ -1,8 +1,8 @@
 import { Command } from "commander";
-import { OpenApiClient, CreateTokenParams } from "../client/OpenApiClient.js";
+import { OpenApiClient, BuyWalletInfo, CreateTokenParams } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
-import { confirmTrade } from "../confirm.js";
+import { confirmTrade, displayText, extraFeeTotal, nativeSymbol, sumDecimals, weiAnnotations } from "../confirm.js";
 import { sanitizeMetadataField, validateMetadataUrl, MAX_DESCRIPTION_LEN, MAX_NAME_LEN } from "../sanitize.js";
 import { validateChain } from "../validate.js";
 
@@ -122,30 +122,68 @@ export function registerCookingCommands(program: Command): void {
       if (opts.isMayhem) params.is_mayhem = true;
       if (opts.isCashback) params.is_cashback = true;
       if (opts.isBuyBack) params.is_buy_back = true;
-      if (opts.pumpFeeShareList) params.pump_fee_share_list = JSON.parse(opts.pumpFeeShareList);
-      if (opts.flapRateConf) params.flap_rate_conf = JSON.parse(opts.flapRateConf);
-      if (opts.fourmemeRateConf) params.fourmeme_rate_conf = JSON.parse(opts.fourmemeRateConf);
-      if (opts.bagsFeeShareList) params.bags_fee_share_list = JSON.parse(opts.bagsFeeShareList);
+      if (opts.pumpFeeShareList) params.pump_fee_share_list = parseJsonOption(opts.pumpFeeShareList, "--pump-fee-share-list");
+      if (opts.flapRateConf) params.flap_rate_conf = parseJsonOption(opts.flapRateConf, "--flap-rate-conf");
+      if (opts.fourmemeRateConf) params.fourmeme_rate_conf = parseJsonOption(opts.fourmemeRateConf, "--fourmeme-rate-conf");
+      if (opts.bagsFeeShareList) params.bags_fee_share_list = parseJsonOption(opts.bagsFeeShareList, "--bags-fee-share-list");
       if (opts.bonkModel) params.bonk_model = opts.bonkModel;
-      if (opts.buyWallets) params.buy_wallets = JSON.parse(opts.buyWallets);
-      if (opts.snipBuyWallets) params.snip_buy_wallets = JSON.parse(opts.snipBuyWallets);
-      if (opts.buyTradeConfig) params.buy_trade_config = JSON.parse(opts.buyTradeConfig);
-      if (opts.sellTradeConfig) params.sell_trade_config = JSON.parse(opts.sellTradeConfig);
-      if (opts.sellConfigs) params.sell_configs = JSON.parse(opts.sellConfigs);
+      if (opts.buyWallets) params.buy_wallets = parseJsonOption(opts.buyWallets, "--buy-wallets");
+      if (opts.snipBuyWallets) params.snip_buy_wallets = parseJsonOption(opts.snipBuyWallets, "--snip-buy-wallets");
+      if (opts.buyTradeConfig) params.buy_trade_config = parseJsonOption(opts.buyTradeConfig, "--buy-trade-config");
+      if (opts.sellTradeConfig) params.sell_trade_config = parseJsonOption(opts.sellTradeConfig, "--sell-trade-config");
+      if (opts.sellConfigs) params.sell_configs = parseJsonOption(opts.sellConfigs, "--sell-configs");
       confirmTrade({
         action: "Create token",
-        lines: [
-          `Chain:     ${params.chain}`,
-          `Launchpad: ${params.dex}`,
-          `Wallet:    ${params.from_address}`,
-          `Name:      ${params.name}`,
-          `Symbol:    ${params.symbol}`,
-          `Buy amount: ${params.buy_amt}`,
-        ],
+        params,
+        keyFields: ["chain", "dex", "from_address", "name", "symbol", "buy_amt", "raised_token", "slippage", "auto_slippage", "is_anti_mev", "anti_mev_mode"],
+        protections: params.chain === "sol"
+          ? [{ fields: ["is_anti_mev", "anti_mev_mode"], text: "Anti-MEV protection not requested (is_anti_mev / anti_mev_mode not sent) — the launch buy can be sandwiched." }]
+          : [],
+        totals: cookingTotals(params),
+        annotations: weiAnnotations(params, ["gas_price", "max_fee_per_gas", "max_priority_fee_per_gas", "dev_max_fee_per_gas"]),
       }, opts.yes);
 
       const client = new OpenApiClient(getConfig(true));
       const data = await client.createToken(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
+}
+
+function parseJsonOption<T>(raw: string, flag: string): T {
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    console.error(`[gmgn-cli] ${flag} must be valid JSON`);
+    process.exit(1);
+  }
+}
+
+// Totals whose meaning only this command knows: the native-token spend across
+// the dev buy, bundle wallets and snipe wallets, the extra fees, and where the
+// creator fees go.
+function cookingTotals(params: CreateTokenParams): string[] {
+  const buyWallets = Array.isArray(params.buy_wallets) ? params.buy_wallets : [];
+  const snipWallets = Array.isArray(params.snip_buy_wallets) ? params.snip_buy_wallets : [];
+  const walletSum = (ws: BuyWalletInfo[]) => sumDecimals(ws.map((w) => String(w?.buy_amt)));
+  const terms = [`${displayText(String(params.buy_amt))} (dev)`];
+  const amounts = [String(params.buy_amt)];
+  if (buyWallets.length) {
+    terms.push(`${walletSum(buyWallets) ?? "?"} (${buyWallets.length} buy wallets)`);
+    amounts.push(...buyWallets.map((w) => String(w?.buy_amt)));
+  }
+  if (snipWallets.length) {
+    terms.push(`${walletSum(snipWallets) ?? "?"} (${snipWallets.length} snipe wallets)`);
+    amounts.push(...snipWallets.map((w) => String(w?.buy_amt)));
+  }
+  const lines = [`Total buy spend: ${terms.join(" + ")} = ${sumDecimals(amounts) ?? "?"} ${nativeSymbol(params.chain)}`];
+
+  const fees = extraFeeTotal(params.chain, params.tip_fee, params.priority_fee);
+  if (fees) lines.push(fees);
+
+  const shares = [params.pump_fee_share_list, params.bags_fee_share_list].flatMap((l) => (Array.isArray(l) ? l : []));
+  if (shares.length) {
+    const list = shares.map((s) => `${s?.provider}:${s?.username} ${Number(s?.basic_points) / 100}%`).join(", ");
+    lines.push(`Creator fees routed to: ${displayText(list)}`);
+  }
+  return lines;
 }

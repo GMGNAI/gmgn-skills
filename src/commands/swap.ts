@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { OpenApiClient, SwapParams, MultiSwapParams, StrategyCreateParams, StrategyCancelParams } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
-import { confirmTrade } from "../confirm.js";
+import { confirmTrade, extraFeeTotal, UnsetProtection, weiAnnotations } from "../confirm.js";
 import { validateAddress, validateChain, validateConditionOrdersSupported, validatePercent, validatePositiveInt, validateV1SmartTradeSupported } from "../validate.js";
 
 export function registerSwapCommands(program: Command): void {
@@ -73,16 +73,15 @@ export function registerSwapCommands(program: Command): void {
 
       confirmTrade({
         action: "Swap",
-        lines: [
-          `Chain:        ${params.chain}`,
-          `Wallet:       ${params.from_address}`,
-          `Input token:  ${params.input_token}`,
-          `Output token: ${params.output_token}`,
-          opts.percent != null
-            ? `Amount:       ${opts.percent}% of balance`
-            : `Amount:       ${params.input_amount} (smallest unit)`,
-          `Slippage:     ${opts.autoSlippage ? "auto" : (params.slippage ?? "default")}`,
-        ],
+        params,
+        keyFields: ["chain", "from_address", "input_token", "output_token", "input_amount", "input_amount_bps", "slippage", "auto_slippage", "min_output_amount", "is_anti_mev"],
+        protections: [MIN_OUTPUT_PROTECTION, SLIPPAGE_PROTECTION, ANTI_MEV_PROTECTION],
+        totals: feeTotals(params),
+        annotations: {
+          ...weiAnnotations(params, ["gas_price"]),
+          input_amount: "smallest unit",
+          ...(params.input_amount_bps ? { input_amount_bps: `${Number(params.input_amount_bps) / 100}% of balance` } : {}),
+        },
       }, opts.yes);
 
       const client = new OpenApiClient(getConfig(true));
@@ -162,13 +161,11 @@ export function registerSwapCommands(program: Command): void {
 
       confirmTrade({
         action: "Multi-wallet swap",
-        lines: [
-          `Chain:        ${params.chain}`,
-          `Wallets:      ${params.accounts.length} (${params.accounts.join(", ")})`,
-          `Input token:  ${params.input_token}`,
-          `Output token: ${params.output_token}`,
-          `Slippage:     ${opts.autoSlippage ? "auto" : (params.slippage ?? "default")}`,
-        ],
+        params,
+        keyFields: ["chain", "accounts", "input_token", "output_token", "input_amount", "input_amount_bps", "output_amount", "slippage", "auto_slippage", "is_anti_mev"],
+        protections: [SLIPPAGE_PROTECTION, ANTI_MEV_PROTECTION],
+        totals: feeTotals(params, `Extra fees per wallet transaction (${params.accounts.length} wallets)`),
+        annotations: weiAnnotations(params, ["gas_price"]),
       }, opts.yes);
 
       const client = new OpenApiClient(getConfig(true));
@@ -312,14 +309,15 @@ export function registerSwapCommands(program: Command): void {
       }
       confirmTrade({
         action: "Create strategy order",
-        lines: [
-          `Chain:       ${params.chain}`,
-          `Wallet:      ${params.from_address}`,
-          `Base token:  ${params.base_token}`,
-          `Quote token: ${params.quote_token}`,
-          `Order type:  ${params.order_type} / ${params.sub_order_type}`,
-          `Amount:      ${params.amount_in ?? `${params.amount_in_percent}%`}`,
+        params,
+        keyFields: ["chain", "from_address", "base_token", "quote_token", "order_type", "sub_order_type", "amount_in", "amount_in_percent", "quote_investment", "open_price", "limit_price_mode", "expire_in", "slippage", "auto_slippage", "is_anti_mev"],
+        protections: [
+          SLIPPAGE_PROTECTION,
+          ANTI_MEV_PROTECTION,
+          { fields: ["expire_in"], text: "No expiry (expire_in) sent — the order stays live for the server-default lifetime." },
         ],
+        totals: feeTotals(params, "Extra fees when the order executes"),
+        annotations: weiAnnotations(params, ["gas_price"]),
       }, opts.yes);
 
       const client = new OpenApiClient(getConfig(true));
@@ -360,6 +358,7 @@ export function registerSwapCommands(program: Command): void {
     .requiredOption("--order-id <id>", "Order ID to cancel")
     .option("--order-type <type>", "Order type: limit_order / smart_trade")
     .option("--close-sell-model <model>", "Sell model when closing")
+    .option("--yes", "Skip the interactive confirmation prompt (requires GMGN_ALLOW_AUTOMATED_TRADES=1)")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       validateChain(opts.chain);
@@ -370,8 +369,34 @@ export function registerSwapCommands(program: Command): void {
       };
       if (opts.orderType) params.order_type = opts.orderType;
       if (opts.closeSellModel) params.close_sell_model = opts.closeSellModel;
+      confirmTrade({
+        action: "Cancel strategy order",
+        params,
+        keyFields: ["chain", "from_address", "order_id", "order_type"],
+      }, opts.yes);
+
       const client = new OpenApiClient(getConfig(true));
       const data = await client.cancelStrategyOrder(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
+}
+
+const SLIPPAGE_PROTECTION: UnsetProtection = {
+  fields: ["slippage", "auto_slippage"],
+  text: "No slippage limit (slippage / auto_slippage) sent — the server default applies.",
+};
+
+const ANTI_MEV_PROTECTION: UnsetProtection = {
+  fields: ["is_anti_mev"],
+  text: "Anti-MEV protection not requested (is_anti_mev not sent) — the trade can be front-run or sandwiched.",
+};
+
+const MIN_OUTPUT_PROTECTION: UnsetProtection = {
+  fields: ["min_output_amount"],
+  text: "No minimum-received floor (min_output_amount) — only slippage bounds what you get back.",
+};
+
+function feeTotals(params: { chain: string; tip_fee?: string; priority_fee?: string }, label?: string): string[] {
+  const total = extraFeeTotal(params.chain, params.tip_fee, params.priority_fee, label);
+  return total ? [total] : [];
 }

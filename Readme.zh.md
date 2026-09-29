@@ -575,7 +575,7 @@ gmgn-cli track smartmoney --chain sol --side sell --limit 50 --raw
 
 ### Swap / Quote / Query
 
-> **人工确认由代码强制执行。** `swap`、`multi-swap`、`order strategy create`、`cooking create` 在执行前会在终端要求输入 `yes` 确认。若需非交互/自动化使用，必须同时在 shell 中设置 `GMGN_ALLOW_AUTOMATED_TRADES=1` 并传入 `--yes`；仅传 `--yes` 会被拒绝。此举可防止 AI agent 被恶意代币元数据等诱导在未经你同意的情况下下单。
+> **人工确认由代码强制执行。** `swap`、`multi-swap`、`order strategy create`、`order strategy cancel`、`cooking create` 在执行前会打印确认块，并在终端要求输入 `yes` 确认。CLI 打印的确认块就是即将签名的完整请求体：关键字段、每一个手续费 / 自动卖出 / 手续费分成字段及其后果、*未设置*的保护，以及其余全部字段；请求体与你确认的内容不一致时 CLI 拒绝签名。若需非交互/自动化使用，必须同时在 shell 中设置 `GMGN_ALLOW_AUTOMATED_TRADES=1` 并传入 `--yes`；仅传 `--yes` 会被拒绝。此举可防止 AI agent 被恶意代币元数据等诱导在未经你同意的情况下下单。
 
 ```bash
 # 提交兑换（固定滑点）
