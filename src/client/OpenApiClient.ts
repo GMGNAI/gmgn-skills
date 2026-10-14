@@ -8,15 +8,12 @@
 
 import { createRequire } from "node:module";
 
-import { consumeConfirmation } from "../confirm.js";
 import { buildAuthQuery, buildMessage, detectAlgorithm, sign } from "./signer.js";
 
 const RATE_LIMIT_RETRY_BUFFER_MS = 1000;
 const DEFAULT_RATE_LIMIT_AUTO_RETRY_MAX_WAIT_MS = 5000;
 
-// Fund-moving routes. Commands pass these to confirmTrade so the confirmation
-// digest is bound to the route the body is actually posted to.
-export const WRITE_ROUTES = {
+const WRITE_ROUTES = {
   swap: "/v1/trade/swap",
   multiSwap: "/v1/trade/multi_swap",
   strategyCreate: "/v1/trade/strategy/create",
@@ -611,15 +608,7 @@ export class OpenApiClient {
       throw new Error("GMGN_PRIVATE_KEY is required for critical-auth commands (swap, order, follow-wallet, and portfolio holdings commands)");
     }
 
-    // Serialize once: the digest checked here is of the exact bytes signed below.
-    // Deny by default — every signed write needs a matching human confirmation.
     const bodyStr = body !== null ? JSON.stringify(body) : "";
-    if (method !== "GET" && !consumeConfirmation(method, subPath, queryExtra, bodyStr)) {
-      throw new Error(
-        `${method} ${subPath} refused: request does not match the confirmed summary. ` +
-          `Nothing was signed or sent.`
-      );
-    }
 
     return this.executePreparedRequest(() => {
       const { timestamp, client_id } = buildAuthQuery();

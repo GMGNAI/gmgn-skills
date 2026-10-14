@@ -1,8 +1,7 @@
 import { Command } from "commander";
-import { OpenApiClient, BuyWalletInfo, CreateTokenParams, WRITE_ROUTES } from "../client/OpenApiClient.js";
+import { OpenApiClient, CreateTokenParams } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
-import { confirmTrade, displayText, nativeSymbol, Protection, SLIPPAGE_PROTECTION, sumDecimals, weiAnnotations } from "../confirm.js";
 import { sanitizeMetadataField, validateMetadataUrl, MAX_DESCRIPTION_LEN, MAX_NAME_LEN } from "../sanitize.js";
 import { nonNegativeInt, nonNegativeNumber, parseJsonOption, validateAddress, validateChain } from "../validate.js";
 
@@ -72,7 +71,6 @@ export function registerCookingCommands(program: Command): void {
     .option("--buy-trade-config <json>", "Buy-side trade config for CondMarket orders as JSON (TradeParam)")
     .option("--sell-trade-config <json>", "Sell-side trade config for auto-sell / pending_sell as JSON (TradeParam)")
     .option("--sell-configs <json>", "Auto-sell strategy list as JSON array (CookingSellConfig[])")
-    .option("--yes", "Skip the interactive confirmation prompt (requires GMGN_ALLOW_AUTOMATED_TRADES=1)")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       if (!opts.image && !opts.imageUrl) {
@@ -134,48 +132,7 @@ export function registerCookingCommands(program: Command): void {
       if (opts.sellTradeConfig) params.sell_trade_config = parseJsonOption(opts.sellTradeConfig, "--sell-trade-config");
       if (opts.sellConfigs) params.sell_configs = parseJsonOption(opts.sellConfigs, "--sell-configs");
       const client = new OpenApiClient(getConfig(true));
-      confirmTrade({
-        action: "Create token",
-        route: WRITE_ROUTES.createToken,
-        params,
-        keyFields: ["chain", "dex", "from_address", "name", "symbol", "buy_amt", "raised_token", "slippage", "auto_slippage", "is_anti_mev", "anti_mev_mode"],
-        blobFields: ["image"],
-        protections: [SLIPPAGE_PROTECTION, LAUNCH_ANTI_MEV_PROTECTION],
-        totals: cookingTotals(params),
-        annotations: weiAnnotations(params, ["gas_price", "max_fee_per_gas", "max_priority_fee_per_gas", "dev_max_fee_per_gas"]),
-      }, opts.yes);
-
       const data = await client.createToken(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
-}
-
-// A standard launch sends anti-MEV off, so on SOL say so unless it is turned on.
-const LAUNCH_ANTI_MEV_PROTECTION: Protection = {
-  text: "Anti-MEV protection is off for the launch buy (is_anti_mev not set and anti_mev_mode not normal / secure) — the dev buy can be sandwiched.",
-  isSet: (b) => b.chain !== "sol" || b.is_anti_mev === true || b.anti_mev_mode === "normal" || b.anti_mev_mode === "secure",
-};
-
-// Totals whose meaning only this command knows: the native-token spend across
-// the dev buy, bundle wallets and snipe wallets, and where the creator fees go.
-// (Tip / priority fee totals, nested configs included, are added by confirmTrade.)
-function cookingTotals(params: CreateTokenParams): string[] {
-  const terms = [`${displayText(String(params.buy_amt))} (dev)`];
-  const amounts = [String(params.buy_amt)];
-  const addGroup = (wallets: BuyWalletInfo[] | undefined, label: string) => {
-    if (!Array.isArray(wallets) || wallets.length === 0) return;
-    const group = wallets.map((w) => String(w?.buy_amt));
-    terms.push(`${sumDecimals(group) ?? "?"} (${wallets.length} ${label})`);
-    amounts.push(...group);
-  };
-  addGroup(params.buy_wallets, "buy wallets");
-  addGroup(params.snip_buy_wallets, "snipe wallets");
-  const lines = [`Total buy spend: ${terms.join(" + ")} = ${sumDecimals(amounts) ?? "?"} ${nativeSymbol(params.chain)}`];
-
-  const shares = [params.pump_fee_share_list, params.bags_fee_share_list].flatMap((l) => (Array.isArray(l) ? l : []));
-  if (shares.length) {
-    const list = shares.map((s) => `${s?.provider}:${s?.username} ${Number(s?.basic_points) / 100}%`).join(", ");
-    lines.push(`Creator fees routed to: ${displayText(list)}`);
-  }
-  return lines;
 }

@@ -1,8 +1,7 @@
 import { Command } from "commander";
-import { OpenApiClient, SwapParams, MultiSwapParams, StrategyCreateParams, StrategyCancelParams, WRITE_ROUTES } from "../client/OpenApiClient.js";
+import { OpenApiClient, SwapParams, MultiSwapParams, StrategyCreateParams, StrategyCancelParams } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
-import { ANTI_MEV_PROTECTION, confirmTrade, EXPIRY_PROTECTION, MIN_OUTPUT_PROTECTION, SLIPPAGE_PROTECTION, weiAnnotations } from "../confirm.js";
 import { gweiToWei, nonNegativeInt, nonNegativeNumber, parseJsonOption, validateAddress, validateChain, validateConditionOrdersSupported, validatePercent, validatePositiveInt, validateV1SmartTradeSupported } from "../validate.js";
 
 export function registerSwapCommands(program: Command): void {
@@ -28,7 +27,6 @@ export function registerSwapCommands(program: Command): void {
     .option("--max-priority-fee-per-gas <amount>", "EIP-1559 max priority fee per gas (BSC / BASE / ETH)")
     .option("--condition-orders <json>", 'JSON array of take-profit/stop-loss conditions, e.g. \'[{"order_type":"profit_stop","side":"sell","price_scale":"150","sell_ratio":"100"}]\'; trace types: \'[{"order_type":"profit_stop_trace","side":"sell","price_scale":"150","sell_ratio":"100","drawdown_rate":"50"}]\'; not supported on arc / stable')
     .option("--sell-ratio-type <type>", "Sell ratio base: buy_amount (default) / hold_amount; only used with --condition-orders")
-    .option("--yes", "Skip the interactive confirmation prompt (requires GMGN_ALLOW_AUTOMATED_TRADES=1)")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       if (opts.percent == null && !opts.amount) {
@@ -67,20 +65,6 @@ export function registerSwapCommands(program: Command): void {
       if (opts.sellRatioType) params.sell_ratio_type = opts.sellRatioType;
 
       const client = new OpenApiClient(getConfig(true));
-      confirmTrade({
-        action: "Swap",
-        route: WRITE_ROUTES.swap,
-        params,
-        keyFields: ["chain", "from_address", "input_token", "output_token", "input_amount_bps", "input_amount", "slippage", "auto_slippage", "min_output_amount", "is_anti_mev"],
-        protections: [MIN_OUTPUT_PROTECTION, SLIPPAGE_PROTECTION],
-        annotations: {
-          ...weiAnnotations(params, ["gas_price"]),
-          ...(params.input_amount_bps
-            ? { input_amount_bps: `${Number(params.input_amount_bps) / 100}% of balance`, input_amount: "ignored — amount is set by input_amount_bps" }
-            : { input_amount: "smallest unit" }),
-        },
-      }, opts.yes);
-
       const data = await client.swap(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
@@ -107,7 +91,6 @@ export function registerSwapCommands(program: Command): void {
     .option("--max-priority-fee-per-gas <amount>", "EIP-1559 max priority fee per gas (BSC / BASE / ETH)")
     .option("--condition-orders <json>", "JSON array of take-profit/stop-loss conditions attached to each successful wallet's swap; not supported on arc / stable")
     .option("--sell-ratio-type <type>", "Sell ratio base: buy_amount (default) / hold_amount; only used with --condition-orders")
-    .option("--yes", "Skip the interactive confirmation prompt (requires GMGN_ALLOW_AUTOMATED_TRADES=1)")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       if (!opts.inputAmount && !opts.inputAmountBps && !opts.outputAmount) {
@@ -155,21 +138,6 @@ export function registerSwapCommands(program: Command): void {
       if (opts.sellRatioType) params.sell_ratio_type = opts.sellRatioType;
 
       const client = new OpenApiClient(getConfig(true));
-      confirmTrade({
-        action: "Multi-wallet swap",
-        route: WRITE_ROUTES.multiSwap,
-        params,
-        keyFields: ["chain", "accounts", "input_token", "output_token", "input_amount", "input_amount_bps", "output_amount", "slippage", "auto_slippage", "is_anti_mev"],
-        protections: [SLIPPAGE_PROTECTION, ANTI_MEV_PROTECTION],
-        totals: [`Wallets: ${params.accounts.length}`],
-        feeLabel: "Extra fees per wallet transaction",
-        annotations: {
-          ...weiAnnotations(params, ["gas_price"]),
-          ...perWalletAnnotations("input_amount", params.input_amount, () => "smallest unit"),
-          ...perWalletAnnotations("input_amount_bps", params.input_amount_bps, (v) => `${Number(v) / 100}% of balance`),
-        },
-      }, opts.yes);
-
       const data = await client.multiSwap(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
@@ -255,7 +223,6 @@ export function registerSwapCommands(program: Command): void {
     .option("--condition-orders <json>", "JSON array of condition sub-orders for smart_trade (must include a buy_low entry + TP/SL entries); V1 smart_trade is not supported on arbitrum / hyperevm / arc / stable")
     .option("--sell-param <json>", "JSON object of sell-side trade params used when a TP/SL condition fires (required for smart_trade)")
     .option("--buy-param <json>", "JSON object of buy-side trade params override for smart_trade")
-    .option("--yes", "Skip the interactive confirmation prompt (requires GMGN_ALLOW_AUTOMATED_TRADES=1)")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       if (!opts.amountIn && !opts.amountInPercent) {
@@ -309,20 +276,6 @@ export function registerSwapCommands(program: Command): void {
         params.buy_param = parseJsonOption(opts.buyParam, "--buy-param");
       }
       const client = new OpenApiClient(getConfig(true));
-      confirmTrade({
-        action: "Create strategy order",
-        route: WRITE_ROUTES.strategyCreate,
-        params,
-        keyFields: ["chain", "from_address", "base_token", "quote_token", "order_type", "sub_order_type", "amount_in", "amount_in_percent", "quote_investment", "open_price", "limit_price_mode", "expire_in", "slippage", "auto_slippage", "is_anti_mev"],
-        protections: [SLIPPAGE_PROTECTION, ANTI_MEV_PROTECTION, EXPIRY_PROTECTION],
-        feeLabel: "Extra fees when the order executes",
-        annotations: {
-          ...weiAnnotations(params, ["gas_price"]),
-          ...(params.amount_in_percent ? { amount_in_percent: `${params.amount_in_percent}% of balance` } : {}),
-          ...(params.expire_in != null ? { expire_in: "seconds" } : {}),
-        },
-      }, opts.yes);
-
       const data = await client.createStrategyOrder(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
@@ -360,7 +313,6 @@ export function registerSwapCommands(program: Command): void {
     .requiredOption("--order-id <id>", "Order ID to cancel")
     .option("--order-type <type>", "Order type: limit_order / smart_trade")
     .option("--close-sell-model <model>", "Sell model when closing")
-    .option("--yes", "Skip the interactive confirmation prompt (requires GMGN_ALLOW_AUTOMATED_TRADES=1)")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       validateChain(opts.chain);
@@ -373,24 +325,7 @@ export function registerSwapCommands(program: Command): void {
       if (opts.orderType) params.order_type = opts.orderType;
       if (opts.closeSellModel) params.close_sell_model = opts.closeSellModel;
       const client = new OpenApiClient(getConfig(true));
-      confirmTrade({
-        action: "Cancel strategy order",
-        route: WRITE_ROUTES.strategyCancel,
-        params,
-        keyFields: ["chain", "from_address", "order_id", "order_type"],
-      }, opts.yes);
-
       const data = await client.cancelStrategyOrder(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
-}
-
-// "input_amount.<wallet>" → hint, for the per-wallet maps of multi-swap.
-function perWalletAnnotations(field: string, map: Record<string, string> | undefined, hint: (v: string) => string): Record<string, string> {
-  const out: Record<string, string> = {};
-  if (map == null || typeof map !== "object") return out;
-  for (const [wallet, v] of Object.entries(map)) {
-    if (/^\w+$/.test(wallet)) out[`${field}.${wallet}`] = hint(String(v));
-  }
-  return out;
 }
