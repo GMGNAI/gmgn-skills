@@ -2,9 +2,8 @@ import { Command } from "commander";
 import { OpenApiClient, CreateTokenParams } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
-import { confirmTrade } from "../confirm.js";
 import { sanitizeMetadataField, validateMetadataUrl, MAX_DESCRIPTION_LEN, MAX_NAME_LEN } from "../sanitize.js";
-import { validateChain } from "../validate.js";
+import { nonNegativeInt, nonNegativeNumber, parseJsonOption, validateAddress, validateChain } from "../validate.js";
 
 export function registerCookingCommands(program: Command): void {
   const cooking = program.command("cooking").description("Token creation and launchpad commands");
@@ -34,7 +33,7 @@ export function registerCookingCommands(program: Command): void {
     .option("--website <url>", "Website URL")
     .option("--twitter <url>", "Twitter link")
     .option("--telegram <url>", "Telegram link")
-    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", parseFloat)
+    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", nonNegativeNumber("--slippage"))
     .option("--auto-slippage", "Enable automatic slippage")
     .option("--fee <amount>", "Base gas / fee")
     .option("--priority-fee <sol>", "Priority fee in SOL (SOL only)")
@@ -45,7 +44,7 @@ export function registerCookingCommands(program: Command): void {
     .option("--anti-mev", "Enable anti-MEV protection (SOL only)")
     .option("--anti-mev-mode <mode>", "Anti-MEV mode: off / normal / secure (SOL only)")
     .option("--raised-token <symbol>", "Raise token symbol: pump→USDC; bonk→USD1; fourmeme→USDT/USD1; base/robinhood→native only; leave empty for native")
-    .option("--dev-wallet-bps <n>", "Dev wallet fee in basis points (100 = 1%)", parseInt)
+    .option("--dev-wallet-bps <n>", "Dev wallet fee in basis points (100 = 1%)", nonNegativeInt("--dev-wallet-bps"))
     .option("--dev-gas <amount>", "Dev gas amount")
     .option("--dev-priority <amount>", "Dev priority fee")
     .option("--dev-tip <amount>", "Dev tip fee")
@@ -72,7 +71,6 @@ export function registerCookingCommands(program: Command): void {
     .option("--buy-trade-config <json>", "Buy-side trade config for CondMarket orders as JSON (TradeParam)")
     .option("--sell-trade-config <json>", "Sell-side trade config for auto-sell / pending_sell as JSON (TradeParam)")
     .option("--sell-configs <json>", "Auto-sell strategy list as JSON array (CookingSellConfig[])")
-    .option("--yes", "Skip the interactive confirmation prompt (requires GMGN_ALLOW_AUTOMATED_TRADES=1)")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       if (!opts.image && !opts.imageUrl) {
@@ -84,6 +82,7 @@ export function registerCookingCommands(program: Command): void {
         process.exit(1);
       }
       validateChain(opts.chain);
+      validateAddress(opts.from, opts.chain, "--from");
       // Validate/clean all free-text and link metadata before publishing. This
       // prevents the CLI from being used to mint tokens whose metadata carries a
       // prompt-injection payload aimed at other users' AI agents.
@@ -122,28 +121,16 @@ export function registerCookingCommands(program: Command): void {
       if (opts.isMayhem) params.is_mayhem = true;
       if (opts.isCashback) params.is_cashback = true;
       if (opts.isBuyBack) params.is_buy_back = true;
-      if (opts.pumpFeeShareList) params.pump_fee_share_list = JSON.parse(opts.pumpFeeShareList);
-      if (opts.flapRateConf) params.flap_rate_conf = JSON.parse(opts.flapRateConf);
-      if (opts.fourmemeRateConf) params.fourmeme_rate_conf = JSON.parse(opts.fourmemeRateConf);
-      if (opts.bagsFeeShareList) params.bags_fee_share_list = JSON.parse(opts.bagsFeeShareList);
+      if (opts.pumpFeeShareList) params.pump_fee_share_list = parseJsonOption(opts.pumpFeeShareList, "--pump-fee-share-list");
+      if (opts.flapRateConf) params.flap_rate_conf = parseJsonOption(opts.flapRateConf, "--flap-rate-conf");
+      if (opts.fourmemeRateConf) params.fourmeme_rate_conf = parseJsonOption(opts.fourmemeRateConf, "--fourmeme-rate-conf");
+      if (opts.bagsFeeShareList) params.bags_fee_share_list = parseJsonOption(opts.bagsFeeShareList, "--bags-fee-share-list");
       if (opts.bonkModel) params.bonk_model = opts.bonkModel;
-      if (opts.buyWallets) params.buy_wallets = JSON.parse(opts.buyWallets);
-      if (opts.snipBuyWallets) params.snip_buy_wallets = JSON.parse(opts.snipBuyWallets);
-      if (opts.buyTradeConfig) params.buy_trade_config = JSON.parse(opts.buyTradeConfig);
-      if (opts.sellTradeConfig) params.sell_trade_config = JSON.parse(opts.sellTradeConfig);
-      if (opts.sellConfigs) params.sell_configs = JSON.parse(opts.sellConfigs);
-      confirmTrade({
-        action: "Create token",
-        lines: [
-          `Chain:     ${params.chain}`,
-          `Launchpad: ${params.dex}`,
-          `Wallet:    ${params.from_address}`,
-          `Name:      ${params.name}`,
-          `Symbol:    ${params.symbol}`,
-          `Buy amount: ${params.buy_amt}`,
-        ],
-      }, opts.yes);
-
+      if (opts.buyWallets) params.buy_wallets = parseJsonOption(opts.buyWallets, "--buy-wallets");
+      if (opts.snipBuyWallets) params.snip_buy_wallets = parseJsonOption(opts.snipBuyWallets, "--snip-buy-wallets");
+      if (opts.buyTradeConfig) params.buy_trade_config = parseJsonOption(opts.buyTradeConfig, "--buy-trade-config");
+      if (opts.sellTradeConfig) params.sell_trade_config = parseJsonOption(opts.sellTradeConfig, "--sell-trade-config");
+      if (opts.sellConfigs) params.sell_configs = parseJsonOption(opts.sellConfigs, "--sell-configs");
       const client = new OpenApiClient(getConfig(true));
       const data = await client.createToken(params).catch(exitOnError);
       printResult(data, opts.raw);

@@ -2,8 +2,7 @@ import { Command } from "commander";
 import { OpenApiClient, SwapParams, MultiSwapParams, StrategyCreateParams, StrategyCancelParams } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
-import { confirmTrade } from "../confirm.js";
-import { validateAddress, validateChain, validateConditionOrdersSupported, validatePercent, validatePositiveInt, validateV1SmartTradeSupported } from "../validate.js";
+import { gweiToWei, nonNegativeInt, nonNegativeNumber, parseJsonOption, validateAddress, validateChain, validateConditionOrdersSupported, validatePercent, validatePositiveInt, validateV1SmartTradeSupported } from "../validate.js";
 
 export function registerSwapCommands(program: Command): void {
   program
@@ -14,8 +13,8 @@ export function registerSwapCommands(program: Command): void {
     .requiredOption("--input-token <address>", "Input token contract address")
     .requiredOption("--output-token <address>", "Output token contract address")
     .option("--amount <amount>", "Input raw amount (smallest unit)")
-    .option("--percent <pct>", "Input amount as a percentage, e.g. 50 = 50%, 1 = 1%; only valid when input_token is NOT a currency", parseFloat)
-    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", parseFloat)
+    .option("--percent <pct>", "Input amount as a percentage, e.g. 50 = 50%, 1 = 1%; only valid when input_token is NOT a currency", nonNegativeNumber("--percent"))
+    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", nonNegativeNumber("--slippage"))
     .option("--auto-slippage", "Enable automatic slippage")
     .option("--min-output <amount>", "Minimum output amount")
     .option("--anti-mev", "Enable anti-MEV protection, default true")
@@ -28,7 +27,6 @@ export function registerSwapCommands(program: Command): void {
     .option("--max-priority-fee-per-gas <amount>", "EIP-1559 max priority fee per gas (BSC / BASE / ETH)")
     .option("--condition-orders <json>", 'JSON array of take-profit/stop-loss conditions, e.g. \'[{"order_type":"profit_stop","side":"sell","price_scale":"150","sell_ratio":"100"}]\'; trace types: \'[{"order_type":"profit_stop_trace","side":"sell","price_scale":"150","sell_ratio":"100","drawdown_rate":"50"}]\'; not supported on arc / stable')
     .option("--sell-ratio-type <type>", "Sell ratio base: buy_amount (default) / hold_amount; only used with --condition-orders")
-    .option("--yes", "Skip the interactive confirmation prompt (requires GMGN_ALLOW_AUTOMATED_TRADES=1)")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       if (opts.percent == null && !opts.amount) {
@@ -56,34 +54,15 @@ export function registerSwapCommands(program: Command): void {
       if (opts.priorityFee) params.priority_fee = opts.priorityFee;
       if (opts.tipFee) params.tip_fee = opts.tipFee;
       if (opts.autoFee) params.auto_fee = true;
-      if (opts.gasPrice) params.gas_price = String(Math.round(parseFloat(opts.gasPrice) * 1e9));
+      if (opts.gasPrice) params.gas_price = gweiToWei(opts.gasPrice, "--gas-price");
       if (opts.gasLevel) params.gas_level = opts.gasLevel;
       if (opts.maxFeePerGas) params.max_fee_per_gas = opts.maxFeePerGas;
       if (opts.maxPriorityFeePerGas) params.max_priority_fee_per_gas = opts.maxPriorityFeePerGas;
       if (opts.conditionOrders) {
         validateConditionOrdersSupported(opts.chain, "swap");
-        try {
-          params.condition_orders = JSON.parse(opts.conditionOrders);
-        } catch {
-          console.error("[gmgn-cli] --condition-orders must be valid JSON");
-          process.exit(1);
-        }
+        params.condition_orders = parseJsonOption(opts.conditionOrders, "--condition-orders");
       }
       if (opts.sellRatioType) params.sell_ratio_type = opts.sellRatioType;
-
-      confirmTrade({
-        action: "Swap",
-        lines: [
-          `Chain:        ${params.chain}`,
-          `Wallet:       ${params.from_address}`,
-          `Input token:  ${params.input_token}`,
-          `Output token: ${params.output_token}`,
-          opts.percent != null
-            ? `Amount:       ${opts.percent}% of balance`
-            : `Amount:       ${params.input_amount} (smallest unit)`,
-          `Slippage:     ${opts.autoSlippage ? "auto" : (params.slippage ?? "default")}`,
-        ],
-      }, opts.yes);
 
       const client = new OpenApiClient(getConfig(true));
       const data = await client.swap(params).catch(exitOnError);
@@ -100,7 +79,7 @@ export function registerSwapCommands(program: Command): void {
     .option("--input-amount <json>", 'JSON map of wallet→amount (smallest unit), e.g. \'{"addr1":"1000000","addr2":"2000000"}\'')
     .option("--input-amount-bps <json>", 'JSON map of wallet→percent in bps (1–10000, e.g. 5000=50%), e.g. \'{"addr1":"5000"}\'')
     .option("--output-amount <json>", "JSON map of wallet→target output amount")
-    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", parseFloat)
+    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", nonNegativeNumber("--slippage"))
     .option("--auto-slippage", "Enable automatic slippage")
     .option("--anti-mev", "Enable anti-MEV protection")
     .option("--priority-fee <sol>", "Priority fee in SOL (SOL only, ≥ 0.00001)")
@@ -112,7 +91,6 @@ export function registerSwapCommands(program: Command): void {
     .option("--max-priority-fee-per-gas <amount>", "EIP-1559 max priority fee per gas (BSC / BASE / ETH)")
     .option("--condition-orders <json>", "JSON array of take-profit/stop-loss conditions attached to each successful wallet's swap; not supported on arc / stable")
     .option("--sell-ratio-type <type>", "Sell ratio base: buy_amount (default) / hold_amount; only used with --condition-orders")
-    .option("--yes", "Skip the interactive confirmation prompt (requires GMGN_ALLOW_AUTOMATED_TRADES=1)")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       if (!opts.inputAmount && !opts.inputAmountBps && !opts.outputAmount) {
@@ -125,6 +103,9 @@ export function registerSwapCommands(program: Command): void {
         console.error("[gmgn-cli] --accounts must be 1–100 comma-separated wallet addresses");
         process.exit(1);
       }
+      accounts.forEach((a: string) => validateAddress(a, opts.chain, "--accounts"));
+      validateAddress(opts.inputToken, opts.chain, "--input-token");
+      validateAddress(opts.outputToken, opts.chain, "--output-token");
       const params: MultiSwapParams = {
         chain: opts.chain,
         accounts: opts.chain === "sol" ? accounts : accounts.map((a: string) => a.toLowerCase()),
@@ -132,16 +113,13 @@ export function registerSwapCommands(program: Command): void {
         output_token: opts.outputToken,
       };
       if (opts.inputAmount) {
-        try { params.input_amount = JSON.parse(opts.inputAmount); }
-        catch { console.error("[gmgn-cli] --input-amount must be valid JSON"); process.exit(1); }
+        params.input_amount = parseJsonOption(opts.inputAmount, "--input-amount");
       }
       if (opts.inputAmountBps) {
-        try { params.input_amount_bps = JSON.parse(opts.inputAmountBps); }
-        catch { console.error("[gmgn-cli] --input-amount-bps must be valid JSON"); process.exit(1); }
+        params.input_amount_bps = parseJsonOption(opts.inputAmountBps, "--input-amount-bps");
       }
       if (opts.outputAmount) {
-        try { params.output_amount = JSON.parse(opts.outputAmount); }
-        catch { console.error("[gmgn-cli] --output-amount must be valid JSON"); process.exit(1); }
+        params.output_amount = parseJsonOption(opts.outputAmount, "--output-amount");
       }
       if (opts.slippage != null) params.slippage = opts.slippage;
       if (opts.autoSlippage) params.auto_slippage = true;
@@ -149,27 +127,15 @@ export function registerSwapCommands(program: Command): void {
       if (opts.priorityFee) params.priority_fee = opts.priorityFee;
       if (opts.tipFee) params.tip_fee = opts.tipFee;
       if (opts.autoFee) params.auto_fee = true;
-      if (opts.gasPrice) params.gas_price = String(Math.round(parseFloat(opts.gasPrice) * 1e9));
+      if (opts.gasPrice) params.gas_price = gweiToWei(opts.gasPrice, "--gas-price");
       if (opts.gasLevel) params.gas_level = opts.gasLevel;
       if (opts.maxFeePerGas) params.max_fee_per_gas = opts.maxFeePerGas;
       if (opts.maxPriorityFeePerGas) params.max_priority_fee_per_gas = opts.maxPriorityFeePerGas;
       if (opts.conditionOrders) {
         validateConditionOrdersSupported(opts.chain, "multi_swap");
-        try { params.condition_orders = JSON.parse(opts.conditionOrders); }
-        catch { console.error("[gmgn-cli] --condition-orders must be valid JSON"); process.exit(1); }
+        params.condition_orders = parseJsonOption(opts.conditionOrders, "--condition-orders");
       }
       if (opts.sellRatioType) params.sell_ratio_type = opts.sellRatioType;
-
-      confirmTrade({
-        action: "Multi-wallet swap",
-        lines: [
-          `Chain:        ${params.chain}`,
-          `Wallets:      ${params.accounts.length} (${params.accounts.join(", ")})`,
-          `Input token:  ${params.input_token}`,
-          `Output token: ${params.output_token}`,
-          `Slippage:     ${opts.autoSlippage ? "auto" : (params.slippage ?? "default")}`,
-        ],
-      }, opts.yes);
 
       const client = new OpenApiClient(getConfig(true));
       const data = await client.multiSwap(params).catch(exitOnError);
@@ -241,10 +207,10 @@ export function registerSwapCommands(program: Command): void {
     .option("--amount-in <amount>", "Input amount (smallest unit)")
     .option("--amount-in-percent <pct>", "Input amount as a percentage (e.g. 50 = 50%)")
     .option("--limit-price-mode <mode>", "Price mode: exact / slippage (default: slippage)")
-    .option("--expire-in <seconds>", "Order expiry in seconds", parseInt)
+    .option("--expire-in <seconds>", "Order expiry in seconds", nonNegativeInt("--expire-in"))
     .option("--sell-ratio-type <type>", "Sell ratio basis: buy_amount (default) / hold_amount")
     .option("--quote-investment <amount>", "Quote token investment amount (smart_trade)")
-    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", parseFloat)
+    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", nonNegativeNumber("--slippage"))
     .option("--auto-slippage", "Enable automatic slippage")
     .option("--priority-fee <sol>", "Priority fee in SOL (required for SOL chain)")
     .option("--tip-fee <amount>", "Tip fee (required for SOL chain)")
@@ -257,7 +223,6 @@ export function registerSwapCommands(program: Command): void {
     .option("--condition-orders <json>", "JSON array of condition sub-orders for smart_trade (must include a buy_low entry + TP/SL entries); V1 smart_trade is not supported on arbitrum / hyperevm / arc / stable")
     .option("--sell-param <json>", "JSON object of sell-side trade params used when a TP/SL condition fires (required for smart_trade)")
     .option("--buy-param <json>", "JSON object of buy-side trade params override for smart_trade")
-    .option("--yes", "Skip the interactive confirmation prompt (requires GMGN_ALLOW_AUTOMATED_TRADES=1)")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       if (!opts.amountIn && !opts.amountInPercent) {
@@ -269,6 +234,9 @@ export function registerSwapCommands(program: Command): void {
         process.exit(1);
       }
       validateChain(opts.chain);
+      validateAddress(opts.from, opts.chain, "--from");
+      validateAddress(opts.baseToken, opts.chain, "--base-token");
+      validateAddress(opts.quoteToken, opts.chain, "--quote-token");
       if (opts.orderType === "smart_trade") {
         validateV1SmartTradeSupported(opts.chain);
       }
@@ -293,35 +261,20 @@ export function registerSwapCommands(program: Command): void {
       if (opts.priorityFee) params.priority_fee = opts.priorityFee;
       if (opts.tipFee) params.tip_fee = opts.tipFee;
       if (opts.autoFee) params.auto_fee = true;
-      if (opts.gasPrice) params.gas_price = String(Math.round(parseFloat(opts.gasPrice) * 1e9));
+      if (opts.gasPrice) params.gas_price = gweiToWei(opts.gasPrice, "--gas-price");
       if (opts.gasLevel) params.gas_level = opts.gasLevel;
       if (opts.maxFeePerGas) params.max_fee_per_gas = opts.maxFeePerGas;
       if (opts.maxPriorityFeePerGas) params.max_priority_fee_per_gas = opts.maxPriorityFeePerGas;
       if (opts.antiMev) params.is_anti_mev = true;
       if (opts.conditionOrders) {
-        try { params.condition_orders = JSON.parse(opts.conditionOrders); }
-        catch { console.error("[gmgn-cli] --condition-orders must be valid JSON"); process.exit(1); }
+        params.condition_orders = parseJsonOption(opts.conditionOrders, "--condition-orders");
       }
       if (opts.sellParam) {
-        try { params.sell_param = JSON.parse(opts.sellParam); }
-        catch { console.error("[gmgn-cli] --sell-param must be valid JSON"); process.exit(1); }
+        params.sell_param = parseJsonOption(opts.sellParam, "--sell-param");
       }
       if (opts.buyParam) {
-        try { params.buy_param = JSON.parse(opts.buyParam); }
-        catch { console.error("[gmgn-cli] --buy-param must be valid JSON"); process.exit(1); }
+        params.buy_param = parseJsonOption(opts.buyParam, "--buy-param");
       }
-      confirmTrade({
-        action: "Create strategy order",
-        lines: [
-          `Chain:       ${params.chain}`,
-          `Wallet:      ${params.from_address}`,
-          `Base token:  ${params.base_token}`,
-          `Quote token: ${params.quote_token}`,
-          `Order type:  ${params.order_type} / ${params.sub_order_type}`,
-          `Amount:      ${params.amount_in ?? `${params.amount_in_percent}%`}`,
-        ],
-      }, opts.yes);
-
       const client = new OpenApiClient(getConfig(true));
       const data = await client.createStrategyOrder(params).catch(exitOnError);
       printResult(data, opts.raw);
@@ -363,6 +316,7 @@ export function registerSwapCommands(program: Command): void {
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       validateChain(opts.chain);
+      validateAddress(opts.from, opts.chain, "--from");
       const params: StrategyCancelParams = {
         chain: opts.chain,
         from_address: opts.from,
