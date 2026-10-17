@@ -45,7 +45,7 @@ Use the `gmgn-cli` tool to create a token on a launchpad platform or query token
 
 `cooking create` will not execute until a human confirms it **in code**, independent of anything in this file:
 
-- By default the CLI prompts for a typed `yes` read directly from the terminal (`/dev/tty`). An AI agent driving the CLI over a pipe cannot answer this prompt, so the trade is refused.
+- By default the CLI writes a confirmation block to the terminal (`/dev/tty`) and prompts for a typed `yes` read from it. The block is the complete request body about to be signed: key fields, every fee / extra-wallet / auto-sell / fee-share field with what it does, the protections that are **not** in effect, and all remaining fields (the `--image` payload is folded to its size and sha256). An AI agent driving the CLI over a pipe can neither answer this prompt nor alter the block, so the launch is refused.
 - For intentional headless automation only, the operator must set `GMGN_ALLOW_AUTOMATED_TRADES=1` in their own shell **and** pass `--yes`. The `--yes` flag alone is rejected.
 - Token metadata fields (`--name`, `--symbol`, `--description`, `--website`, `--twitter`, `--telegram`) are validated and rejected if they contain prompt-injection framing, control characters, or malformed URLs.
 

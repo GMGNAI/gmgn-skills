@@ -1,10 +1,10 @@
 import { Command } from "commander";
-import { OpenApiClient, CreateTokenParams } from "../client/OpenApiClient.js";
+import { OpenApiClient, BuyWalletInfo, CreateTokenParams, WRITE_ROUTES } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
-import { confirmTrade } from "../confirm.js";
+import { confirmTrade, displayText, nativeSymbol, Protection, SLIPPAGE_PROTECTION, sumDecimals, weiAnnotations } from "../confirm.js";
 import { sanitizeMetadataField, validateMetadataUrl, MAX_DESCRIPTION_LEN, MAX_NAME_LEN } from "../sanitize.js";
-import { validateChain } from "../validate.js";
+import { nonNegativeInt, nonNegativeNumber, parseJsonOption, validateAddress, validateChain } from "../validate.js";
 
 export function registerCookingCommands(program: Command): void {
   const cooking = program.command("cooking").description("Token creation and launchpad commands");
@@ -34,7 +34,7 @@ export function registerCookingCommands(program: Command): void {
     .option("--website <url>", "Website URL")
     .option("--twitter <url>", "Twitter link")
     .option("--telegram <url>", "Telegram link")
-    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", parseFloat)
+    .option("--slippage <n>", "Slippage tolerance (e.g. 30 = 30%)", nonNegativeNumber("--slippage"))
     .option("--auto-slippage", "Enable automatic slippage")
     .option("--fee <amount>", "Base gas / fee")
     .option("--priority-fee <sol>", "Priority fee in SOL (SOL only)")
@@ -45,7 +45,7 @@ export function registerCookingCommands(program: Command): void {
     .option("--anti-mev", "Enable anti-MEV protection (SOL only)")
     .option("--anti-mev-mode <mode>", "Anti-MEV mode: off / normal / secure (SOL only)")
     .option("--raised-token <symbol>", "Raise token symbol: pump→USDC; bonk→USD1; fourmeme→USDT/USD1; base/robinhood→native only; leave empty for native")
-    .option("--dev-wallet-bps <n>", "Dev wallet fee in basis points (100 = 1%)", parseInt)
+    .option("--dev-wallet-bps <n>", "Dev wallet fee in basis points (100 = 1%)", nonNegativeInt("--dev-wallet-bps"))
     .option("--dev-gas <amount>", "Dev gas amount")
     .option("--dev-priority <amount>", "Dev priority fee")
     .option("--dev-tip <amount>", "Dev tip fee")
@@ -84,6 +84,7 @@ export function registerCookingCommands(program: Command): void {
         process.exit(1);
       }
       validateChain(opts.chain);
+      validateAddress(opts.from, opts.chain, "--from");
       // Validate/clean all free-text and link metadata before publishing. This
       // prevents the CLI from being used to mint tokens whose metadata carries a
       // prompt-injection payload aimed at other users' AI agents.
@@ -122,30 +123,59 @@ export function registerCookingCommands(program: Command): void {
       if (opts.isMayhem) params.is_mayhem = true;
       if (opts.isCashback) params.is_cashback = true;
       if (opts.isBuyBack) params.is_buy_back = true;
-      if (opts.pumpFeeShareList) params.pump_fee_share_list = JSON.parse(opts.pumpFeeShareList);
-      if (opts.flapRateConf) params.flap_rate_conf = JSON.parse(opts.flapRateConf);
-      if (opts.fourmemeRateConf) params.fourmeme_rate_conf = JSON.parse(opts.fourmemeRateConf);
-      if (opts.bagsFeeShareList) params.bags_fee_share_list = JSON.parse(opts.bagsFeeShareList);
+      if (opts.pumpFeeShareList) params.pump_fee_share_list = parseJsonOption(opts.pumpFeeShareList, "--pump-fee-share-list");
+      if (opts.flapRateConf) params.flap_rate_conf = parseJsonOption(opts.flapRateConf, "--flap-rate-conf");
+      if (opts.fourmemeRateConf) params.fourmeme_rate_conf = parseJsonOption(opts.fourmemeRateConf, "--fourmeme-rate-conf");
+      if (opts.bagsFeeShareList) params.bags_fee_share_list = parseJsonOption(opts.bagsFeeShareList, "--bags-fee-share-list");
       if (opts.bonkModel) params.bonk_model = opts.bonkModel;
-      if (opts.buyWallets) params.buy_wallets = JSON.parse(opts.buyWallets);
-      if (opts.snipBuyWallets) params.snip_buy_wallets = JSON.parse(opts.snipBuyWallets);
-      if (opts.buyTradeConfig) params.buy_trade_config = JSON.parse(opts.buyTradeConfig);
-      if (opts.sellTradeConfig) params.sell_trade_config = JSON.parse(opts.sellTradeConfig);
-      if (opts.sellConfigs) params.sell_configs = JSON.parse(opts.sellConfigs);
+      if (opts.buyWallets) params.buy_wallets = parseJsonOption(opts.buyWallets, "--buy-wallets");
+      if (opts.snipBuyWallets) params.snip_buy_wallets = parseJsonOption(opts.snipBuyWallets, "--snip-buy-wallets");
+      if (opts.buyTradeConfig) params.buy_trade_config = parseJsonOption(opts.buyTradeConfig, "--buy-trade-config");
+      if (opts.sellTradeConfig) params.sell_trade_config = parseJsonOption(opts.sellTradeConfig, "--sell-trade-config");
+      if (opts.sellConfigs) params.sell_configs = parseJsonOption(opts.sellConfigs, "--sell-configs");
+      const client = new OpenApiClient(getConfig(true));
       confirmTrade({
         action: "Create token",
-        lines: [
-          `Chain:     ${params.chain}`,
-          `Launchpad: ${params.dex}`,
-          `Wallet:    ${params.from_address}`,
-          `Name:      ${params.name}`,
-          `Symbol:    ${params.symbol}`,
-          `Buy amount: ${params.buy_amt}`,
-        ],
+        route: WRITE_ROUTES.createToken,
+        params,
+        keyFields: ["chain", "dex", "from_address", "name", "symbol", "buy_amt", "raised_token", "slippage", "auto_slippage", "is_anti_mev", "anti_mev_mode"],
+        blobFields: ["image"],
+        protections: [SLIPPAGE_PROTECTION, LAUNCH_ANTI_MEV_PROTECTION],
+        totals: cookingTotals(params),
+        annotations: weiAnnotations(params, ["gas_price", "max_fee_per_gas", "max_priority_fee_per_gas", "dev_max_fee_per_gas"]),
       }, opts.yes);
 
-      const client = new OpenApiClient(getConfig(true));
       const data = await client.createToken(params).catch(exitOnError);
       printResult(data, opts.raw);
     });
+}
+
+// A standard launch sends anti-MEV off, so on SOL say so unless it is turned on.
+const LAUNCH_ANTI_MEV_PROTECTION: Protection = {
+  text: "Anti-MEV protection is off for the launch buy (is_anti_mev not set and anti_mev_mode not normal / secure) — the dev buy can be sandwiched.",
+  isSet: (b) => b.chain !== "sol" || b.is_anti_mev === true || b.anti_mev_mode === "normal" || b.anti_mev_mode === "secure",
+};
+
+// Totals whose meaning only this command knows: the native-token spend across
+// the dev buy, bundle wallets and snipe wallets, and where the creator fees go.
+// (Tip / priority fee totals, nested configs included, are added by confirmTrade.)
+function cookingTotals(params: CreateTokenParams): string[] {
+  const terms = [`${displayText(String(params.buy_amt))} (dev)`];
+  const amounts = [String(params.buy_amt)];
+  const addGroup = (wallets: BuyWalletInfo[] | undefined, label: string) => {
+    if (!Array.isArray(wallets) || wallets.length === 0) return;
+    const group = wallets.map((w) => String(w?.buy_amt));
+    terms.push(`${sumDecimals(group) ?? "?"} (${wallets.length} ${label})`);
+    amounts.push(...group);
+  };
+  addGroup(params.buy_wallets, "buy wallets");
+  addGroup(params.snip_buy_wallets, "snipe wallets");
+  const lines = [`Total buy spend: ${terms.join(" + ")} = ${sumDecimals(amounts) ?? "?"} ${nativeSymbol(params.chain)}`];
+
+  const shares = [params.pump_fee_share_list, params.bags_fee_share_list].flatMap((l) => (Array.isArray(l) ? l : []));
+  if (shares.length) {
+    const list = shares.map((s) => `${s?.provider}:${s?.username} ${Number(s?.basic_points) / 100}%`).join(", ");
+    lines.push(`Creator fees routed to: ${displayText(list)}`);
+  }
+  return lines;
 }
