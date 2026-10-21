@@ -567,7 +567,7 @@ gmgn-cli callout global --chain sol --page-token <next_page_token> --raw
 
 ### Swap / Quote / Query
 
-> **Human confirmation is enforced in code.** `swap`, `multi-swap`, `order strategy create`, and `cooking create` prompt for a typed `yes` on the terminal before executing. For non-interactive/automated use you must both set `GMGN_ALLOW_AUTOMATED_TRADES=1` in your shell and pass `--yes`; `--yes` alone is rejected. This guards against an AI agent being tricked (e.g. by malicious token metadata) into placing a trade without you.
+> **Direct execution.** `swap`, `multi-swap`, `order strategy create`, `order strategy cancel`, and `cooking create` submit immediately after validating their options. They do not require a terminal prompt, `--yes`, or `GMGN_ALLOW_AUTOMATED_TRADES`; this keeps scheduled and unattended strategies operational.
 
 ```bash
 # Submit swap with fixed slippage

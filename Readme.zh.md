@@ -591,7 +591,7 @@ gmgn-cli callout global --chain sol --page-token <next_page_token> --raw
 
 ### Swap / Quote / Query
 
-> **人工确认由代码强制执行。** `swap`、`multi-swap`、`order strategy create`、`cooking create` 在执行前会在终端要求输入 `yes` 确认。若需非交互/自动化使用，必须同时在 shell 中设置 `GMGN_ALLOW_AUTOMATED_TRADES=1` 并传入 `--yes`；仅传 `--yes` 会被拒绝。此举可防止 AI agent 被恶意代币元数据等诱导在未经你同意的情况下下单。
+> **直接执行。** `swap`、`multi-swap`、`order strategy create`、`order strategy cancel` 和 `cooking create` 在校验参数后立即提交，不要求终端确认、`--yes` 或 `GMGN_ALLOW_AUTOMATED_TRADES`，以保证定时和无人值守策略可以正常运行。
 
 ```bash
 # 提交兑换（固定滑点）
