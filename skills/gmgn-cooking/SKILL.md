@@ -144,8 +144,8 @@ gmgn-cli cooking stats [--raw]
 | `--twitter` | No | Twitter / X URL. Must be a valid `http(s)` URL. |
 | `--telegram` | No | Telegram group URL. Must be a valid `http(s)` URL. |
 | `--fee` | No | Base gas / fee |
-| `--priority-fee` | No | Priority fee in SOL (**SOL only**, ≥ 0.0001 SOL) |
-| `--tip-fee` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB; ignored on BASE) |
+| `--priority-fee` | No | Priority fee in SOL (**SOL only**) |
+| `--tip-fee` | No | Tip fee (SOL in SOL / BSC in BNB; ignored on BASE) |
 | `--gas-price` | No | Gas price in wei (EVM chains: BSC / BASE) |
 | `--max-fee-per-gas` | No | Max fee per gas in wei (**EVM only**) |
 | `--max-priority-fee-per-gas` | No | Max priority fee per gas in wei (**EVM only**) |

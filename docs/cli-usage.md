@@ -643,9 +643,9 @@ npx gmgn-cli swap \
 | `--auto-slippage` | No | all | Enable automatic slippage |
 | `--min-output` | No | all | Minimum output amount (raw amount) |
 | `--anti-mev` | No | all | Enable anti-MEV protection (default true) |
-| `--priority-fee` | No | `sol` | Priority fee in SOL (≥ 0.00001) |
-| `--tip-fee` | No | `sol` / `bsc` | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB) |
-| `--gas-price` | No | `bsc` / `base` / `eth` | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01) |
+| `--priority-fee` | No | `sol` | Priority fee in SOL |
+| `--tip-fee` | No | `sol` / `bsc` | Tip fee (SOL in SOL / BSC in BNB) |
+| `--gas-price` | No | `bsc` / `base` / `eth` | Gas price in gwei |
 | `--gas-level` | No | `eth` | Gas price tier: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
 | `--auto-fee` | No | `eth` | **Only with `--condition-orders`.** GMGN automatically selects the optimal fee. |
 | `--max-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max fee per gas |
@@ -720,9 +720,9 @@ gmgn-cli multi-swap \
 | `--slippage` | No | all | Slippage tolerance as an integer 0–100, e.g. `30` = 30% |
 | `--auto-slippage` | No | all | Enable automatic slippage |
 | `--anti-mev` | No | all | Enable anti-MEV protection |
-| `--priority-fee` | No | `sol` | Priority fee in SOL (≥ 0.00001) |
-| `--tip-fee` | No | `sol` / `bsc` | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB) |
-| `--gas-price` | No | `bsc` / `base` / `eth` | Gas price in gwei (BSC ≥ 0.05 / BASE/ETH ≥ 0.01) |
+| `--priority-fee` | No | `sol` | Priority fee in SOL |
+| `--tip-fee` | No | `sol` / `bsc` | Tip fee (SOL in SOL / BSC in BNB) |
+| `--gas-price` | No | `bsc` / `base` / `eth` | Gas price in gwei |
 | `--gas-level` | No | `eth` | Gas price tier: `low` / `average` / `high`. Mutually exclusive with `--gas-price`. |
 | `--auto-fee` | No | `eth` | **Only with `--condition-orders`.** GMGN automatically selects the optimal fee. |
 | `--max-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max fee per gas |
@@ -807,7 +807,7 @@ gmgn-cli order strategy create \
 | `--auto-slippage` | No | Enable automatic slippage |
 | `--priority-fee` | No | Priority fee in SOL (**required for SOL chain**) |
 | `--tip-fee` | No | Tip fee (**required for SOL chain**) |
-| `--gas-price` | No | Gas price in gwei (**required for BSC**; ≥ 0.05 / BASE/ETH ≥ 0.01) |
+| `--gas-price` | No | Gas price in gwei (**required for BSC**) |
 | `--anti-mev` | No | Enable anti-MEV protection |
 
 > **Chain-specific fee requirements:**
@@ -930,8 +930,8 @@ gmgn-cli cooking create \
 | `--twitter` | No | Twitter link |
 | `--telegram` | No | Telegram link |
 | `--fee` | No | Base gas / fee |
-| `--priority-fee` | No | Priority fee in SOL (**SOL only**, ≥ 0.0001 SOL) |
-| `--tip-fee` | No | Tip fee (SOL ≥ 0.00001 / BSC ≥ 0.000001 BNB; ignored on BASE) |
+| `--priority-fee` | No | Priority fee in SOL (**SOL only**) |
+| `--tip-fee` | No | Tip fee (SOL in SOL / BSC in BNB; ignored on BASE) |
 | `--gas-price` | No | Gas price in wei (**EVM only**) |
 | `--max-fee-per-gas` | No | Max fee per gas in wei (**EVM only**) |
 | `--max-priority-fee-per-gas` | No | Max priority fee per gas in wei (**EVM only**) |
