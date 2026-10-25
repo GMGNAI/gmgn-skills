@@ -333,7 +333,7 @@ cp .env.example .env
 # 编辑 .env，填入实际值
 ```
 
-配置加载顺序：`~/.config/gmgn/.env` → 项目 `.env`（项目级优先）。
+配置加载顺序：`~/.config/gmgn/.env` → 项目 `.env`（项目级优先）。Shell 中已 export 的同名环境变量优先级最高，会覆盖两个文件。
 
 ## 5. 在 AI 客户端中使用
 

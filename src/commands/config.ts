@@ -1,10 +1,10 @@
-import { config as loadDotenv } from "dotenv";
 import { Command } from "commander";
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { execSync } from "child_process";
+import { loadEnvFiles } from "../config.js";
 
 const GMGN_CONFIG_DIR = path.join(os.homedir(), ".config", "gmgn");
 const KEYPAIR_FILE = path.join(GMGN_CONFIG_DIR, "keypair.pem");
@@ -116,8 +116,7 @@ export function registerConfigCommands(program: Command): void {
       const lang = detectLang();
 
       if (opts.check) {
-        loadDotenv({ path: ENV_FILE, override: true });
-        loadDotenv();
+        loadEnvFiles();
         process.exit(process.env.GMGN_API_KEY ? 0 : 1);
       }
 

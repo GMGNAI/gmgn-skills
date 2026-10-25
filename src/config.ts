@@ -28,9 +28,15 @@ function enforceCredentialFilePermissions(path: string): void {
 
 enforceCredentialFilePermissions(GLOBAL_ENV_PATH);
 
-// Load global config first (~/.config/gmgn/.env, takes precedence), then project .env (supplements only)
-loadDotenv({ path: GLOBAL_ENV_PATH, override: true });
-loadDotenv();
+// Precedence: shell environment > project .env (cwd) > global ~/.config/gmgn/.env.
+// dotenv never overwrites a variable that is already set, so the higher-priority
+// source must be loaded first and the global file only fills in what is missing.
+export function loadEnvFiles(): void {
+  loadDotenv();
+  loadDotenv({ path: GLOBAL_ENV_PATH });
+}
+
+loadEnvFiles();
 
 export interface Config {
   apiKey: string;
