@@ -329,7 +329,7 @@ cp .env.example .env
 # Edit .env and fill in your values
 ```
 
-Config lookup order: `~/.config/gmgn/.env` → project `.env` (project takes precedence).
+Config lookup order: `~/.config/gmgn/.env` → project `.env` (project takes precedence). Variables already exported in your shell override both files.
 
 ## 5. Try in AI Clients
 

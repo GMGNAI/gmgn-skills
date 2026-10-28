@@ -97,6 +97,8 @@ Config lookup order (project overrides global):
 1. `~/.config/gmgn/.env` — global config, set once for all projects
 2. `.env` in the current working directory — project-level override (takes precedence)
 
+Variables already exported in the shell environment override both files.
+
 Required variables:
 - `GMGN_API_KEY` — apply at https://gmgn.ai/ai
 - `GMGN_PRIVATE_KEY` — PEM content, required for swap/order commands only
