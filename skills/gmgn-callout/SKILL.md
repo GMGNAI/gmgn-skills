@@ -1,7 +1,7 @@
 ---
 name: gmgn-callout
 description: Read GMGN call-outs (喊单) — public token calls that wallets publish on GMGN, with call price, call market cap, multiplier since the call, thesis text and the caller's current holding. Use when user asks who is calling a token, what a wallet has called, a wallet's call-out track record (hit rate, best multiplier), or wants the latest call-out feed (KOL-only, paid declarations, safe tokens). Read-only; publishing a call-out is not supported.
-argument-hint: "<record|global> --chain <sol|bsc|eth|base|megaeth|hyperevm|tron|monad|xlayer|robinhood|arbitrum|arc|stable> [--wallet <wallet_address>]"
+argument-hint: "<record|global> --chain <sol|bsc|eth|base|megaeth|hyperevm|tron|monad|xlayer|robinhood|arbitrum|arc|stable|avalanche> [--wallet <wallet_address>]"
 metadata:
   cliHelp: "gmgn-cli callout --help"
 ---
@@ -45,7 +45,7 @@ Use the `gmgn-cli` tool to read call-out data based on the user's request.
 
 ## Supported Chains
 
-`sol` / `bsc` / `eth` / `base` / `megaeth` / `hyperevm` / `tron` / `monad` / `xlayer` / `robinhood` / `arbitrum` / `arc` / `stable`
+`sol` / `bsc` / `eth` / `base` / `megaeth` / `hyperevm` / `tron` / `monad` / `xlayer` / `robinhood` / `arbitrum` / `arc` / `stable` / `avalanche`
 
 This is wider than the trading chains of other skills — call-outs are read-only data. A token surfaced here on e.g. `tron` or `monad` may not be queryable with `gmgn-token` or tradable with `gmgn-swap`.
 

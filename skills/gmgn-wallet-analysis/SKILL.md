@@ -2,7 +2,7 @@
 name: gmgn-wallet-analysis
 description: >-
   The trader's decision dossier on a wallet — four pass/fail gates (is the record real, is the edge still working THIS week, can you actually get filled, does it cut losses) plus what the wallet is holding and buying right now, its entry market-cap band, its copy window in seconds, and a concrete size cap. Answers the question a memecoin trader actually has: "the numbers look good, but if I copy this wallet what happens to me?" Use when the user asks 「这个钱包能跟吗」, 「帮我分析一下这个钱包」, 「它现在在买什么」, 「这个钱包最近还行吗」, 「跟着他买我能吃到吗」, 「他是不是已经不行了」, 「它是什么类型的」, "can I copy this wallet", "analyze this wallet", "what is this wallet buying now", "is this wallet still hot", "would I actually get filled following this", or pastes a bare wallet address. This is the default for a bare wallet address, answering "what kind of trader is this" and "should I act on it" in one pass. A one-line recap or 打法 advice (复盘, 一句话总结, 下一步怎么打) goes to gmgn-wallet-review; style-only asks (这个钱包什么风格, 打法) to gmgn-wallet-style.
-argument-hint: "--chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable> --wallet <wallet_address> [--latency <seconds>]"
+argument-hint: "--chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche> --wallet <wallet_address> [--latency <seconds>]"
 metadata:
   cliHelp: "gmgn-cli portfolio stats --help && gmgn-cli portfolio profits --help && gmgn-cli portfolio activity --help && gmgn-cli portfolio holdings --help && gmgn-cli portfolio created-tokens --help && gmgn-cli token info --help"
 ---
@@ -460,7 +460,7 @@ cross-check — and the CLI remains the only supported way to read wallet data.)
 
 ## Supported Chains
 
-`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` — whatever `gmgn-cli portfolio` accepts. `portfolio stats --period` accepts only `7d` and `30d`; `portfolio profits --period` accepts `1d` / `7d` / `30d` / `all`. Every conclusion is a statement about its window — the report names the window, and so should you.
+`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` — whatever `gmgn-cli portfolio` accepts. `portfolio stats --period` accepts only `7d` and `30d`; `portfolio profits --period` accepts `1d` / `7d` / `30d` / `all`. Every conclusion is a statement about its window — the report names the window, and so should you.
 
 ## Notes
 

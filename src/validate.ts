@@ -1,4 +1,4 @@
-const VALID_CHAINS = new Set(["sol", "bsc", "base", "eth", "arbitrum", "hyperevm", "robinhood", "arc", "stable" /*, "monad" */]);
+const VALID_CHAINS = new Set(["sol", "bsc", "base", "eth", "arbitrum", "hyperevm", "robinhood", "arc", "stable", "avalanche" /*, "monad" */]);
 const SOL_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const EVM_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 const POSITIVE_INT_RE = /^\d+$/;
@@ -13,7 +13,7 @@ export function validateChain(chain: string): void {
 }
 
 export function validateAddress(address: string, chain: string, label: string): void {
-  const isEvm = chain === "bsc" || chain === "base" || chain === "eth" || chain === "arbitrum" || chain === "hyperevm" || chain === "robinhood" || chain === "arc" || chain === "stable" /* || chain === "monad" */;
+  const isEvm = VALID_CHAINS.has(chain) && chain !== "sol";
   const valid = isEvm ? EVM_ADDRESS_RE.test(address) : SOL_ADDRESS_RE.test(address);
   if (!valid) {
     console.error(
@@ -37,7 +37,7 @@ const NO_CONDITION_ORDER_CHAINS = new Set(["arc", "stable"]);
 
 // V1 smart_trade is unavailable on the newer EVM chains. They support the V2
 // strategy endpoint instead; the CLI currently exposes only the V1 command.
-const NO_V1_SMART_TRADE_CHAINS = new Set(["arbitrum", "hyperevm", "arc", "stable"]);
+const NO_V1_SMART_TRADE_CHAINS = new Set(["arbitrum", "hyperevm", "arc", "stable", "avalanche"]);
 
 export function validateConditionOrdersSupported(chain: string, feature: string): void {
   if (NO_CONDITION_ORDER_CHAINS.has(chain)) {
@@ -73,7 +73,7 @@ export function validatePercent(value: number): void {
 // Keep the two lists independent.
 const CALLOUT_CHAINS = new Set([
   "sol", "bsc", "eth", "base", "megaeth", "hyperevm",
-  "tron", "monad", "xlayer", "robinhood", "arbitrum", "arc", "stable",
+  "tron", "monad", "xlayer", "robinhood", "arbitrum", "arc", "stable", "avalanche",
 ]);
 const CALLOUT_MAX_CHAINS = 20;
 const CALLOUT_MAX_LIMIT = 50;

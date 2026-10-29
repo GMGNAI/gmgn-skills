@@ -1,7 +1,7 @@
 ---
 name: gmgn-token
 description: Research any crypto or meme token by address — real-time price, market cap, liquidity, holder list, trader list, top Smart Money and KOL positions, security audit (honeypot, rug pull risk, dev wallet, renounced status), social links (Twitter/X, website) via GMGN API on Solana, BSC, Base, or Ethereum. Use when user asks about a token's price, safety, holders, traders, smart money exposure, or wants due diligence before buying.
-argument-hint: "<sub-command> --chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable> --address <token_address>"
+argument-hint: "<sub-command> --chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche> --address <token_address>"
 metadata:
   cliHelp: "gmgn-cli token --help"
 ---
@@ -46,7 +46,7 @@ Use the `gmgn-cli` tool to query token information based on the user's request.
 
 ## Supported Chains
 
-`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable`
+`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche`
 
 ## Prerequisites
 
@@ -80,7 +80,7 @@ When a request returns `429`:
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` |
 | `--address` | Yes | Token contract address |
 | `--raw` | No | Output raw single-line JSON (for piping or further processing) |
 
@@ -88,7 +88,7 @@ When a request returns `429`:
 
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
-| `--chain` | Yes | — | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
+| `--chain` | Yes | — | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` |
 | `--address` | Yes | — | Token contract address |
 | `--limit` | No | `20` | Number of results, max `100` |
 | `--order-by` | No | `amount_percentage` | Sort field — see table below |

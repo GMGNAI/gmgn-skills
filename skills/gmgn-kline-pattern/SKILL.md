@@ -23,7 +23,7 @@ below is computed by you from that one response — no script, no second call.
 
 ## Supported Chains
 
-`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable`.
+`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche`.
 
 ## Prerequisites
 

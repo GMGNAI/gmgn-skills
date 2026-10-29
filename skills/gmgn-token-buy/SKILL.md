@@ -36,7 +36,7 @@ description: >-
   and an amount needs sizing, so both start here; a bare address needs only a
   verdict, so it is gmgn-contract-dd's; a signed transaction is always
   gmgn-swap's.
-argument-hint: "<token name | symbol | contract address> [amount, e.g. 200u | 0.5 ETH | 1 sol] [--chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable>]"
+argument-hint: "<token name | symbol | contract address> [amount, e.g. 200u | 0.5 ETH | 1 sol] [--chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche>]"
 metadata:
   cliHelp: "gmgn-cli market search --help"
 ---
