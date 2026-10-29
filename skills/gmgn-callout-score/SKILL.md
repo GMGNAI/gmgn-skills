@@ -130,7 +130,7 @@ read this table before using any of them.
 `robinhood` / `arbitrum` / `arc` / `stable` for `callout record`.
 
 The conduct axis additionally needs `portfolio activity` and `portfolio stats`, which cover
-`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable`.
+`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche`.
 On a chain outside that set, report the selection axis only and say the conduct axis is
 unavailable on this chain.
 

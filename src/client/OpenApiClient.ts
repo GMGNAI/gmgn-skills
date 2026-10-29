@@ -203,7 +203,7 @@ export interface TokenSignalGroup {
 export interface HotSearchesParam {
   label?: string;
   interval: string;       // "1m" | "5m" | "1h" | "6h" | "24h"
-  chain: string;          // "sol" | "bsc" | "base" | "eth" | "robinhood" | "arc" | "stable"
+  chain: string;          // any chain accepted by validateChain
   filters?: string[];
   limit?: number;
   [key: string]: string[] | number | string | undefined;
@@ -897,17 +897,8 @@ function formatCurl(method: string, url: string, headers: Record<string, string>
   return `\n[curl]\ncurl -X ${method} '${url}' \\\n${headerArgs}${bodyArg}\n`;
 }
 
-const TRENCHES_QUOTE_ADDRESS_TYPES: Record<string, number[]> = {
-  sol:  [4, 5, 3, 1, 13, 0],
-  bsc:  [6, 7, 1, 16, 8, 3, 9, 10, 2, 17, 18, 0],
-  base: [11, 3, 12, 13, 0],
-  eth:  [20, 11, 8, 3, 12, 1, 0],
-  robinhood: [11, 20, 24, 12, 26, 0],
-};
-
 function buildTrenchesBody(chain: string, types?: string[], platforms?: string[], limit?: number, filters?: Record<string, number | string>): Record<string, unknown> {
   const selectedTypes = types?.length ? types : ["new_creation", "near_completion", "completed"];
-  const quote_address_type = TRENCHES_QUOTE_ADDRESS_TYPES[chain] ?? [];
   const actualLimit = limit ?? 80;
   const section: Record<string, unknown> = {
     filters: ["offchain", "onchain"],
@@ -915,11 +906,11 @@ function buildTrenchesBody(chain: string, types?: string[], platforms?: string[]
     limit: actualLimit,
     ...filters,
   };
-  // Let the service apply its current per-chain launchpad defaults when the user
-  // does not provide an explicit filter. Keeping a duplicate client-side allow-list
-  // here can silently hide newly supported platforms until the CLI is released.
+  // Let the service apply its current per-chain launchpad_platform and
+  // quote_address_type defaults when the user does not provide explicit filters.
+  // Keeping duplicate client-side lists here silently hides newly supported
+  // platforms / quote currencies until the CLI is released.
   if (platforms?.length) section.launchpad_platform = platforms;
-  if (quote_address_type.length) section.quote_address_type = quote_address_type;
   const body: Record<string, unknown> = { version: "v2" };
   for (const type of selectedTypes) {
     body[type] = { ...section };

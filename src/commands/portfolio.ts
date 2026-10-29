@@ -10,7 +10,7 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("holdings")
     .description("Get wallet token holdings")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
     .requiredOption("--wallet <address>", "Wallet address")
     .option("--limit <n>", "Page size (default 20, max 50)", parseInt, 20)
     .option("--cursor <cursor>", "Pagination cursor")
@@ -46,7 +46,7 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("activity")
     .description("Get wallet transaction activity")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
     .requiredOption("--wallet <address>", "Wallet address")
     .option("--token <address>", "Filter by token contract address")
     .option("--limit <n>", "Page size", parseInt)
@@ -71,7 +71,7 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("stats")
     .description("Get wallet trading statistics (supports multiple wallets)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
     .requiredOption("--wallet <address...>", "Wallet address(es), repeatable")
     .option("--period <period>", "Stats period: 7d / 30d", "7d")
     .option("--raw", "Output raw JSON")
@@ -86,7 +86,7 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("profits")
     .description("Batch query wallet profit and loss (1–100 wallets)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
     .requiredOption("--wallet <address...>", "Wallet address(es), up to 100")
     .option("--period <period>", "Profit period: 1d / 7d / 30d / all", "7d")
     .option("--raw", "Output raw JSON")
@@ -118,7 +118,7 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("token-balance")
     .description("Get wallet token balance for a single token")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
     .requiredOption("--wallet <address>", "Wallet address")
     .requiredOption("--token <address>", "Token contract address")
     .option("--raw", "Output raw JSON")
@@ -134,7 +134,7 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("created-tokens")
     .description("Get tokens created by a developer wallet")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
     .requiredOption("--wallet <address>", "Developer wallet address")
     .option("--order-by <field>", "Sort field: market_cap / token_ath_mc")
     .option("--direction <dir>", "Sort direction: asc / desc")

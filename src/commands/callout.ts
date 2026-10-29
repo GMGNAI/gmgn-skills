@@ -5,7 +5,7 @@ import { exitOnError, printResult } from "../output.js";
 import { validateCalloutChains, validateCalloutLimit, validateNonNegativeDecimal } from "../validate.js";
 
 const CALLOUT_CHAIN_HELP =
-  "sol / bsc / eth / base / megaeth / hyperevm / tron / monad / xlayer / robinhood / arbitrum / arc / stable";
+  "sol / bsc / eth / base / megaeth / hyperevm / tron / monad / xlayer / robinhood / arbitrum / arc / stable / avalanche";
 
 export function registerCalloutCommands(program: Command): void {
   const callout = program.command("callout").description("Call-out (喊单) read commands: one wallet's call-out history, global call-out feed");

@@ -759,6 +759,8 @@ gmgn-cli order strategy list --chain sol
 
 # 撤销策略单
 gmgn-cli order strategy cancel --chain sol --from <wallet_address> --order-id <order_id>
+# V2 策略单（通过 OpenAPI V2 接口创建）
+gmgn-cli order strategy cancel --chain arbitrum --from <wallet_address> --order-id <order_id> --order-type smart_trade_v2
 ```
 
 ### Cooking 一键策略单（需要私钥）
@@ -779,10 +781,10 @@ gmgn-cli cooking \
 
 | 接口类型 | 支持的链 | 链原生货币 |
 |----------|----------|-----------|
-| token / market / portfolio / track | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` | — |
-| swap / order | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` | sol: SOL、USDC · bsc: BNB、USDC · base: ETH、USDC · eth: ETH |
-| gas-price | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` | — |
-| track kol / track smartmoney · market signal | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable`（kol/smartmoney）· `sol` / `bsc` / `robinhood` / `arc` / `stable`（signal） | — |
+| token / market / portfolio / track | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` | — |
+| swap / order | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` | sol: SOL、USDC · bsc: BNB、USDC · base: ETH、USDC · eth: ETH |
+| gas-price | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` | — |
+| track kol / track smartmoney · market signal | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche`（kol/smartmoney）· `sol` / `bsc` / `base` / `eth` / `arbitrum` / `robinhood` / `arc` / `stable` / `avalanche`（signal） | — |
 | cooking create | `sol` / `bsc` / `base` / `robinhood` | — |
 
 ---

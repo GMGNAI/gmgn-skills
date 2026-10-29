@@ -5,6 +5,8 @@ import { exitOnError, printResult } from "../output.js";
 import { validateAddress, validateChain, validateSearchChain, normalizeSearchQuery } from "../validate.js";
 
 const unsupportedSignalTypes = new Set([14, 15, 16]);
+// Mirrors dto.TokenSignalChains in gmgn-openapi-service (google-api rejects hyperevm).
+const TOKEN_SIGNAL_CHAINS = ["sol", "bsc", "base", "eth", "arbitrum", "robinhood", "arc", "stable", "avalanche"];
 
 // Parse token age string. If a unit suffix is present (s/m), use it as-is.
 // Bare numbers (no unit) are treated as minutes with a warning.
@@ -36,7 +38,7 @@ export function registerMarketCommands(program: Command): void {
   market
     .command("kline")
     .description("Get token K-line (candlestick) data")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
     .requiredOption("--address <address>", "Token contract address")
     .requiredOption("--resolution <resolution>", "Candlestick resolution: 1s (Pro only) / 30s / 1m / 5m / 15m / 1h / 4h / 1d")
     .option("--from <timestamp>", "Start time (Unix seconds)", parseInt)
@@ -61,7 +63,7 @@ export function registerMarketCommands(program: Command): void {
   const trendingCmd = market
     .command("trending")
     .description("Get trending token swap data")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
     .requiredOption("--interval <interval>", "Time interval: 1m / 5m / 1h / 6h / 24h")
     .option("--limit <n>", "Number of results (default 100, max 100)", parseInt)
     .option("--order-by <field>", "Sort field: default / volume / swaps / marketcap / holder_count / price / change1h / ... (see docs for full list)")
@@ -106,9 +108,9 @@ export function registerMarketCommands(program: Command): void {
   const trenchesCmd = market
     .command("trenches")
     .description("Get Trenches token data (new creation, near completion, completed)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
     .option("--type <type...>", "Categories to query, repeatable: new_creation / near_completion / completed (default: all three)")
-    .option("--launchpad-platform <platform...>", "Launchpad platform filter, repeatable (default: all platforms for the chain)")
+    .option("--launchpad-platform <platform...>", "Launchpad platform filter, repeatable (default: the server's per-chain default platform list)")
     .option("--limit <n>", "Max results per category, max 80 (default: 80)", parseInt)
     .option("--filter-preset <preset>", "Apply a named filter preset: safe / smart-money / strict")
     .option("--sort-by <field>", "Client-side sort per category: smart_degen_count / renowned_count / volume_24h / volume_1h / swaps_24h / swaps_1h / rug_ratio / holder_count / usd_market_cap / created_timestamp")
@@ -167,7 +169,7 @@ export function registerMarketCommands(program: Command): void {
   market
     .command("signal")
     .description("Query token signals (price spikes, smart money buys, large buys, etc.) — max 50 results per group")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / robinhood / arc / stable")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / robinhood / arc / stable / avalanche (hyperevm not supported)")
     .option("--signal-type <n...>", "Signal type(s), repeatable: 1–13, 17–21 (default: all supported types)", (v: string, acc: number[]) => { acc.push(parseInt(v, 10)); return acc; }, [] as number[])
     .option("--mc-min <usd>", "Min market cap at trigger time (USD)", parseFloat)
     .option("--mc-max <usd>", "Max market cap at trigger time (USD)", parseFloat)
@@ -181,8 +183,8 @@ export function registerMarketCommands(program: Command): void {
     .option("--raw", "Output raw JSON")
     .action(async (opts: Record<string, unknown>) => {
       validateChain(opts["chain"] as string);
-      if (!["sol", "bsc", "robinhood", "arc", "stable"].includes(opts["chain"] as string)) {
-        console.error(`[gmgn-cli] market signal only supports sol, bsc, robinhood, arc and stable, got "${opts["chain"]}"`);
+      if (!TOKEN_SIGNAL_CHAINS.includes(opts["chain"] as string)) {
+        console.error(`[gmgn-cli] market signal only supports ${TOKEN_SIGNAL_CHAINS.join(", ")}, got "${opts["chain"]}"`);
         process.exit(1);
       }
 
@@ -228,7 +230,7 @@ export function registerMarketCommands(program: Command): void {
   const hotSearchesCmd = market
     .command("hot-searches")
     .description("Get the hot-search ranking (most-searched tokens) for one or more chains")
-    .option("--chain <chain...>", "Chain(s), repeatable: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable (default: all default chains)")
+    .option("--chain <chain...>", "Chain(s), repeatable: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche (default: all default chains)")
     .option("--interval <interval>", "Time window: 1m / 5m / 1h / 6h / 24h (default 24h)", "24h")
     .option("--limit <n>", "Max results per chain (default 500)", parseInt)
     .option("--filter <tag...>", "Boolean filter tags, repeatable. sol defaults: renounced / frozen; EVM defaults: not_honeypot / verified / renounced")

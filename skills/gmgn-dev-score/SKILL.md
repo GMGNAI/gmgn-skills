@@ -33,7 +33,7 @@ description: >-
   "dev score" (decision → here): the deciding factor is whether a buy is on
   the table. If it is genuinely ambiguous, ask one short question instead of
   guessing — the two produce different reports and there is no cheap hedge.
-argument-hint: "--chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable> --dev <creator_address> [--max-pages <n>]"
+argument-hint: "--chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche> --dev <creator_address> [--max-pages <n>]"
 metadata:
   cliHelp: "gmgn-cli portfolio created-tokens --help && gmgn-cli portfolio activity --help && gmgn-cli token info --help"
 ---

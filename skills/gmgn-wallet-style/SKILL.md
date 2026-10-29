@@ -1,7 +1,7 @@
 ---
 name: gmgn-wallet-style
 description: Tag any wallet's trading style — one main title from a 20-cell frequency×P&L grid (印钞机, 磨损户, P小将, 一击必杀, and 16 others), one holding-speed subtitle (秒杀流/日内流/波段流/长持流), and any of 14 orthogonal badges plus a wash-trader flag. Every tag states the number that triggered it. Use when the user asks what kind of trader a wallet is — 「这个钱包什么风格」, 「交易风格」, 「打法」, 「是不是机器人」, 「是不是狙击盘的」, 「帮我给这个钱包打标签」, "what's this wallet's trading style", "tag this wallet". A bare wallet address with no question goes to gmgn-wallet-analysis. If the user also wants the tag shown on a real GMGN screenshot or as a clickable interactive page ("生成标签预览", "把标签叠加到这张截图上", "1:1还原钱包页并加标签", "可交互交易风格标签"), answer with Part A below and then also do Part B — the same algorithm, rendered. When 打法 / 风格 comes with 问题, 建议, 复盘 or 一句话总结, hand off to gmgn-wallet-review, which returns one tag plus a one-line recap and next step.
-argument-hint: "--chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable> --wallet <wallet_address> [--period 7d|30d] [--screenshot <path>]"
+argument-hint: "--chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche> --wallet <wallet_address> [--period 7d|30d] [--screenshot <path>]"
 metadata:
   cliHelp: "gmgn-cli portfolio stats --help && gmgn-cli portfolio activity --help"
 ---

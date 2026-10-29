@@ -1,7 +1,7 @@
 ---
 name: gmgn-track
 description: Get real-time crypto buy/sell activity from Smart Money wallets, KOL influencer wallets, and personally followed wallets via GMGN API — alpha signals, whale tracking, meme token copy-trading ideas on Solana, BSC, Base, or Ethereum. Also query which tokens a wallet has followed (bookmarked) on GMGN. Use when user asks what smart money or KOLs are buying, wants whale alerts, on-chain alpha, copy-trade signals, or wants to check a wallet's followed tokens. (For a specific wallet address's portfolio, use gmgn-portfolio.)
-argument-hint: "<follow-tokens|follow-wallet|kol|smartmoney> --chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable> [--wallet <wallet_address>]"
+argument-hint: "<follow-tokens|follow-wallet|kol|smartmoney> --chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche> [--wallet <wallet_address>]"
 metadata:
   cliHelp: "gmgn-cli track --help"
 ---
@@ -59,7 +59,7 @@ Use the `gmgn-cli` tool to query on-chain tracking data based on the user's requ
 
 ## Supported Chains
 
-`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable`
+`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche`
 
 ## Prerequisites
 
@@ -134,7 +134,7 @@ gmgn-cli track smartmoney --chain sol --side sell --limit 10 --raw
 
 | Option | Description |
 |--------|-------------|
-| `--chain` | Required. `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
+| `--chain` | Required. `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` |
 | `--wallet <address>` | Required. Wallet address to query |
 | `--group-id <id>` | Filter by group: `all_group` (all tokens across groups), `default` (default group), or a user-defined group ID |
 | `--interval <interval>` | Time interval for price change stats (e.g. `1m`, `5m`, `1h`, `6h`, `24h`) |
@@ -176,7 +176,7 @@ Each item in `followings` contains:
 
 | Option | Description |
 |--------|-------------|
-| `--chain` | Required. `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
+| `--chain` | Required. `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` |
 | `--wallet <address>` | Required. Wallet address to query |
 
 ## `track follow-token-groups` Response Fields
@@ -194,7 +194,7 @@ Each item in `followings` contains:
 
 | Option | Description |
 |--------|-------------|
-| `--chain` | Required. `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
+| `--chain` | Required. `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` |
 | `--wallet <address>` | Filter by wallet address |
 | `--limit <n>` | Page size (1–100, default 10) |
 | `--side <side>` | Trade direction: `buy` / `sell` |

@@ -11,7 +11,7 @@ description: >-
   ("这个钱包发盘情况怎么样", "是不是发币方钱包", "dev 信誉怎么样", "is this a token-creator wallet"), or gives a wallet
   address and wants any of these judgments. A one-line recap of the record or next-step advice (复盘,
   一句话总结战绩, 下一步怎么打) goes to gmgn-wallet-review.
-argument-hint: "--chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable> --wallet <wallet_address> [--latency <seconds>] [--slippage <pct>] [--gas <usd>] [--sample <n>]"
+argument-hint: "--chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche> --wallet <wallet_address> [--latency <seconds>] [--slippage <pct>] [--gas <usd>] [--sample <n>]"
 metadata:
   cliHelp: "gmgn-cli portfolio stats --help && gmgn-cli portfolio activity --help && gmgn-cli portfolio created-tokens --help && gmgn-cli token security --help"
 ---
@@ -516,7 +516,7 @@ Fields the script reads, confirmed against `portfolio stats` / `portfolio activi
 
 ## Supported Chains
 
-`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable`
+`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche`
 
 ## Prerequisites
 

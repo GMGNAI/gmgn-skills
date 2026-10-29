@@ -1,7 +1,7 @@
 ---
 name: gmgn-narrative
 description: Independently research and write an AI-narrative / due-diligence card for a crypto token — the kind of "叙事分析" card that covers what story a token is telling and what's independently verifiable about its social spread. Use whenever the user asks for a token's "叙事"、"舆情"、"传播情况"、"社媒热度", wants to know "这个币在讲什么故事"/"这个币是不是在蹭热点", asks to analyze or fact-check a token's X/Twitter narrative, or gives a bare contract address together with a request to understand its story rather than just its price/security numbers. This is not a raw safety score (`gmgn-contract-dd` owns that), not a screened hot list (`gmgn-heat-rank` owns that), and not a buy decision (`gmgn-token-buy` / `gmgn-swap` own that) — route here only when the ask is specifically about story and spread.
-argument-hint: "--chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable> --address <token_address>"
+argument-hint: "--chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche> --address <token_address>"
 metadata:
   cliHelp: "gmgn-cli token info --help && gmgn-cli token security --help"
 ---

@@ -735,6 +735,8 @@ gmgn-cli order strategy list --chain sol
 
 # Cancel a strategy order
 gmgn-cli order strategy cancel --chain sol --from <wallet_address> --order-id <order_id>
+# V2 strategy orders (created via the OpenAPI V2 endpoint)
+gmgn-cli order strategy cancel --chain arbitrum --from <wallet_address> --order-id <order_id> --order-type smart_trade_v2
 ```
 
 ### Cooking (requires private key)
@@ -755,10 +757,10 @@ gmgn-cli cooking \
 
 | Commands | Chains | Chain Currencies |
 |----------|--------|-----------------|
-| token / market / portfolio / track | `sol` / `bsc` / `base` / `eth` / `robinhood` / `arc` / `stable` | — |
-| swap / order | `sol` / `bsc` / `base` / `eth` / `robinhood` / `arc` / `stable` | sol: SOL, USDC · bsc: BNB, USDC · base: ETH, USDC · eth: ETH |
-| gas-price | `sol` / `bsc` / `base` / `eth` / `robinhood` / `arc` / `stable` | — |
-| track kol / track smartmoney · market signal | `sol` / `bsc` / `base` / `eth` / `robinhood` / `arc` / `stable` (kol/smartmoney) · `sol` / `bsc` / `robinhood` / `arc` / `stable` (signal) | — |
+| token / market / portfolio / track | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` | — |
+| swap / order | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` | sol: SOL, USDC · bsc: BNB, USDC · base: ETH, USDC · eth: ETH |
+| gas-price | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` | — |
+| track kol / track smartmoney · market signal | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` (kol/smartmoney) · `sol` / `bsc` / `base` / `eth` / `arbitrum` / `robinhood` / `arc` / `stable` / `avalanche` (signal) | — |
 | cooking create | `sol` / `bsc` / `base` / `robinhood` | — |
 
 ---

@@ -118,7 +118,7 @@ Only these fields are confirmed against the live API. Anything else — degrade 
 
 ## Supported Chains
 
-`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable`
+`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche`
 
 `robinhood` is a real chain hosting tokenized-stock tickers with the `longxyz` launchpad — do not assume a `0x…` address is on BSC/ETH. If `created-tokens` returns `inner_count=0, open_count=0`, probe the other chains before concluding the address is not a dev.
 

@@ -23,7 +23,7 @@ description: >-
   catch. Everything else is unchanged and unconditionally this skill's:
   selling, percentage sells, swaps, multi-wallet batch trading, limit orders,
   stop loss, take profit, trailing orders, order status, gas prices.
-argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [gas-price --chain <eth|bsc|base|sol>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type <limit_order|smart_trade> --sub-order-type <buy_low|buy_high|stop_loss|take_profit|mix_trade> ...]"
+argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [gas-price --chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type <limit_order|smart_trade> --sub-order-type <buy_low|buy_high|stop_loss|take_profit|mix_trade> ...]"
 metadata:
   cliHelp: "gmgn-cli swap --help"
 ---
@@ -79,7 +79,7 @@ Use the `gmgn-cli` tool to submit a token swap or query an existing order. `GMGN
 
 ## Supported Chains
 
-`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable`
+`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche`
 
 ## Chain Currencies
 
@@ -179,7 +179,7 @@ gmgn-cli swap \
 
 | Parameter | Required | Chain | Description |
 |-----------|----------|-------|-------------|
-| `--chain` | Yes | all | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
+| `--chain` | Yes | all | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` |
 | `--from` | Yes | all | Wallet address (must match API Key binding) |
 | `--input-token` | Yes | all | Input token contract address |
 | `--output-token` | Yes | all | Output token contract address |
@@ -360,7 +360,7 @@ gmgn-cli multi-swap \
 
 | Parameter | Required | Chain | Description |
 |-----------|----------|-------|-------------|
-| `--chain` | Yes | all | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
+| `--chain` | Yes | all | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` |
 | `--accounts` | Yes | all | Comma-separated wallet addresses (1–100, all must be bound to the API Key) |
 | `--input-token` | Yes | all | Input token contract address |
 | `--output-token` | Yes | all | Output token contract address |
@@ -527,11 +527,11 @@ gmgn-cli order strategy create \
 
 | Parameter | Required | Chain | Description |
 |-----------|----------|-------|-------------|
-| `--chain` | Yes | all | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
+| `--chain` | Yes | all | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` |
 | `--from` | Yes | all | Wallet address (must match API Key binding) |
 | `--base-token` | Yes | all | Base token contract address |
 | `--quote-token` | Yes | all | Quote token contract address |
-| `--order-type` | Yes | all | Order type: `limit_order` / `smart_trade`. **`arc` / `stable` support `limit_order` only** — `smart_trade` returns a 400. |
+| `--order-type` | Yes | all | Order type: `limit_order` / `smart_trade`. **`arbitrum` / `hyperevm` / `arc` / `stable` / `avalanche` support `limit_order` only** — V1 `smart_trade` returns a 400 there (use the OpenAPI V2 strategy endpoint for TP/SL). |
 | `--sub-order-type` | Yes | all | `limit_order`: `buy_low` / `buy_high` / `stop_loss` / `take_profit`; `smart_trade` with condition_orders: `mix_trade` |
 | `--check-price` | No* | all | Trigger price — required for `limit_order`; omit for `smart_trade` (trigger is in the `buy_low` condition order) |
 | `--open-price` | No | all | Open price of the position |
@@ -553,7 +553,7 @@ gmgn-cli order strategy create \
 | `--max-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max fee per gas. |
 | `--max-priority-fee-per-gas` | No | `bsc` / `base` / `eth` | EIP-1559 max priority fee per gas. Capped to `--max-fee-per-gas`. |
 | `--anti-mev` | No | sol / bsc / eth | Enable anti-MEV protection. Not supported on `base`. |
-| `--condition-orders` | No | sol / bsc / base / eth / robinhood | JSON array of condition sub-orders for `smart_trade`. Must include one `buy_low` entry (with `check_price` lower than `open_price`) plus at least one TP/SL entry. **Not supported on `arc` / `stable`** (`smart_trade` is rejected there). |
+| `--condition-orders` | No | sol / bsc / base / eth / robinhood | JSON array of condition sub-orders for `smart_trade`. Must include one `buy_low` entry (with `check_price` lower than `open_price`) plus at least one TP/SL entry. **Not supported on `arbitrum` / `hyperevm` / `arc` / `stable` / `avalanche`** (V1 `smart_trade` is rejected there). |
 
 ### `order strategy create` Response Fields
 
@@ -584,7 +584,7 @@ gmgn-cli order strategy list --chain sol --group-tag STMix --base-token <token_a
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` |
 | `--type` | No | `open` (default) / `history` |
 | `--from` | No | Filter by wallet address |
 | `--group-tag` | Yes | Filter by order group: `LimitOrder` (limit orders only) / `STMix` (mixed strategy orders: take-profit, stop-loss, trailing take-profit, trailing stop-loss) |
@@ -608,7 +608,7 @@ gmgn-cli order strategy list --chain sol --group-tag STMix --base-token <token_a
 | `auto_slippage`            | bool   | Whether auto slippage is enabled |
 | `base_decimal`             | int    | Base token decimal places |
 | `base_token`               | string | Base token contract address |
-| `chain`                    | string | Chain: `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
+| `chain`                    | string | Chain: `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` |
 | `close_amount`             | string | Token amount sold on close; empty when order is open |
 | `close_price`              | string | Token price at close; empty when order is open |
 | `close_sell_model`         | string | Sell model used on close; empty when order is open |
@@ -633,7 +633,7 @@ gmgn-cli order strategy list --chain sol --group-tag STMix --base-token <token_a
 | `open_sign_hash`           | string | Open transaction hash; empty before confirmed |
 | `order_id`                 | string | Unique order ID (UUID) |
 | `order_statistic`          | object | Cumulative order statistics; see `order_statistic` Object below |
-| `order_type`               | string | Order type: `smart_trade` / `limit_order` |
+| `order_type`               | string | Order type: `smart_trade` / `smart_trade_v2` / `limit_order` — pass it as `--order-type` to `order strategy cancel` |
 | `place_action`             | string | Placement action; empty when not applicable |
 | `prepare_status`           | string | Preparation status; empty when not applicable |
 | `priority_fee`             | string | Priority fee; SOL / BSC only |
@@ -722,10 +722,10 @@ gmgn-cli order strategy cancel \
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` |
 | `--from` | Yes | Wallet address (must match API Key binding) |
 | `--order-id` | Yes | Order ID to cancel |
-| `--order-type` | No | Order type: `limit_order` (limit order) / `smart_trade` (mixed strategy order: take-profit, stop-loss, trailing take-profit, trailing stop-loss) |
+| `--order-type` | No | Order type: `limit_order` (limit order) / `smart_trade` (mixed strategy order: take-profit, stop-loss, trailing take-profit, trailing stop-loss) / `smart_trade_v2` (orders created via the OpenAPI V2 strategy endpoint). Default when omitted: `smart_trade` |
 | `--close-sell-model` | No | Sell model when closing the order |
 
 ---
@@ -737,7 +737,7 @@ gmgn-cli order strategy cancel \
 - `--amount` is in the **smallest unit** (e.g., lamports for SOL)
 - `order strategy create`, `order strategy list`, and `order strategy cancel` use signed auth (require `GMGN_PRIVATE_KEY`)
 - Use `--raw` to get single-line JSON for further processing
-- **Chain restrictions for fee flags** — see the `Chain` column in each parameter table above. `--priority-fee` and `--tip-fee` are SOL/BSC only; `--gas-price`, `--max-fee-per-gas`, `--max-priority-fee-per-gas` are BSC/BASE/ETH only; `--gas-level` and `--auto-fee` are ETH only. The server returns 400 if a chain-restricted flag is sent on the wrong chain. (`gas-price` itself supports all four chains including `sol`.)
+- **Chain restrictions for fee flags** — see the `Chain` column in each parameter table above. `--priority-fee` and `--tip-fee` are SOL/BSC only; `--gas-price`, `--max-fee-per-gas`, `--max-priority-fee-per-gas` are BSC/BASE/ETH only; `--gas-level` and `--auto-fee` are ETH only. The server returns 400 if a chain-restricted flag is sent on the wrong chain. (`gas-price` itself supports every chain: `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche`.)
 - **No per-chain fee bounds** — the OpenAPI layer does not clamp `--priority-fee`, `--tip-fee`, `--gas-price`, `--max-fee-per-gas` or `--max-priority-fee-per-gas` to any minimum or maximum; values are forwarded as-is and the trade backend enforces its global fee ceilings. The server only checks:
   - every fee must be a non-negative number, otherwise 400
   - BSC: `max_fee_per_gas` / `max_priority_fee_per_gas` of `"0"` returns 400
