@@ -112,7 +112,9 @@ common = stats_raw.get('common') or {}
 buy  = int(_f(stats_raw.get('buy', stats_raw.get('buy_count'))))
 sell = int(_f(stats_raw.get('sell', stats_raw.get('sell_count'))))
 trades = buy + sell
-token_num = int(_f(pnl.get('token_num')))
+raw_count = _f(pnl.get('token_num'), float('nan'))
+token_num = (int(raw_count) if not isinstance(pnl.get('token_num'), bool)
+             and math.isfinite(raw_count) and raw_count >= 0 and raw_count.is_integer() else None)
 dist = dict(
     gt_5   = int(_f(pnl.get('pnl_gt_5x_num'))),
     x2_5   = int(_f(pnl.get('pnl_2x_5x_num'))),
@@ -206,7 +208,8 @@ summ = dict(sampled=len(acts), entry_under_100k=round(entry_under_100k, 4),
 
 # ── 3. Dev-reputation (only if this wallet mostly launches, not trades) ──
 DEV_SEC_SCAN_N = 3     # how many of its most recent launches to security-scan
-is_dev_wallet = created_token_count > 0 and created_token_count > 0.5 * max(1, token_num)
+is_dev_wallet = (token_num is not None and token_num > 0
+                 and created_token_count > 0.5 * token_num)
 
 dev = None
 if is_dev_wallet:
@@ -265,9 +268,10 @@ tags = []
 def add_tag(emoji, zh, en):
     tags.append(dict(emoji=emoji, text=_(zh, en)))
 
-tn = max(1, token_num)
-big_win  = (dist['gt_5'] + dist['x2_5']) / tn
-big_loss = dist['lt_n50'] / tn
+tn = token_num if token_num is not None and token_num > 0 else None
+big_win = ((dist['gt_5'] + dist['x2_5']) / tn
+           if tn and 0 <= dist['gt_5'] + dist['x2_5'] <= tn else None)
+big_loss = dist['lt_n50'] / tn if tn and 0 <= dist['lt_n50'] <= tn else None
 early, flip = summ['entry_under_100k'], summ['fast_flip_rate']
 
 if dev is not None:
@@ -298,11 +302,11 @@ if 0 < w['avg_hold_s'] < 3600 and flip < 0.3 and trades >= 30:
     add_tag("🐇", f"快枪手：平均持仓 {fmt_dur(w['avg_hold_s'])}", f"Quick-draw: avg hold {fmt_dur(w['avg_hold_s'])}")
 if dev is None and 0 < summ['median_entry_mcap'] < 30000:
     add_tag("🔦", f"冷门捡漏：中位进场市值仅 {usd(summ['median_entry_mcap'])}", f"Obscure hunter: median entry mcap only {usd(summ['median_entry_mcap'])}")
-if w['realized_profit'] > 20000 and big_loss <= 0.05:
+if w['realized_profit'] > 20000 and big_loss is not None and big_loss <= 0.05:
     add_tag("📈", "真高手：净赚且极少大亏，止损纪律好", "True skill: net profitable with very few big losses")
-elif big_loss >= 0.3 and w['realized_profit'] < 0:
+elif big_loss is not None and big_loss >= 0.3 and w['realized_profit'] < 0:
     add_tag("🩸", f"亏损韭菜：{round(big_loss*100)}% 的币亏超 50%，长期净亏", f"Bag holder: {round(big_loss*100)}% of tokens lost over 50%")
-elif big_win >= 0.02 and w['winrate'] < 0.35 and w['realized_profit'] > 0:
+elif big_win is not None and big_win >= 0.02 and w['winrate'] < 0.35 and w['realized_profit'] > 0:
     add_tag("🎰", "赌狗打法：胜率低但靠少数暴击回本", "Gambler: low win-rate, carried by a few huge hits")
 if trades < 60 and w['realized_profit'] > 0 and flip < 0.1:
     add_tag("🐌", "慢工出细活：低频、可复制，最适合跟单", "Slow & steady: low frequency, repeatable — easiest to copy")
@@ -311,13 +315,15 @@ if not tags:
 
 # ── 5. Track-record score (is this trader actually good?) ──
 TRACK_W = dict(tail=0.34, upside=0.28, roi=0.16, win=0.10, size=0.12)
-tail_f    = 1 - dist['lt_n50'] / tn
-upside_f  = (dist['gt_5'] + dist['x2_5'] + dist['x0_2']) / tn
+tail_f    = 1 - big_loss if big_loss is not None else None
+winning_n = dist['gt_5'] + dist['x2_5'] + dist['x0_2']
+upside_f  = winning_n / tn if tn and 0 <= winning_n <= tn else None
 roi_f     = _clamp((w['roi'] + 0.05) / 0.35)
 win_f     = _clamp(w['winrate'] / 0.5)
-size_f    = _clamp((tn - 20) / 300)
+size_f    = _clamp((token_num - 20) / 300) if token_num is not None else None
 track_facs = dict(tail=tail_f, upside=upside_f, roi=roi_f, win=win_f, size=size_f)
-track_score = round(100 * sum(TRACK_W[k] * _clamp(v) for k, v in track_facs.items()))
+track_score = (round(100 * sum(TRACK_W[k] * _clamp(v) for k, v in track_facs.items()))
+               if all(v is not None for v in track_facs.values()) else None)
 TRACK_LABELS = dict(tail=_('止损纪律','Stop-loss discipline'), upside=_('盈利面','Profit share'),
                      roi=_('资金回报','Capital ROI'), win=_('胜率','Win rate'), size=_('样本量','Sample size'))
 
@@ -338,7 +344,8 @@ COPY_LABELS = dict(entry=_('进场市值','Entry mcap'), profit=_('单笔利润�
 # discount both display scores (not hidden, just flagged) rather than let them look falsely strong.
 SELF_DEAL_DISCOUNT = 0.45
 self_dealing = dev is not None
-track_disp = round(track_score * SELF_DEAL_DISCOUNT) if self_dealing else track_score
+track_disp = (round(track_score * SELF_DEAL_DISCOUNT)
+              if self_dealing and track_score is not None else track_score)
 copy_disp  = round(copy_score  * SELF_DEAL_DISCOUNT) if self_dealing else copy_score
 
 # ── 7. Copy-trade backtest ───────────────────────────────────
@@ -365,6 +372,8 @@ if dev is not None:
     else:
         v_emoji, v_text = "🟡", _( f"发币方钱包，Dev 信誉 {ds}/100 —— 看它的存活率与安全记录再决定是否跟它的新盘。",
                                     f"Token-creator wallet, Dev reputation {ds}/100 — check survival rate and security record before following its new launches.")
+elif ts is None:
+    v_emoji, v_text = '⚪', 'Token-count distribution unavailable — no track-record conclusion.'
 elif ts >= 65 and cs < 35:
     v_emoji, v_text = "⚠️", _( "高战绩、低可跟单 —— 学它的止损纪律，别抄它的入场；延迟和滑点会把薄利吃成负。",
                                 "High track record, low copy-tradeability — learn the stop-loss discipline, don't copy the entries; latency and slippage will turn thin profit negative.")
@@ -393,7 +402,7 @@ sec = _("📊 近7天战绩", "📊 7D Trading Stats")
 print(f"━━  {sec}  {'━'*(54-len(sec))}")
 print(f"  {_('已实现盈亏','Realized P&L')} {usd(w['realized_profit'])}   ROI {w['roi']*100:+.1f}%   "
       f"{_('胜率','Win rate')} {w['winrate']*100:.0f}%   {_('笔数','Trades')} {trades} ({buy}{_('买','buy')}/{sell}{_('卖','sell')})")
-print(f"  {_('交易币数','Tokens traded')} {token_num}   {_('均持仓','Avg hold')} {fmt_dur(w['avg_hold_s'])}   "
+print(f"  {_('交易币数','Tokens traded')} {token_num if token_num is not None else 'unknown'}   {_('均持仓','Avg hold')} {fmt_dur(w['avg_hold_s'])}   "
       f"{_('均单笔建仓','Avg position')} {usd(w['avg_buy_usd'])}")
 print()
 
@@ -409,9 +418,10 @@ if self_dealing:
 
 sec = _("🎯 真实战绩分（这交易员是不是真有本事）", "🎯 Track-Record Score (is this trader actually good?)")
 print(f"━━  {sec}  {'━'*(max(0,54-len(sec)))}")
-print(f"  {track_disp}/100")
+print(f"  {track_disp}/100" if track_disp is not None else '  unavailable — token count unavailable or distribution inconsistent')
 for k, v in track_facs.items():
-    print(f"    · {TRACK_LABELS[k]:14s}  {round(100*_clamp(v)):3d}/100   ({_('权重','w')} {TRACK_W[k]:.0%})")
+    value = f'{round(100*_clamp(v)):3d}/100' if v is not None else 'unknown'
+    print(f"    · {TRACK_LABELS[k]:14s}  {value}   ({_('权重','w')} {TRACK_W[k]:.0%})")
 print()
 
 sec = _("🚀 可跟单分（你跟进后能拿到多少）", "🚀 Copy-Tradeability Score (can YOU capture it?)")
