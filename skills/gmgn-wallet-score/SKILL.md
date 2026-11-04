@@ -123,10 +123,13 @@ dist = dict(
 realized_profit = _f(stats_raw.get('realized_profit'))
 bought_cost      = _f(stats_raw.get('bought_cost', stats_raw.get('total_cost')))
 created_token_count = int(_f(common.get('created_token_count')))
+roi = _f(stats_raw.get('realized_profit_pnl', stats_raw.get('pnl')), None)
+if roi is not None and not math.isfinite(roi):
+    roi = None
 
 w = dict(
     realized_profit=realized_profit,
-    roi=_f(stats_raw.get('realized_profit_pnl', stats_raw.get('pnl'))),
+    roi=roi,
     buy=buy, sell=sell, trades=trades,
     bought_cost=bought_cost,
     avg_buy_usd=(bought_cost / buy if buy else 0.0),
@@ -313,11 +316,12 @@ if not tags:
 TRACK_W = dict(tail=0.34, upside=0.28, roi=0.16, win=0.10, size=0.12)
 tail_f    = 1 - dist['lt_n50'] / tn
 upside_f  = (dist['gt_5'] + dist['x2_5'] + dist['x0_2']) / tn
-roi_f     = _clamp((w['roi'] + 0.05) / 0.35)
+roi_f     = _clamp((w['roi'] + 0.05) / 0.35) if w['roi'] is not None else None
 win_f     = _clamp(w['winrate'] / 0.5)
 size_f    = _clamp((tn - 20) / 300)
 track_facs = dict(tail=tail_f, upside=upside_f, roi=roi_f, win=win_f, size=size_f)
-track_score = round(100 * sum(TRACK_W[k] * _clamp(v) for k, v in track_facs.items()))
+track_score = (round(100 * sum(TRACK_W[k] * _clamp(v) for k, v in track_facs.items()))
+               if roi_f is not None else None)
 TRACK_LABELS = dict(tail=_('止损纪律','Stop-loss discipline'), upside=_('盈利面','Profit share'),
                      roi=_('资金回报','Capital ROI'), win=_('胜率','Win rate'), size=_('样本量','Sample size'))
 
@@ -338,22 +342,24 @@ COPY_LABELS = dict(entry=_('进场市值','Entry mcap'), profit=_('单笔利润�
 # discount both display scores (not hidden, just flagged) rather than let them look falsely strong.
 SELF_DEAL_DISCOUNT = 0.45
 self_dealing = dev is not None
-track_disp = round(track_score * SELF_DEAL_DISCOUNT) if self_dealing else track_score
+track_disp = round(track_score * SELF_DEAL_DISCOUNT) if self_dealing and track_score is not None else track_score
 copy_disp  = round(copy_score  * SELF_DEAL_DISCOUNT) if self_dealing else copy_score
 
 # ── 7. Copy-trade backtest ───────────────────────────────────
-wallet_pct = (w['realized_profit'] / w['bought_cost']) if w['bought_cost'] > 0 else w['roi']
-wallet_pct = _clamp(wallet_pct or 0.0001, -0.9, 3.0)   # clamp: dev wallets have near-zero bought_cost, ratio blows up
 LOW_MCAP_DRIFT_PER_S = 0.015
 drift_per_s = LOW_MCAP_DRIFT_PER_S * (0.3 + 0.7 * summ['entry_under_100k'])
 drift = LATENCY_S * drift_per_s
 slip = 2 * SLIPPAGE_PCT
 gas_pct = (GAS_USD / w['avg_buy_usd']) if w['avg_buy_usd'] > 0 else 0.0
-copy_pct = wallet_pct - drift - slip - gas_pct
-copy_7d = w['realized_profit'] * (copy_pct / wallet_pct) if wallet_pct else 0.0
-bt = dict(wallet_pct=round(wallet_pct,4), copy_pct=round(copy_pct,4), drift=round(drift,4),
-          slip=round(slip,4), gas_pct=round(gas_pct,4), wallet_7d=round(w['realized_profit'],1),
-          copy_7d=round(copy_7d,1), trap=round(w['realized_profit']-copy_7d,1))
+bt = None
+if math.isfinite(w['bought_cost']) and w['bought_cost'] > 0:
+    wallet_pct = _clamp(w['realized_profit'] / w['bought_cost'], -0.9, 3.0)
+    copy_pct = wallet_pct - drift - slip - gas_pct
+    copy_7d = (w['realized_profit'] * (copy_pct / wallet_pct)
+               if wallet_pct else w['bought_cost'] * copy_pct)
+    bt = dict(wallet_pct=round(wallet_pct,4), copy_pct=round(copy_pct,4), drift=round(drift,4),
+              slip=round(slip,4), gas_pct=round(gas_pct,4), wallet_7d=round(w['realized_profit'],1),
+              copy_7d=round(copy_7d,1), trap=round(w['realized_profit']-copy_7d,1))
 
 # ── 8. Verdict ────────────────────────────────────────────────
 ts, cs = track_disp, copy_disp
@@ -365,6 +371,8 @@ if dev is not None:
     else:
         v_emoji, v_text = "🟡", _( f"发币方钱包，Dev 信誉 {ds}/100 —— 看它的存活率与安全记录再决定是否跟它的新盘。",
                                     f"Token-creator wallet, Dev reputation {ds}/100 — check survival rate and security record before following its new launches.")
+elif ts is None or bt is None:
+    v_emoji, v_text = "⚠️", "Insufficient ROI or cost-basis data — no copy-return conclusion for this window."
 elif ts >= 65 and cs < 35:
     v_emoji, v_text = "⚠️", _( "高战绩、低可跟单 —— 学它的止损纪律，别抄它的入场；延迟和滑点会把薄利吃成负。",
                                 "High track record, low copy-tradeability — learn the stop-loss discipline, don't copy the entries; latency and slippage will turn thin profit negative.")
@@ -391,7 +399,8 @@ print()
 
 sec = _("📊 近7天战绩", "📊 7D Trading Stats")
 print(f"━━  {sec}  {'━'*(54-len(sec))}")
-print(f"  {_('已实现盈亏','Realized P&L')} {usd(w['realized_profit'])}   ROI {w['roi']*100:+.1f}%   "
+roi_text = f"{w['roi']*100:+.1f}%" if w['roi'] is not None else 'unknown'
+print(f"  {_('已实现盈亏','Realized P&L')} {usd(w['realized_profit'])}   ROI {roi_text}   "
       f"{_('胜率','Win rate')} {w['winrate']*100:.0f}%   {_('笔数','Trades')} {trades} ({buy}{_('买','buy')}/{sell}{_('卖','sell')})")
 print(f"  {_('交易币数','Tokens traded')} {token_num}   {_('均持仓','Avg hold')} {fmt_dur(w['avg_hold_s'])}   "
       f"{_('均单笔建仓','Avg position')} {usd(w['avg_buy_usd'])}")
@@ -409,9 +418,10 @@ if self_dealing:
 
 sec = _("🎯 真实战绩分（这交易员是不是真有本事）", "🎯 Track-Record Score (is this trader actually good?)")
 print(f"━━  {sec}  {'━'*(max(0,54-len(sec)))}")
-print(f"  {track_disp}/100")
+print(f"  {track_disp}/100" if track_disp is not None else "  Not measurable: ROI unknown")
 for k, v in track_facs.items():
-    print(f"    · {TRACK_LABELS[k]:14s}  {round(100*_clamp(v)):3d}/100   ({_('权重','w')} {TRACK_W[k]:.0%})")
+    factor_text = f"{round(100*_clamp(v)):3d}/100" if v is not None else 'unknown'
+    print(f"    · {TRACK_LABELS[k]:14s}  {factor_text}   ({_('权重','w')} {TRACK_W[k]:.0%})")
 print()
 
 sec = _("🚀 可跟单分（你跟进后能拿到多少）", "🚀 Copy-Tradeability Score (can YOU capture it?)")
@@ -424,11 +434,14 @@ print()
 sec = _("🧮 跟单回测", "🧮 Copy-Trade Backtest")
 print(f"━━  {sec}  {'━'*(max(0,54-len(sec)))}")
 print(f"  {_('假设','Assuming')}: {_('延迟','latency')} {LATENCY_S:.1f}s   {_('单边滑点','one-sided slippage')} {SLIPPAGE_PCT:.1%}   {_('每笔gas','gas/trade')} {usd(GAS_USD)}")
-print(f"  {_('钱包本人单笔收益率','Wallet per-trade return')}  {bt['wallet_pct']*100:+.1f}%")
-print(f"  {_('- 延迟漂移','- latency drift')}  {bt['drift']*100:.2f}pp    {_('- 双边滑点','- round-trip slippage')}  {bt['slip']*100:.2f}pp    {_('- gas占比','- gas cost')}  {bt['gas_pct']*100:.2f}pp")
-print(f"  {_('= 跟单后单笔收益率','= your per-trade return')}  {bt['copy_pct']*100:+.1f}%")
-print()
-print(f"  7D  {_('钱包本人','wallet')} {usd(bt['wallet_7d'])}  →  {_('跟单预估','copy estimate')} {usd(bt['copy_7d'])}   ({_('抄单损耗','execution drag')} {usd(bt['trap'])})")
+if bt is None:
+    print("  copy estimate not measurable for this window — positive cost basis required")
+else:
+    print(f"  {_('钱包本人单笔收益率','Wallet per-trade return')}  {bt['wallet_pct']*100:+.1f}%")
+    print(f"  {_('- 延迟漂移','- latency drift')}  {bt['drift']*100:.2f}pp    {_('- 双边滑点','- round-trip slippage')}  {bt['slip']*100:.2f}pp    {_('- gas占比','- gas cost')}  {bt['gas_pct']*100:.2f}pp")
+    print(f"  {_('= 跟单后单笔收益率','= your per-trade return')}  {bt['copy_pct']*100:+.1f}%")
+    print()
+    print(f"  7D  {_('钱包本人','wallet')} {usd(bt['wallet_7d'])}  →  {_('跟单预估','copy estimate')} {usd(bt['copy_7d'])}   ({_('抄单损耗','execution drag')} {usd(bt['trap'])})")
 if not has_mcap_data:
     print(f"  ⚠️ {_('未取到进场市值数据，延迟漂移按中性假设估算，可能失真','Entry mcap data unavailable — latency drift uses a neutral assumption and may be inaccurate')}")
 print()
@@ -509,6 +522,7 @@ Fields the script reads, confirmed against `portfolio stats` / `portfolio activi
 |-----------|---------|
 | Wallet is a Dev, Dev-reputation < 40 | 🔴 Stay away from its new launches |
 | Wallet is a Dev, Dev-reputation ≥ 40 | 🟡 Check survival rate / security record before following new launches |
+| ROI is unknown or a positive finite cost basis is unavailable (non-Dev) | ⚠️ Insufficient data; no copy-return conclusion for this window |
 | Track ≥65, Copy <35 | ⚠️ Learn the discipline, don't copy the entries |
 | Track ≥60, Copy ≥55 | 🟢 Worth a small copy-trade to verify |
 | Track <40 | 🔴 Not recommended as a copy-trade target |
@@ -553,6 +567,9 @@ A single run of this skill's script can burn through several of these in sequenc
 - This skill only reads data (`portfolio stats` / `activity` / `created-tokens`, `token security`) — it never executes a trade. For actually copy-trading, use [gmgn-swap](../gmgn-swap/SKILL.md) after this skill gives a 🟢 verdict.
 - Scores over a 7-day window can be noisy for low-trade-count wallets — the sample-size factor in the track-record score already discounts this, but treat a score built on <10 trades as low-confidence and say so.
 - The backtest (`--latency` / `--slippage` / `--gas`) is a rough estimate, not a precise simulation — actual slippage depends on the specific token's liquidity at the moment you'd have traded it.
+- Missing, malformed or nonfinite ROI is shown as unknown; the ROI factor and aggregate track-record score are withheld rather than scoring a fabricated zero. Other observed factors and the separate copy-tradeability score remain visible. A reported zero ROI remains zero.
+- The copy estimate requires a positive finite `bought_cost` (or the existing `total_cost` alias). Without it, even a reported ROI cannot establish the capital base for this window: print "copy estimate not measurable for this window". With a valid cost basis and zero realized return, the estimate is the negative modeled execution cost, not zero and not a division by an artificial ROI floor. Existing nonzero-return clamps and formulas are unchanged.
+- Offline regression tests execute the embedded script with fixture CLI responses: `python -m unittest discover -s tests -v` from the repository root. No API key or network access is needed.
 - Dev-reputation is only computed when `created_token_count` exceeds half the wallet's traded-token count — a wallet that launched one token in passing while mostly trading normally will NOT be treated as a Dev, and its trading-style tags/scores apply as normal.
 - Use `--raw` on any underlying `gmgn-cli` command to get single-line JSON if you want to inspect the raw response yourself before trusting a derived field.
 
