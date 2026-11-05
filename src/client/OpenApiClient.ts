@@ -681,7 +681,7 @@ export class OpenApiClient {
       );
 
       try {
-        return this.parseResponse(request.method, request.subPath, res, request.curlStr);
+        return await this.parseResponse(request.method, request.subPath, res, request.curlStr);
       } catch (err) {
         const retryDelayMs = getRateLimitRetryDelayMs(err, attempt, maxAttempts, autoRetryOnRateLimit);
         if (retryDelayMs == null) {
