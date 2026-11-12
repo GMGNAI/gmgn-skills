@@ -20,7 +20,7 @@ Run the following command, replacing the placeholders with the actual values:
 python3 ~/.claude/skills/gmgn-holder-analysis/analyze.py <FILL_IN_TOKEN_ADDRESS> <FILL_IN_CHAIN> <FILL_IN_LANG>
 ```
 
-- FILL_IN_CHAIN: `sol` for Solana addresses; for EVM `0x...` addresses use `auto` unless the user explicitly specifies a chain (`bsc`/`eth`/`base`)
+- FILL_IN_CHAIN: `sol` for Solana addresses; for EVM `0x...` addresses, use the chain the user specifies (`bsc`/`eth`/`base`/`robinhood`/`arc`/`stable`), otherwise use `auto`. Do NOT use `auto` when the user mentions arc, stable, or robinhood — pass the chain name directly.
 - FILL_IN_LANG: `zh` if user wrote Chinese, `en` if English, default `zh`
 
 ## Output Rule
