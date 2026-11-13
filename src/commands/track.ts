@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { OpenApiClient } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
-import { validateChain } from "../validate.js";
+import { validateReadChain } from "../validate.js";
 
 export function registerTrackCommands(program: Command): void {
   const track = program.command("track").description("On-chain tracking commands: follow-wallet trades, KOL trades, Smart Money trades");
@@ -10,7 +10,7 @@ export function registerTrackCommands(program: Command): void {
   track
     .command("follow-tokens")
     .description("Get the followed token list for a wallet on a given chain")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche / elysium")
     .requiredOption("--wallet <address>", "Wallet address")
     .option("--group-id <id>", "Filter by group: all_group (all), default, or a user-defined group ID")
     .option("--interval <interval>", "Time interval for price change stats (e.g. 1m, 5m, 1h, 6h, 24h)")
@@ -21,7 +21,7 @@ export function registerTrackCommands(program: Command): void {
     .option("--search <text>", "Search by token name or address")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
-      validateChain(opts.chain);
+      validateReadChain(opts.chain);
       const extra: Record<string, string | number> = {};
       if (opts.groupId) extra["group_id"] = opts.groupId;
       if (opts.interval) extra["interval"] = opts.interval;
@@ -38,11 +38,11 @@ export function registerTrackCommands(program: Command): void {
   track
     .command("follow-token-groups")
     .description("Get the follow token group names for a wallet on a given chain")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche / elysium")
     .requiredOption("--wallet <address>", "Wallet address")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
-      validateChain(opts.chain);
+      validateReadChain(opts.chain);
       const client = new OpenApiClient(getConfig());
       const data = await client.getFollowGroupNames(opts.chain, opts.wallet).catch(exitOnError);
       printResult(data, opts.raw);
@@ -51,7 +51,7 @@ export function registerTrackCommands(program: Command): void {
   track
     .command("follow-wallet")
     .description("Get follow-wallet trade records")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche / elysium")
     .option("--wallet <address>", "Filter by wallet address")
     .option("--limit <n>", "Page size (1–100, default 10)", parseInt)
     .option("--side <side>", "Trade direction filter: buy / sell")
@@ -60,7 +60,7 @@ export function registerTrackCommands(program: Command): void {
     .option("--max-amount-usd <n>", "Maximum trade amount (USD)", parseFloat)
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
-      validateChain(opts.chain);
+      validateReadChain(opts.chain);
       const extra: Record<string, string | number | string[]> = {};
       if (opts.wallet) extra["wallet_address"] = opts.wallet;
       if (opts.limit != null) extra["limit"] = opts.limit;
@@ -76,12 +76,12 @@ export function registerTrackCommands(program: Command): void {
   track
     .command("kol")
     .description("Get KOL trade records")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche / elysium")
     .option("--limit <n>", "Page size (1–200, default 100)", parseInt)
     .option("--side <side>", "Filter by trade direction: buy / sell (client-side filter)")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
-      if (opts.chain) validateChain(opts.chain);
+      if (opts.chain) validateReadChain(opts.chain);
       const client = new OpenApiClient(getConfig());
       const data = await client.getKol(opts.chain, opts.limit).catch(exitOnError) as { list?: { side: string }[] };
       if (opts.side && data?.list) {
@@ -93,12 +93,12 @@ export function registerTrackCommands(program: Command): void {
   track
     .command("smartmoney")
     .description("Get Smart Money trade records")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche / elysium")
     .option("--limit <n>", "Page size (1–200, default 100)", parseInt)
     .option("--side <side>", "Filter by trade direction: buy / sell (client-side filter)")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
-      if (opts.chain) validateChain(opts.chain);
+      if (opts.chain) validateReadChain(opts.chain);
       const client = new OpenApiClient(getConfig());
       const data = await client.getSmartMoney(opts.chain, opts.limit).catch(exitOnError) as { list?: { side: string }[] };
       if (opts.side && data?.list) {

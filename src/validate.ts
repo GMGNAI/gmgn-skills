@@ -1,10 +1,22 @@
+// Chains the trade commands accept (swap / order / strategy / cooking). Mirrors
+// dto.tradeChains in gmgn-openapi-service.
 const VALID_CHAINS = new Set(["sol", "bsc", "base", "eth", "arbitrum", "hyperevm", "robinhood", "arc", "stable", "avalanche" /*, "monad" */]);
+// Chains the read-only commands accept (token / market / portfolio / track):
+// every trade chain plus chains the server serves read-only. Mirrors
+// dto.marketChains. elysium (Kinetiq's HyperEVM L2) has no trading yet.
+const READ_CHAINS = new Set([...VALID_CHAINS, "elysium"]);
 const SOL_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const EVM_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 const POSITIVE_INT_RE = /^\d+$/;
 
 export function validateChain(chain: string): void {
   if (!VALID_CHAINS.has(chain)) {
+    if (READ_CHAINS.has(chain)) {
+      console.error(
+        `[gmgn-cli] Chain "${chain}" is read-only: trading is not supported. Trade chains: ${[...VALID_CHAINS].join(", ")}`
+      );
+      process.exit(1);
+    }
     console.error(
       `[gmgn-cli] Invalid chain: "${chain}". Must be one of: ${[...VALID_CHAINS].join(", ")}`
     );
@@ -12,8 +24,18 @@ export function validateChain(chain: string): void {
   }
 }
 
+/** Like validateChain, for read-only commands: also accepts read-only chains such as elysium. */
+export function validateReadChain(chain: string): void {
+  if (!READ_CHAINS.has(chain)) {
+    console.error(
+      `[gmgn-cli] Invalid chain: "${chain}". Must be one of: ${[...READ_CHAINS].join(", ")}`
+    );
+    process.exit(1);
+  }
+}
+
 export function validateAddress(address: string, chain: string, label: string): void {
-  const isEvm = VALID_CHAINS.has(chain) && chain !== "sol";
+  const isEvm = READ_CHAINS.has(chain) && chain !== "sol";
   const valid = isEvm ? EVM_ADDRESS_RE.test(address) : SOL_ADDRESS_RE.test(address);
   if (!valid) {
     console.error(
@@ -73,7 +95,7 @@ export function validatePercent(value: number): void {
 // Keep the two lists independent.
 const CALLOUT_CHAINS = new Set([
   "sol", "bsc", "eth", "base", "megaeth", "hyperevm",
-  "tron", "monad", "xlayer", "robinhood", "arbitrum", "arc", "stable", "avalanche",
+  "tron", "monad", "xlayer", "robinhood", "arbitrum", "arc", "stable", "avalanche", "elysium",
 ]);
 const CALLOUT_MAX_CHAINS = 20;
 const CALLOUT_MAX_LIMIT = 50;

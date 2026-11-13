@@ -781,11 +781,13 @@ gmgn-cli cooking \
 
 | 接口类型 | 支持的链 | 链原生货币 |
 |----------|----------|-----------|
-| token / market / portfolio / track | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` | — |
+| token / market / portfolio / track | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` / `elysium` | — |
 | swap / order | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` | sol: SOL、USDC · bsc: BNB、USDC · base: ETH、USDC · eth: ETH |
-| gas-price | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` | — |
-| track kol / track smartmoney · market signal | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche`（kol/smartmoney）· `sol` / `bsc` / `base` / `eth` / `arbitrum` / `robinhood` / `arc` / `stable` / `avalanche`（signal） | — |
+| gas-price | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` / `elysium` | — |
+| track kol / track smartmoney · market signal | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` / `elysium`（kol/smartmoney）· `sol` / `bsc` / `base` / `eth` / `arbitrum` / `robinhood` / `arc` / `stable` / `avalanche` / `elysium`（signal） | — |
 | cooking create | `sol` / `bsc` / `base` / `robinhood` | — |
+
+`elysium` 只支持只读命令，swap / order / cooking 会拒绝。
 
 ---
 

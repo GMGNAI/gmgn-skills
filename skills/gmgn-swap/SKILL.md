@@ -23,7 +23,7 @@ description: >-
   catch. Everything else is unchanged and unconditionally this skill's:
   selling, percentage sells, swaps, multi-wallet batch trading, limit orders,
   stop loss, take profit, trailing orders, order status, gas prices.
-argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [gas-price --chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type <limit_order|smart_trade> --sub-order-type <buy_low|buy_high|stop_loss|take_profit|mix_trade> ...]"
+argument-hint: "[--chain <chain> --from <wallet> --input-token <addr> --output-token <addr> --amount <n>] | [order get --chain <chain> --order-id <id>] | [gas-price --chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche|elysium>] | [order strategy list --chain <chain> --group-tag <LimitOrder|STMix>] | [order strategy create --chain <chain> --order-type <limit_order|smart_trade> --sub-order-type <buy_low|buy_high|stop_loss|take_profit|mix_trade> ...]"
 metadata:
   cliHelp: "gmgn-cli swap --help"
 ---
