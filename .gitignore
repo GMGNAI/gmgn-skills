@@ -23,3 +23,7 @@ testing/
 .claude/
 .agents/
 skills-lock.json
+
+# Python bytecode
+__pycache__/
+*.pyc
