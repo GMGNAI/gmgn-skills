@@ -1388,7 +1388,12 @@ def compute(d, latency_s, my_size):
     m["sell"] = i(s7.get("sell", s7.get("sell_count")))
     m["trades"] = m["buy"] + m["sell"]
     m["per_day"] = m["trades"] / 7.0
-    m["token_num"] = i(pnl.get("token_num"))
+    raw_count = f(pnl.get("token_num"), float("nan"))
+    m["token_count_known"] = (not isinstance(pnl.get("token_num"), bool)
+                              and math.isfinite(raw_count) and raw_count >= 0
+                              and raw_count.is_integer())
+    # Zero is an internal sample-size floor, not an observation when the field is absent.
+    m["token_num"] = int(raw_count) if m["token_count_known"] else 0
     m["winrate"] = f(pnl.get("winrate"))
     m["avg_hold_s"] = f(pnl.get("avg_holding_period"))
     m["realized_7d"] = f(s7.get("realized_profit"))
@@ -1401,15 +1406,19 @@ def compute(d, latency_s, my_size):
         "n50_0": i(pnl.get("pnl_nd5_0x_num")),
         "lt_n50": i(pnl.get("pnl_lt_nd5_num")),
     }
-    m["lt50_share"] = safe_div(m["buckets"]["lt_n50"], max(1, m["token_num"]))
+    m["lt50_share"] = (m["buckets"]["lt_n50"] / m["token_num"]
+                         if m["token_num"] > 0
+                         and 0 <= m["buckets"]["lt_n50"] <= m["token_num"] else None)
     # The 0-200% bucket and the win rate disagree, and the report used to print both without
     # saying so. A live wallet showed 188 of 209 tokens in that bucket next to a 23.9% win
     # rate: 188 would imply 90%. Only one reading satisfies both numbers — the band absorbs
     # every token with no realized result yet (bought, not yet sold => realized ROI 0, which
     # sits on that band's lower edge), so its size is not a count of wins. `unsettled` is
     # that difference, and it is stated rather than left for the reader to notice.
-    m["implied_winners"] = round(m["winrate"] * m["token_num"])
-    m["unsettled"] = max(0, m["buckets"]["x0_2"] - m["implied_winners"])
+    m["implied_winners"] = (round(m["winrate"] * m["token_num"])
+                             if m["token_count_known"] else None)
+    m["unsettled"] = (max(0, m["buckets"]["x0_2"] - m["implied_winners"])
+                       if m["implied_winners"] is not None else None)
     m["dist_gap"] = (
         m["token_num"] >= 20
         and m["buckets"]["x0_2"] > 0
@@ -1435,7 +1444,8 @@ def compute(d, latency_s, my_size):
     m["fund_from_address"] = clean_text(common.get("fund_from_address") or "", 120)
     m["fund_amount"] = f(common.get("fund_amount"))
     m["follow_count"] = i(common.get("follow_count"))
-    m["is_dev"] = m["created_tokens_n"] > 0 and m["created_tokens_n"] > 0.5 * max(1, m["token_num"])
+    m["is_dev"] = (m["token_num"] > 0 and m["created_tokens_n"] > 0
+                   and m["created_tokens_n"] > 0.5 * m["token_num"])
 
     # form curve — the trap detector: great all-time, dead this week
     def stats_roi(row):
@@ -1623,7 +1633,8 @@ def compute(d, latency_s, my_size):
             # ...and the open book has to be most of what it ever traded before its
             # concentration may speak for the record.
             m["pcr_represents_record"] = (
-                m["pcr_trusted"] and len(h) >= 0.5 * max(1, m["token_num"])
+                m["pcr_trusted"] and m["token_num"] > 0
+                and len(h) >= 0.5 * m["token_num"]
             )
         m["hold_to_zero"] = sum(
             1
@@ -1955,6 +1966,8 @@ def gates(m):
             why.append(T('for reference: in the positions read, at most {0} of realized gains came from its own launches — the rest is from trading {1}{2}',
                          pct(m['self_hi']), joinsym(m['self_ext_top']), self_window(m)))
         g["G1"] = (False, why if len(why) > 1 else why[0])
+    elif not m["token_count_known"]:
+        g["G1"] = (None, T('token count unavailable — sample size and launch-count ratio not evaluated'))
     elif m["token_num"] < 5:
         g["G1"] = (
             False,
@@ -2111,7 +2124,9 @@ def gates(m):
         g["G3"] = (True, reasons_ok or [T('no reachability obstacle found')])
 
     # G4 SURVIVABILITY
-    if m["token_num"] < 5:
+    if not m["token_count_known"]:
+        g["G4"] = (None, T('token count unavailable — survivability not evaluated'))
+    elif m["token_num"] < 5:
         g["G4"] = (None, T('sample too thin — survivability not evaluated'))
     elif len(m["honeypots"]) >= 2:
         syms = joinsym(x["sym"] for x in m["honeypots"])
@@ -2119,7 +2134,7 @@ def gates(m):
             False,
             T('{0} live positions are honeypots ({1}, {2} that cannot be sold) — its own screening did not catch them, and copying it walks into the same ones', len(m['honeypots']), syms, usd(m['honeypot_usd'])),
         )
-    elif m["lt50_share"] >= 0.35:
+    elif m["lt50_share"] is not None and m["lt50_share"] >= 0.35:
         g["G4"] = (
             False,
             T('{0} of its tokens are down >50% ({1:,}/{2:,}) — it does not cut', pct(m['lt50_share']), m['buckets']['lt_n50'], m['token_num']),
@@ -2129,6 +2144,8 @@ def gates(m):
             False,
             T('{0} positions down 90%+ with zero sells — riding to zero is the habit', m['hold_to_zero']),
         )
+    elif m["lt50_share"] is None:
+        g["G4"] = (None, T('heavy-loss count exceeds the token count — survivability not evaluated'))
     else:
         reasons = [
             T('heavy-loss share {0} ({1:,}/{2:,} down >50%)', pct(m['lt50_share']), m['buckets']['lt_n50'], m['token_num'])
@@ -2222,6 +2239,9 @@ def verdict(m, g):
         return ("🟡",
                 T('HOLD OFF · over half its profit may come from its own launches'),
                 T('Check its launch record before sizing off this one.'))
+    if p["G1"] is None and not m["token_count_known"]:
+        return ("⚪", T('NO READ · token count unavailable'),
+                T('Read the missing token count before judging the sample or launch ratio.'))
     if p["G1"] is None:
         return ("🟡",
                 T('HOLD OFF · a wash-trading flag we cannot check'),
@@ -2383,13 +2403,13 @@ def pnl_level(m):
     hits = []
     if m["winrate"] >= 0.5:
         hits.append(T('{0} hit rate', pct(m['winrate'])))
-    if m["lt50_share"] < 0.15:
+    if m["lt50_share"] is not None and m["lt50_share"] < 0.15:
         hits.append(T('only {0} heavy losses', pct(m['lt50_share'])))
     if roi > 0.5 and m["token_num"] >= 5 and hits:
         return ("P5", T('7d {0} + {1}', pct(roi), hits[0]))
     if roi > 0.1:
         return ("P4", None)
-    if m["lt50_share"] >= 0.40 and m["realized_7d"] < 0:
+    if m["lt50_share"] is not None and m["lt50_share"] >= 0.40 and m["realized_7d"] < 0:
         return ("P1", None)
     if abs(roi) <= 0.10:
         return ("P3", None)
@@ -2602,7 +2622,7 @@ def speed_read(m, g, why):
                      T('{0} honeypots in its live book, {1} unsellable — its own screening fails too', len(m['honeypots']), usd(m['honeypot_usd']))))
     elif flags:
         rows.append((T('top risk'), f"{flags[0]['emoji']} {flags[0]['name']} · {flags[0]['meaning']}"))
-    elif m["lt50_share"] >= 0.35:
+    elif m["lt50_share"] is not None and m["lt50_share"] >= 0.35:
         rows.append((T('top risk'),
                      T('{0} of tokens down >50% — it does not cut', pct(m['lt50_share']))))
     elif not m["security_checked"]:
@@ -2665,7 +2685,7 @@ def caliber(m, g):
     wallet can still be an excellent trader, and collapsing the two is what a single blended
     score does wrong.
     """
-    if g["G1"][0] is False or m["token_num"] < 5:
+    if g["G1"][0] is False or m["token_num"] < 5 or m["lt50_share"] is None:
         return ("⚪", T('record unreadable'))
     ra, wr, hl, n = m["realized_all"], m["winrate"], m["lt50_share"], m["token_num"]
     if ra is not None and ra < 0:
@@ -2779,7 +2799,8 @@ def card(m, g, wallet, chain):
                           usd(m["realized_all"]), age or T('so far'), hook_method(m))
         else:
             head_line = T('This wallet trades by {0}', hook_method(m))
-        sub = [T('{0:,} of {1:,} coins in profit', m["winners"], m["token_num"])]
+        sub = ([T('{0:,} of {1:,} coins in profit', m["winners"], m["token_num"])]
+               if m["token_count_known"] else [T('token count unavailable')])
         if m["buckets"]["lt_n50"] is not None:
             sub.append(T('only {0:,} lost more than half', m["buckets"]["lt_n50"]))
         out += [f"**{head_line}**", joinclause(sub) + _qualifier(m, chain)]
