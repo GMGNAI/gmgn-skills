@@ -739,7 +739,9 @@ def cwidth(cp):
     return 1
 
 
-NATIVE = {"sol": "SOL", "bsc": "BNB", "eth": "ETH", "base": "ETH", "arc": "ARC"}
+NATIVE = {"sol": "SOL", "bsc": "BNB", "eth": "ETH", "base": "ETH", "arc": "ARC",
+          "arbitrum": "ETH", "robinhood": "ETH", "hyperevm": "HYPE", "stable": "USDT0",
+          "avalanche": "AVAX", "elysium": "HYPE"}
 
 
 def usd_exact(v):

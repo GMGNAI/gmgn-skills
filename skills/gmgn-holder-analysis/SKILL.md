@@ -1,7 +1,7 @@
 ---
 name: gmgn-holder-analysis
 description: Token holder chip analysis — deep analysis of holder structure including chip distribution, entry cost, whale/dev/KOL behavior, risk wallets (rat traders, bundlers, snipers), related wallets, smart money signals, and an AI rating based purely on token structure. Use when user asks about holder analysis, 筹码分析, 持仓分析, chip structure, who is holding, or whether a token is safe to buy based on its holder composition.
-argument-hint: "--chain <sol|bsc|base|eth|robinhood|arc|stable> --address <token_address>"
+argument-hint: "--chain <sol|bsc|base|eth|robinhood|arc|stable|avalanche|elysium> --address <token_address>"
 metadata:
   cliHelp: "gmgn-cli token holders --help && gmgn-cli portfolio created-tokens --help"
 ---
@@ -221,7 +221,7 @@ contradict the rating above it.
 
 ## Supported Chains
 
-`sol`, `bsc`, `base`, `eth`, `robinhood`, `arc`, `stable`
+`sol`, `bsc`, `base`, `eth`, `robinhood`, `arc`, `stable`, `avalanche`, `elysium`
 
 ## Dev lookup is dual-source
 
@@ -248,7 +248,7 @@ when the primary source fails, so it costs nothing on tokens where the tag works
 
 - `balance >= 1` threshold avoids dust false positives when identifying dev holdings
 - SOL `native_balance` is in lamports (÷1e9); `bsc`/`eth`/`base` are in wei (÷1e18). Decimals for
-  `arc`/`stable`/`robinhood` are unconfirmed, so the buying-power section reports "not assessed"
+  `arc`/`stable`/`robinhood`/`avalanche`/`elysium` are unconfirmed, so the buying-power section reports "not assessed"
   on those chains rather than printing a converted figure that would be wrong.
 - Holder buying power needs a live native-token price, fetched with `token info` on the wrapped
   native address (`So111…1112` / WBNB / WETH / Base WETH). When that call fails, the section falls

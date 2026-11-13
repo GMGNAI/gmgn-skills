@@ -41,9 +41,10 @@ top fix reach the output. Don't add lines, badges or numbers unless the user ask
 The address and chain go straight into shell commands, so check them first. Never
 "fix up" a string to make it pass.
 
-- **Chain** must be one of `sol bsc base eth arbitrum hyperevm robinhood arc stable`. A base58
-  address is `sol`. A `0x…` address could be on any of the eight EVM chains: if the user named
-  one, use it; otherwise find it with the probe in Step 0a.
+- **Chain** must be one of `sol bsc base eth arbitrum hyperevm robinhood arc stable avalanche elysium`.
+  A base58 address is `sol`. A `0x…` address could be on any EVM chain: if the user named one,
+  use it; otherwise find it with the probe in Step 0a. `avalanche` and `elysium` are used only when
+  the user names them — the probe below does not sweep them.
 - **Address**: EVM must match `^0x[0-9a-fA-F]{40}$`. Solana must match
   `^[1-9A-HJ-NP-Za-km-z]{32,44}$`. Anything else (spaces, quotes, `;`, `$`, a leading `-`) → say
   it isn't a valid wallet address and stop.
@@ -74,7 +75,7 @@ Each probe is one call. Stop probing on a rate limit, and use the best chain fou
 any trades were seen. A probe response is also the 30D stats for that chain, so reuse it rather
 than asking for it again in Step 2. Name the chain in the reply's title line when it wasn't
 given, e.g. `（7D · Base）`. Chain display names: BSC, Base, ETH, Arbitrum, HyperEVM, Robinhood, Arc,
-Stable, SOL.
+Stable, Avalanche, Elysium, SOL.
 
 ## Step 1 — Pick the voice
 
