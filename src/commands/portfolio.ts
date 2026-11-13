@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { OpenApiClient } from "../client/OpenApiClient.js";
 import { getConfig } from "../config.js";
 import { exitOnError, printResult } from "../output.js";
-import { validateAddress, validateChain } from "../validate.js";
+import { validateAddress, validateReadChain } from "../validate.js";
 
 export function registerPortfolioCommands(program: Command): void {
   const portfolio = program.command("portfolio").description("Wallet portfolio commands");
@@ -10,7 +10,7 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("holdings")
     .description("Get wallet token holdings")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche / elysium")
     .requiredOption("--wallet <address>", "Wallet address")
     .option("--limit <n>", "Page size (default 20, max 50)", parseInt, 20)
     .option("--cursor <cursor>", "Pagination cursor")
@@ -24,7 +24,7 @@ export function registerPortfolioCommands(program: Command): void {
     .option("--tx30d", "Only show positions with trades in last 30 days")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
-      validateChain(opts.chain);
+      validateReadChain(opts.chain);
       validateAddress(opts.wallet, opts.chain, "--wallet");
       const extra: Record<string, string | number> = {};
       if (opts.limit != null) extra["limit"] = opts.limit;
@@ -46,7 +46,7 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("activity")
     .description("Get wallet transaction activity")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche / elysium")
     .requiredOption("--wallet <address>", "Wallet address")
     .option("--token <address>", "Filter by token contract address")
     .option("--limit <n>", "Page size", parseInt)
@@ -54,7 +54,7 @@ export function registerPortfolioCommands(program: Command): void {
     .option("--type <type...>", "Activity type filter, repeatable: buy / sell / transferIn / transferOut / add / remove")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
-      validateChain(opts.chain);
+      validateReadChain(opts.chain);
       validateAddress(opts.wallet, opts.chain, "--wallet");
       if (opts.token) validateAddress(opts.token, opts.chain, "--token");
       const extra: Record<string, string | number | string[]> = {};
@@ -71,12 +71,12 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("stats")
     .description("Get wallet trading statistics (supports multiple wallets)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche / elysium")
     .requiredOption("--wallet <address...>", "Wallet address(es), repeatable")
     .option("--period <period>", "Stats period: 7d / 30d", "7d")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
-      validateChain(opts.chain);
+      validateReadChain(opts.chain);
       for (const w of opts.wallet as string[]) validateAddress(w, opts.chain, "--wallet");
       const client = new OpenApiClient(getConfig());
       const data = await client.getWalletStats(opts.chain, opts.wallet, opts.period).catch(exitOnError);
@@ -86,12 +86,12 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("profits")
     .description("Batch query wallet profit and loss (1–100 wallets)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche / elysium")
     .requiredOption("--wallet <address...>", "Wallet address(es), up to 100")
     .option("--period <period>", "Profit period: 1d / 7d / 30d / all", "7d")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
-      validateChain(opts.chain);
+      validateReadChain(opts.chain);
       const wallets = opts.wallet as string[];
       if (wallets.length > 100) {
         throw new Error("--wallet accepts at most 100 addresses");
@@ -118,12 +118,12 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("token-balance")
     .description("Get wallet token balance for a single token")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche / elysium")
     .requiredOption("--wallet <address>", "Wallet address")
     .requiredOption("--token <address>", "Token contract address")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
-      validateChain(opts.chain);
+      validateReadChain(opts.chain);
       validateAddress(opts.wallet, opts.chain, "--wallet");
       validateAddress(opts.token, opts.chain, "--token");
       const client = new OpenApiClient(getConfig());
@@ -134,14 +134,14 @@ export function registerPortfolioCommands(program: Command): void {
   portfolio
     .command("created-tokens")
     .description("Get tokens created by a developer wallet")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche / elysium")
     .requiredOption("--wallet <address>", "Developer wallet address")
     .option("--order-by <field>", "Sort field: market_cap / token_ath_mc")
     .option("--direction <dir>", "Sort direction: asc / desc")
     .option("--migrate-state <state>", "Filter: migrated / non_migrated")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
-      validateChain(opts.chain);
+      validateReadChain(opts.chain);
       validateAddress(opts.wallet, opts.chain, "--wallet");
       const extra: Record<string, string | number> = {};
       if (opts.orderBy) extra["order_by"] = opts.orderBy;

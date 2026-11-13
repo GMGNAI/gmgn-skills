@@ -8,7 +8,7 @@ CHAIN      = sys.argv[2]
 LANG       = sys.argv[3] if len(sys.argv) > 3 else 'zh'
 
 # EVM 地址自动探测链（0x... 且 chain 传入 'auto' 或未明确指定时）
-KNOWN_CHAINS = ('bsc', 'eth', 'base', 'sol', 'robinhood', 'arc', 'stable')
+KNOWN_CHAINS = ('bsc', 'eth', 'base', 'sol', 'robinhood', 'arc', 'stable', 'avalanche', 'elysium')
 if CHAIN == 'auto' or (TOKEN_ADDR.startswith('0x') and CHAIN not in KNOWN_CHAINS):
     for _c in ('bsc', 'eth', 'base'):
         _r = subprocess.run(['gmgn-cli', 'token', 'holders', '--chain', _c,
@@ -26,7 +26,7 @@ TIGHT      = 60    # 秒级同步注资，基本可判定为脚本批量打款
 now_ts     = int(time.time())
 
 # 原生代币的包装地址，用于查询实时价格来估算持仓者购买力。
-# 未列出的链（arc / stable / robinhood）拿不到价格，购买力改用原生单位展示。
+# 未列出的链（arc / stable / robinhood / avalanche / elysium）拿不到价格，购买力改用原生单位展示。
 WNATIVE = {
     'sol':  'So11111111111111111111111111111111111111112',
     'bsc':  '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
@@ -390,7 +390,7 @@ loss_pct    = fs(loss_w)
 trapped     = [h for h in normal if (h.get('unrealized_pnl') or 0)<-0.2 and h.get('balance',0)>0]
 trapped_pct = fs(trapped)
 
-# 只列已确认精度的链。arc / stable / robinhood 的原生精度未确认，套 1e18 会把余额
+# 只列已确认精度的链。arc / stable / robinhood / avalanche / elysium 的原生精度未确认，套 1e18 会把余额
 # 算成 0.000，读起来像"这些钱包没有 gas"—— 错的数字比没有数字更危险。
 NATIVE_DENOM = {'sol': 1e9, 'bsc': 1e18, 'eth': 1e18, 'base': 1e18}.get(CHAIN)
 NSYM         = NATIVE_SYM.get(CHAIN, 'NATIVE')

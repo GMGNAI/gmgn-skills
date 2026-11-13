@@ -2,7 +2,7 @@
 name: gmgn-market
 description: Get crypto and meme token price charts (K-line, candlestick, OHLCV), trending meme coin rankings by volume, newly launched tokens on launchpads (pump.fun, fourmeme, letsbonk, Raydium, etc.), the hot-search ranking (most-searched tokens), and search for a specific token or wallet by name, symbol, contract address, wallet address, or ENS via GMGN API on Solana, BSC, Base, or Ethereum. Use when user asks for price chart, trending tokens, what's pumping, hot coins, most searched tokens, new launches, token signals, wants to look up / find / search a specific token or wallet by name or address, or wants to discover early-stage opportunities.
 metadata:
-  argument-hint: "kline --chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche> --address <token_address> --resolution <1s|30s|1m|5m|15m|1h|4h|1d> [--from <unix_ts>] [--to <unix_ts>] | trending --chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche> --interval <1m|5m|1h|6h|24h> | trenches --chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche> | signal --chain <sol|bsc|base|eth|arbitrum|robinhood|arc|stable|avalanche> | hot-searches [--chain <sol|bsc|base|eth|robinhood...>] [--interval <1m|5m|1h|6h|24h>] | search --query <name|symbol|address|ens> [--chain <chain>] [--launchpad-platform <p>...] [--is-og <true|false>] [--is-launched <true|false>] [--order-by weight]"
+  argument-hint: "kline --chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche|elysium> --address <token_address> --resolution <1s|30s|1m|5m|15m|1h|4h|1d> [--from <unix_ts>] [--to <unix_ts>] | trending --chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche|elysium> --interval <1m|5m|1h|6h|24h> | trenches --chain <sol|bsc|base|eth|arbitrum|hyperevm|robinhood|arc|stable|avalanche|elysium> | signal --chain <sol|bsc|base|eth|arbitrum|robinhood|arc|stable|avalanche|elysium> | hot-searches [--chain <sol|bsc|base|eth|robinhood...>] [--interval <1m|5m|1h|6h|24h>] | search --query <name|symbol|address|ens> [--chain <chain>] [--launchpad-platform <p>...] [--is-og <true|false>] [--is-launched <true|false>] [--order-by weight]"
   cliHelp: "gmgn-cli market --help"
 ---
 
@@ -56,7 +56,7 @@ Use the `gmgn-cli` tool to query K-line data for a token, browse trending tokens
 
 ## Supported Chains
 
-`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` (kline / trending / trenches / hot-searches; signal: `sol` / `bsc` / `base` / `eth` / `arbitrum` / `robinhood` / `arc` / `stable` / `avalanche` (no `hyperevm`); search: `--chain` is **optional** — omit to search all chains; accepts `all` and any chain the search module has enabled, including dynamically-enabled chains such as `tron` / `monad` / `megaeth` / `xlayer`)
+`sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` / `elysium` (kline / trending / trenches / hot-searches; signal: `sol` / `bsc` / `base` / `eth` / `arbitrum` / `robinhood` / `arc` / `stable` / `avalanche` / `elysium` (no `hyperevm`); search: `--chain` is **optional** — omit to search all chains; accepts `all` and any chain the search module has enabled, including dynamically-enabled chains such as `tron` / `monad` / `megaeth` / `xlayer`)
 
 ## Prerequisites
 
@@ -92,7 +92,7 @@ When a request returns `429`:
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` / `elysium` |
 | `--address` | Yes | Token contract address |
 | `--resolution` | Yes | Candlestick resolution: `1s` (**Pro only; at most 500 candles per request**) / `30s` / `1m` / `5m` / `15m` / `1h` / `4h` / `1d` |
 | `--from` | No | Start time (Unix seconds) |
@@ -135,7 +135,7 @@ The response is an object with a `list` array. Each element in `list` is one can
 
 | Option | Description |
 |--------|-------------|
-| `--chain` | Required. `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` |
+| `--chain` | Required. `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` / `elysium` |
 | `--interval` | Required. `1m` / `5m` / `1h` / `6h` / `24h` (default `1h`) |
 | `--limit <n>` | Number of results (default 100, max 100) |
 | `--order-by <field>` | Sort field: `default` / `swaps` / `marketcap` / `history_highest_market_cap` / `liquidity` / `volume` / `holder_count` / `smart_degen_count` / `renowned_count` / `gas_fee` / `price` / `change1m` / `change5m` / `change1h` / `creation_timestamp` |
@@ -559,7 +559,7 @@ Use field combinations to determine what stage a token is in. This affects how s
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` / `elysium` |
 | `--type` | No | Categories to query, repeatable: `new_creation` / `near_completion` / `completed` (default: all three) |
 | `--launchpad-platform` | No | Launchpad platform filter, repeatable. Omitted: every chain uses the server's per-chain default allow-list (see the table below). Passing values replaces that default. |
 | `--limit` | No | Max results per category, max 80 (default: 80) |
@@ -582,6 +582,7 @@ Use field combinations to determine what stage a token is in. This affects how s
 | `arc`  | `trench` / `circlewarp` / `argus` / `argus_v2` / `minara` / `tollylabs_direct` / `radardex` / `o1` / `dyorswap` / `dyorfun_v3` / `sharcfun` / `lift` / `klik` / `actfun` / `peach` / `ayoo_curve` / `flutch_v3` / `archemist_v2` / `pegd` / `akafun` / `onmidotfun` / `foci` / `evefun` / `lazymemes` / `zyora_bc` / `ubifun` / `ellipse` / `arcpad` / `pool_uniswap_v2` / `pool_uniswap_v3` / `pool_uniswap_v4` |
 | `stable` | `trench` / `dyorswap` / `dyorfun_v3` |
 | `avalanche` | `arenatrade` / `pool_uniswap_v2` / `pool_uniswap_v3` / `pool_uniswap_v4` / `pool_pharaoh_v2` / `pool_pharaoh_v3` / `pool_pharaoh_dlmm` / `pool_lfj_v1` / `pool_blackhole_clmm` / `pool_pangolin_v2` / `pool_sushiswap_v2` / `pool_allblue_v2` |
+| `elysium` | `aether` / `aether_meme` / `akafun` / `apogee` / `arkhampad` / `ascend` / `basko` / `boursely` / `boxa` / `boxa_v4` / `bunnypad` / `chainzy` / `citadel` / `clanker` / `degen_zone` / `eleos` / `elevate` / `elyra` / `elysino` / `elyspad` / `elyspad_v4` / `elyspump` / `elyspump_v4` / `elyxa` / `evermor` / `flap` / `forge` / `hesperia` / `hips` / `kilnpad` / `kinetiq_strategy` / `kinex` / `kleos` / `kleos_v4` / `kstock` / `launchcraft` / `lumora` / `mesa` / `montra` / `nectar` / `o1` / `obol` / `obol_v4` / `olympad` / `pangea` / `perpme` / `perpme_ramses` / `perpme_v4` / `pools_fun` / `quoted` / `quoted_curve` / `rons` / `rons_v4` / `skyhook` / `stands` / `stockium` / `stokx` / `styxn` / `summon` / `supercolony` / `synapse` / `synthra` / `tartarus` / `torus` / `volta` / `windup` / `wormpad` / `zyora` / `pool_aerodrome` / `pool_kiln_dex` / `pool_metric` / `pool_ramses_v3` / `pool_uniswap_v2` / `pool_uniswap_v3` / `pool_uniswap_v4` / `pool_windup_spot` |
 
 ### Filter Presets
 
@@ -1006,7 +1007,7 @@ Present each category separately with a header:
 
 ## `market signal` Parameters
 
-Chains: `sol` / `bsc` / `base` / `eth` / `arbitrum` / `robinhood` / `arc` / `stable` / `avalanche` (`hyperevm` is not supported upstream). **Maximum 50 results per group** — use multiple groups via `--groups` to cover different signal types in a single request.
+Chains: `sol` / `bsc` / `base` / `eth` / `arbitrum` / `robinhood` / `arc` / `stable` / `avalanche` / `elysium` (`hyperevm` is not supported upstream). **Maximum 50 results per group** — use multiple groups via `--groups` to cover different signal types in a single request.
 
 **Single-group (individual flags):**
 
@@ -1014,7 +1015,7 @@ Do **not** pass signal types **14, 15, or 16** in `signal_type` / `--signal-type
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `robinhood` / `arc` / `stable` / `avalanche` (`hyperevm` not supported) |
+| `--chain` | Yes | `sol` / `bsc` / `base` / `eth` / `arbitrum` / `robinhood` / `arc` / `stable` / `avalanche` / `elysium` (`hyperevm` not supported) |
 | `--signal-type` | No | Signal type(s), repeatable: `1`–`13`, `17`–`21`; default: all supported types. See Signal Types below. |
 | `--mc-min` | No | Min market cap at trigger time (USD) |
 | `--mc-max` | No | Max market cap at trigger time (USD) |
@@ -1119,7 +1120,7 @@ Returns the hot-search ranking — the tokens people are searching for most righ
 
 | Option | Description |
 |--------|-------------|
-| `--chain <chain...>` | Repeatable. `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche`. **Omit to query the default 10-chain set** (each at `24h` with chain-appropriate safety filters). |
+| `--chain <chain...>` | Repeatable. `sol` / `bsc` / `base` / `eth` / `arbitrum` / `hyperevm` / `robinhood` / `arc` / `stable` / `avalanche` / `elysium`. **Omit to query the default 11-chain set** (each at `24h` with chain-appropriate safety filters). |
 | `--interval <interval>` | `1m` / `5m` / `1h` / `6h` / `24h` (default `24h`). Applies to every `--chain` provided. |
 | `--limit <n>` | Max results per chain (default `500`). |
 | `--filter <tag...>` | Repeatable **boolean** filter tags (the downstream `filter.filters` array). **⚠️ SOL defaults: `renounced frozen`; EVM defaults: `not_honeypot verified renounced`.** Omitting `--filter` is NOT "no filter" — the server applies chain defaults. See the Filter Tags table below for the exact vocabulary. |
@@ -1185,7 +1186,7 @@ Numeric bounds use the **same rank-style metric names as `market trending`**. Th
 
 **Notes on behaviour:**
 
-- `--chain all` is **not** valid. To aggregate across chains, pass `--chain` multiple times (or omit `--chain` for the default 10-chain set).
+- `--chain all` is **not** valid. To aggregate across chains, pass `--chain` multiple times (or omit `--chain` for the default 11-chain set).
 - When you pass `--chain` but omit `--filter`, the **server** applies the chain-appropriate default filters — so each chain is filtered even without an explicit `--filter`.
 - Different chains return different counts: a chain's token count depends on how many of its tokens made the global top-500 (sol is usually the largest).
 
@@ -1221,7 +1222,7 @@ See the [`market trending` Response Fields](#market-trending-response-fields) se
 ### `market hot-searches` Usage Examples
 
 ```bash
-# Default 10-chain hot-search ranking (sol/bsc/base/eth/arbitrum/hyperevm/robinhood/arc/stable/avalanche, each 24h)
+# Default 11-chain hot-search ranking (sol/bsc/base/eth/arbitrum/hyperevm/robinhood/arc/stable/avalanche/elysium, each 24h)
 gmgn-cli market hot-searches --raw
 
 # SOL only, 24h hot-search list
@@ -1350,7 +1351,7 @@ Present tokens and wallets separately. Do not dump the raw JSON.
 
 - `market kline`: `--from` and `--to` are Unix timestamps in **seconds** — CLI converts to milliseconds automatically
 - `market trending`: `--filter` and `--platform` are repeatable flags
-- `market hot-searches`: `--chain` and `--filter` are repeatable flags; omit `--chain` to query the default 10-chain set. `--min-*`/`--max-*` range flags reuse the same metric names as `market trending` and are translated server-side per `--interval`
+- `market hot-searches`: `--chain` and `--filter` are repeatable flags; omit `--chain` to query the default 11-chain set. `--min-*`/`--max-*` range flags reuse the same metric names as `market trending` and are translated server-side per `--interval`
 - `market search`: `--query` is required; `--launchpad-platform` is a repeatable flag (max 50). `--chain` is optional (omit = all chains). `--launchpad-platform` / `--is-og` / `--is-launched` / `--order-by` filter `coins` only, never `wallets`
 - All commands use exist auth (API Key only, no signature)
 - If the user doesn't provide kline timestamps, calculate them from the current time based on their desired time range

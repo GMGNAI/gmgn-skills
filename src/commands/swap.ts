@@ -183,7 +183,7 @@ export function registerSwapCommands(program: Command): void {
   program
     .command("gas-price")
     .description("Query recommended gas price tiers for any chain (exist auth — API Key only)")
-    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche")
+    .requiredOption("--chain <chain>", "Chain: sol / bsc / base / eth / arbitrum / hyperevm / robinhood / arc / stable / avalanche / elysium")
     .option("--raw", "Output raw JSON")
     .action(async (opts) => {
       const client = new OpenApiClient(getConfig(false));
